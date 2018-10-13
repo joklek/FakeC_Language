@@ -11,7 +11,6 @@ public class StringParsingUtils {
         escapedChars.put("\\n", "\n");
         escapedChars.put("\\r", "\r");
         escapedChars.put("\\t", "\t");
-        escapedChars.put("\\\"", "\"");
     }
 
     public String unescapeSymbols(String escapedString) {
@@ -19,6 +18,16 @@ public class StringParsingUtils {
         for(Map.Entry<String, String> entry : escapedChars.entrySet()) {
             unescaped = unescaped.replace(entry.getKey(), entry.getValue());
         }
+        unescaped = unescaped.replace("\\\"", "\"");
+        return unescaped;
+    }
+
+    public String unescapeCharSymbols(String escapedString) {
+        String unescaped = escapedString;
+        for(Map.Entry<String, String> entry : escapedChars.entrySet()) {
+            unescaped = unescaped.replace(entry.getKey(), entry.getValue());
+        }
+        unescaped = unescaped.replace("\\'", "'");
         return unescaped;
     }
 }

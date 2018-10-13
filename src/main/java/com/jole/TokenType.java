@@ -4,7 +4,7 @@ package com.jole;
 public enum TokenType {
     // Tokens
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE, CURLY_LEFT, CURLY_RIGHT, // ()[]{}
-    COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR, PERCENT,                  // .,-+;/*%
+    COMMA, MINUS, PLUS, SEMICOLON, SLASH, STAR, PERCENT,                  // .,-+;/*%
 
     NOT, NOT_EQUAL,         // ! !=
     EQUAL, EQUAL_EQUAL,     // = ==
@@ -13,14 +13,14 @@ public enum TokenType {
     PLUS_EQUAL, MINUS_EQUAL, MUL_EQUAL, DIV_EQUAL, MOD_EQUAL, // += -= *= /= %=
 
     // Literals
-    IDENTIFIER, STRING, INTEGER, FLOAT,
+    IDENTIFIER, STRING, INTEGER, FLOAT, CHAR,
 
     // Keywords
     AND, OR, RETURN, BREAK, CONTINUE, WHILE, FOR, IF, ELSE, TRUE, FALSE, NULL,
     FLOAT_TYPE, INT_TYPE, CHAR_TYPE, BOOL_TYPE, STRING_TYPE, VOID_TYPE,
 
     // IO
-    INPUT, OUTPUT,
+    INPUT, OUTPUT, INPUT_SIGN, OUTPUT_SIGN,
 
     EOF
 }

@@ -2,6 +2,8 @@ package com.jole;
 
 import com.jole.utils.ReservedKeywordUtils;
 import com.jole.utils.StringParsingUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +11,9 @@ import java.util.List;
 import static com.jole.TokenType.*;
 
 public class Scanner {
+
+    private static final Logger LOGGER = LogManager.getLogger(Scanner.class);
+
     private final String source;
     private final List<Token> tokens;
     private final StringParsingUtils stringParsingUtils;
@@ -44,6 +49,7 @@ public class Scanner {
         char c = advance();
         switch (c) {
             case '"': lexString(); break;
+            case '\'': lexChar(); break;
 
             case  '(': addToken(LEFT_PAREN); break;
             case  ')': addToken(RIGHT_PAREN); break;
@@ -60,9 +66,20 @@ public class Scanner {
             case  '*': addToken(match('=') ? MUL_EQUAL : STAR); break;
             case  '%': addToken(match('=') ? MOD_EQUAL : PERCENT); break;
             case  '=': addToken(match('=') ? EQUAL_EQUAL : EQUAL); break;
-            case  '>': addToken(match('=') ? GREATER_EQUAL : GREATER); break;
-            case  '<': addToken(match('=') ? LESS_EQUAL : LESS); break;
-
+            case  '>':
+                if (match('=')) {
+                    addToken(GREATER_EQUAL);
+                } else {
+                    addToken(match('>') ? INPUT_SIGN : GREATER);
+                }
+                break;
+            case  '<':
+                if (match('=')) {
+                    addToken(LESS_EQUAL);
+                } else {
+                    addToken(match('<') ? OUTPUT_SIGN : LESS);
+                }
+                break;
             case  '/':
                 if(match('/')) {
                     while (peek() != '\n' && !isAtEnd()) {
@@ -92,9 +109,38 @@ public class Scanner {
                     lexIdentifier();
                 }
                 else {
-                    // TODO ERROR
+                    LOGGER.error("line: {}", line);
                 }
                 break;
+        }
+    }
+
+    private void lexChar() {
+        while(peek() != '\'' && !isAtEnd()) {
+            if(peek() == '\n') {
+                line++;
+            }
+            if(peek() == '\\' && peekNext() == '\'') {
+                advance();
+            }
+            advance();
+        }
+        if(isAtEnd()) {
+            // TODO: error unterminated char
+            return;
+        }
+
+        // for closing '
+        advance();
+
+        String value = source.substring(start + 1, current - 1);
+        String unescapedValue = stringParsingUtils.unescapeCharSymbols(value);
+        if (unescapedValue.length() == 1) {
+            addToken(CHAR, unescapedValue);
+        }
+        else {
+            // TODO: error too long char
+            return;
         }
     }
 
@@ -159,6 +205,9 @@ public class Scanner {
         while(peek() != '"' && !isAtEnd()) {
             if(peek() == '\n') {
                 line++;
+            }
+            if(peek() == '\\' && peekNext() == '"') {
+                advance();
             }
             advance();
         }

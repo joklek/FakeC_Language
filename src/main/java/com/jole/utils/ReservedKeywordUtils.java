@@ -30,6 +30,8 @@ public class ReservedKeywordUtils {
         keywords.put("bool", BOOL_TYPE);
         keywords.put("string", STRING_TYPE);
         keywords.put("void", VOID_TYPE);
+        keywords.put("input", INPUT);
+        keywords.put("output", OUTPUT);
     }
 
     /**

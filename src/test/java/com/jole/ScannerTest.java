@@ -10,13 +10,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ScannerTest {
 
-    @Test
-    public void test() {
-        Scanner testScan = new Scanner("12.12");
-        testScan.scanTokens();
-    }
-
-
     // FLOAT
     @Test
     void shouldLexSimpleFloat() {
@@ -163,13 +156,73 @@ public class ScannerTest {
 
     @Test
     void shouldLexEscapedSymbols() {
-        String stringContent = "\n \r \t \\\\ ";
-        String code = "\"\\n \\r \\t \\\\ \"";
+        String stringContent = "\n \r \t \\\\ \" abc";
+        String code = "\"" + "\\n \\r \\t \\\\ \\\" abc" + "\"";
 
         Scanner testScan = new Scanner(code);
         List<Token> tokens = testScan.scanTokens();
         assertThat(tokens.get(0).getType(), is(STRING));
         assertThat(tokens.get(0).getLiteral(), is(stringContent));
         assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    @Test
+    void shouldLexEmptyString() {
+        String stringContent = "";
+        String code = "\"" + "\"";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(STRING));
+        assertThat(tokens.get(0).getLiteral(), is(stringContent));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    // Char
+    @Test
+    void shouldLexNormalChars() {
+        String wantedChar = "a";
+        String code = "'a'";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(CHAR));
+        assertThat(tokens.get(0).getLiteral(), is(wantedChar));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    @Test
+    void shouldLexEscapedChars() {
+        String wantedChar = "'";
+        String code = "'\\''";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(CHAR));
+        assertThat(tokens.get(0).getLiteral(), is(wantedChar));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    // IO
+    @Test
+    void shouldParseInput() {
+        String code = "input    >> test";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(INPUT));
+        assertThat(tokens.get(1).getType(), is(INPUT_SIGN));
+        assertThat(tokens.get(2).getType(), is(IDENTIFIER));
+    }
+
+    @Test
+    void shouldParseOutput() {
+        String code = "output << test";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(OUTPUT));
+        assertThat(tokens.get(1).getType(), is(OUTPUT_SIGN));
+        assertThat(tokens.get(2).getType(), is(IDENTIFIER));
     }
 }
