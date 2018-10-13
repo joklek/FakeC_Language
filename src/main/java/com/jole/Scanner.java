@@ -109,10 +109,14 @@ public class Scanner {
                     lexIdentifier();
                 }
                 else {
-                    LOGGER.error("line: {}", line);
+                    error("Unidentified lexema at line", line);
                 }
                 break;
         }
+    }
+
+    private void error(String errorMessage, int line) {
+        System.out.printf("ERROR at line %s with message: %s%n", line, errorMessage);
     }
 
     private void lexChar() {
@@ -126,7 +130,7 @@ public class Scanner {
             advance();
         }
         if(isAtEnd()) {
-            // TODO: error unterminated char
+            error("Unterminated char", line);
             return;
         }
 
@@ -139,8 +143,7 @@ public class Scanner {
             addToken(CHAR, unescapedValue);
         }
         else {
-            // TODO: error too long char
-            return;
+            error("Char should be of one character length and is of: " + unescapedValue.length(), line);
         }
     }
 
@@ -154,8 +157,11 @@ public class Scanner {
         // check if text is reserved
         if (type == null) {
             type = IDENTIFIER;
+            addToken(type, text);
         }
-        addToken(type);
+        else {
+            addToken(type);
+        }
     }
 
     private void lexNumber() {
@@ -212,7 +218,7 @@ public class Scanner {
             advance();
         }
         if(isAtEnd()) {
-            // TODO: error unterminated string
+            error("Unterminated string", line);
             return;
         }
 
