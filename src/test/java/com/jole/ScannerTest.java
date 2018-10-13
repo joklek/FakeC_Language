@@ -43,6 +43,18 @@ public class ScannerTest {
     }
 
     @Test
+    void shouldLexNegativeExponent() {
+        String code = "12e-1";
+        Double value = Double.parseDouble(code);
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(FLOAT));
+        assertThat(tokens.get(0).getLiteral(), is(value));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    @Test
     void shouldLexFloatWithDotStart() {
         String code = ".12";
         Double value = Double.parseDouble(code);
@@ -112,6 +124,52 @@ public class ScannerTest {
         List<Token> tokens = testScan.scanTokens();
         assertThat(tokens.get(0).getType(), is(INTEGER));
         assertThat(tokens.get(0).getLiteral(), is(value));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    // Identifiers
+    @Test
+    void shouldLexIdentifier() {
+        String code = "text_12";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(IDENTIFIER));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    @Test
+    void shouldLexReservedKeyword() {
+        String code = "return";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(RETURN));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    // Strings
+    @Test
+    void shouldLexSimpleString() {
+        String stringContent = "text";
+        String code = "\"" + stringContent +"\"";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(STRING));
+        assertThat(tokens.get(0).getLiteral(), is(stringContent));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    @Test
+    void shouldLexEscapedSymbols() {
+        String stringContent = "\n \r \t \\\\ ";
+        String code = "\"\\n \\r \\t \\\\ \"";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(STRING));
+        assertThat(tokens.get(0).getLiteral(), is(stringContent));
         assertThat(tokens.get(0).getLexeme(), is(code));
     }
 }

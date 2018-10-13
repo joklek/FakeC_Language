@@ -1,22 +1,34 @@
 package com.jole;
 
+import com.jole.utils.ReservedKeywordUtils;
+import com.jole.utils.StringParsingUtils;
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.jole.TokenType.*;
 
 public class Scanner {
     private final String source;
     private final List<Token> tokens;
+    private final StringParsingUtils stringParsingUtils;
+    private final ReservedKeywordUtils reservedKeywordUtils;
     private int start = 0;
     private int current = 0;
     private int line = 1;
 
+    public Scanner(String source, StringParsingUtils stringParsingUtils, ReservedKeywordUtils reservedKeywordUtils) {
+        this.source = source;
+        this.tokens = new ArrayList<>();
+        this.stringParsingUtils = stringParsingUtils;
+        this.reservedKeywordUtils = reservedKeywordUtils;
+    }
+
     public Scanner(String source) {
         this.source = source;
         this.tokens = new ArrayList<>();
+        this.stringParsingUtils = new StringParsingUtils();
+        this.reservedKeywordUtils = new ReservedKeywordUtils();
     }
 
     public List<Token> scanTokens() {
@@ -76,11 +88,28 @@ public class Scanner {
                 if(isDigit(c) || (c == '.' && isDigit(peekNext())) ) {
                     lexNumber();
                 }
+                else if (isAlpha(c)) {
+                    lexIdentifier();
+                }
                 else {
                     // TODO ERROR
                 }
                 break;
         }
+    }
+
+    private void lexIdentifier() {
+        while (isAlphaNumeric(peek())) {
+            advance();
+        }
+
+        String text = source.substring(start, current);
+        TokenType type = reservedKeywordUtils.getTokenType(text);
+        // check if text is reserved
+        if (type == null) {
+            type = IDENTIFIER;
+        }
+        addToken(type);
     }
 
     private void lexNumber() {
@@ -89,10 +118,9 @@ public class Scanner {
         if(source.charAt(current - 1) != '.') {
             collectNumbers();
         }
-        // if dot is consumed, unconsume for simplified lexing
         else {
             isFloat = true;  // this flag is optionally set here for clarity
-            current--;
+            current--; // if dot is consumed, unconsume for simplified lexing
         }
 
         if (peek() == '.') {
@@ -103,6 +131,9 @@ public class Scanner {
         if (peek() == 'e') {
             isFloat = true;
             advance();
+            if (peek() == '-') {
+                advance();
+            }
             collectNumbers();
         }
 
@@ -140,22 +171,8 @@ public class Scanner {
         advance();
 
         String value = source.substring(start + 1, current - 1);
-        String unescapedValue = unescapeString(value);
+        String unescapedValue = stringParsingUtils.unescapeSymbols(value);
         addToken(STRING, unescapedValue);
-    }
-
-    private String unescapeString(final String value) {
-        String unescaped = value;
-        Map<String, String> escapedChars = new HashMap<>();
-        escapedChars.put("\\n", "\n");
-        escapedChars.put("\\r", "\r");
-        escapedChars.put("\\t", "\t");
-        escapedChars.put("\\\"", "\"");
-
-        for(Map.Entry<String, String> entry : escapedChars.entrySet()) {
-            unescaped = unescaped.replace(entry.getKey(), entry.getValue());
-        }
-        return unescaped;
     }
 
     /**
@@ -219,5 +236,15 @@ public class Scanner {
 
     private boolean isDigit(char c) {
         return c >= '0' && c <= '9';
+    }
+
+    private boolean isAlpha(char c) {
+        return (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z') ||
+                c == '_';
+    }
+
+    private boolean isAlphaNumeric(char c) {
+        return isAlpha(c) || isDigit(c);
     }
 }

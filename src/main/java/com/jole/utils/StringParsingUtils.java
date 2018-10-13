@@ -1,0 +1,24 @@
+package com.jole.utils;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class StringParsingUtils {
+
+    Map<String, String> escapedChars = new HashMap<>();
+
+    public StringParsingUtils() {
+        escapedChars.put("\\n", "\n");
+        escapedChars.put("\\r", "\r");
+        escapedChars.put("\\t", "\t");
+        escapedChars.put("\\\"", "\"");
+    }
+
+    public String unescapeSymbols(String escapedString) {
+        String unescaped = escapedString;
+        for(Map.Entry<String, String> entry : escapedChars.entrySet()) {
+            unescaped = unescaped.replace(entry.getKey(), entry.getValue());
+        }
+        return unescaped;
+    }
+}
