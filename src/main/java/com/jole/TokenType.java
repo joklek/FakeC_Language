@@ -13,7 +13,7 @@ public enum TokenType {
     PLUS_EQUAL, MINUS_EQUAL, MUL_EQUAL, DIV_EQUAL, MOD_EQUAL, // += -= *= /= %=
 
     // Literals
-    IDENTIFIER, STRING, NUMBER,
+    IDENTIFIER, STRING, INTEGER, FLOAT,
 
     // Keywords
     AND, OR, RETURN, BREAK, CONTINUE, WHILE, FOR, IF, ELSE, TRUE, FALSE, NULL,
