@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class StringParsingUtils {
 
-    Map<String, String> escapedChars = new HashMap<>();
+    private Map<String, String> escapedChars = new HashMap<>();
 
     public StringParsingUtils() {
         escapedChars.put("\\n", "\n");

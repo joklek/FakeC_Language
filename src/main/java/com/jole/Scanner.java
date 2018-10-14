@@ -12,8 +12,6 @@ import static com.jole.TokenType.*;
 
 public class Scanner {
 
-    private static final Logger LOGGER = LogManager.getLogger(Scanner.class);
-
     private final String source;
     private final List<Token> tokens;
     private final StringParsingUtils stringParsingUtils;
@@ -189,13 +187,13 @@ public class Scanner {
             collectNumbers();
         }
 
+        String value = source.substring(start, current);
         if(isFloat) {
-            String value = source.substring(start, current);
             Double unescapedValue = Double.parseDouble(value);
             addToken(FLOAT, unescapedValue);
         }
         else {
-            String value = source.substring(start, current);
+
             Integer unescapedValue = Integer.parseInt(value);
             addToken(INTEGER, unescapedValue);
         }
