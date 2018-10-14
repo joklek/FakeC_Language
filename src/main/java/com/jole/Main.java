@@ -9,7 +9,7 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        runFile("D:\\Documents\\Univeras\\V semestras\\Transliavimo metodai\\Lexing\\src\\main\\java\\com\\jole\\source.txt");
+        runFile(args[0]);
     }
 
     private static void runFile(String path) throws IOException {
