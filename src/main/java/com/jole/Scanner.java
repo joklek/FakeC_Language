@@ -102,14 +102,14 @@ public class Scanner {
                 line++;
                 break;
             default:
-                if(isDigit(c) || (c == '.' && isDigit(peekNext())) ) {
+                if(isDigit(c) || (c == '.' && isDigit(peek())) ) {
                     lexNumber();
                 }
                 else if (isAlpha(c)) {
                     lexIdentifier();
                 }
                 else {
-                    error("Unidentified lexema at line", line);
+                    error("Unidentified lexema \"" + source.substring(start, current) + "\" at line", line);
                 }
                 break;
         }
@@ -124,7 +124,7 @@ public class Scanner {
             if(peek() == '\n') {
                 line++;
             }
-            if(peek() == '\\' && peekNext() == '\'') {
+            if(peek() == '\\') {
                 advance();
             }
             advance();
@@ -212,7 +212,7 @@ public class Scanner {
             if(peek() == '\n') {
                 line++;
             }
-            if(peek() == '\\' && peekNext() == '"') {
+            if(peek() == '\\') {
                 advance();
             }
             advance();

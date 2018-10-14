@@ -155,8 +155,20 @@ public class ScannerTest {
 
     @Test
     void shouldLexEscapedSymbols() {
-        String stringContent = "\n \r \t \\\\ \" abc";
-        String code = "\"" + "\\n \\r \\t \\\\ \\\" abc" + "\"";
+        String stringContent = "\n \r \t \\ \" abc";
+        String code = "\"" + "\\n \\r \\t \\\\ \\\" abc" + "\""; // \n \r \t \\ " abc
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(STRING));
+        assertThat(tokens.get(0).getLiteral(), is(stringContent));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    @Test
+    void shouldLexEscapedSymbols2() {
+        String stringContent = "\\";        //  \
+        String code = "\"" + "\\\\" + "\""; // "\\"
 
         Scanner testScan = new Scanner(code);
         List<Token> tokens = testScan.scanTokens();
@@ -194,6 +206,18 @@ public class ScannerTest {
     void shouldLexEscapedChars() {
         String wantedChar = "'";
         String code = "'\\''";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(CHAR));
+        assertThat(tokens.get(0).getLiteral(), is(wantedChar));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+    }
+
+    @Test
+    void shouldLexEscapedSlash() {
+        String wantedChar = "\\";
+        String code = "'\\\\'";
 
         Scanner testScan = new Scanner(code);
         List<Token> tokens = testScan.scanTokens();

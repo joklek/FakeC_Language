@@ -1,6 +1,5 @@
 package com.jole;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -22,9 +21,11 @@ public class Main {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
-        System.out.printf("%4s|%4s|%15s|%20s%n", "ID", "LN", "TYPE", "VALUE");
+        System.out.printf("%4s|%4s|%15s|%-50s%n", "ID", "LN", "TYPE", "VALUE");
+        System.out.printf("%4s|%4s|%15s|%-50s%n", "----", "----", "---------------", "--------------------------------------------------");
         for (Token token : tokens) {
-            System.out.printf("%4s|%4s|%15s|%20s%n", tokens.indexOf(token), token.getLine(), token.getType(), token.getLiteral());
+            Object value = token.getLiteral() == null ? "" : token.getLexeme();
+            System.out.printf("%4s|%4s|%15s|%-50s%n", tokens.indexOf(token), token.getLine(), token.getType(), value);
         }
     }
 }

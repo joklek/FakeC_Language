@@ -11,6 +11,7 @@ public class StringParsingUtils {
         escapedChars.put("\\n", "\n");
         escapedChars.put("\\r", "\r");
         escapedChars.put("\\t", "\t");
+        escapedChars.put("\\\\", "\\");
     }
 
     public String unescapeSymbols(String escapedString) {
