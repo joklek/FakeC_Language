@@ -12,6 +12,7 @@ public class Scanner {
 
     private final String source;
     private final List<Token> tokens;
+    private final List<LexerError> errors;
     private final StringParsingUtils stringParsingUtils;
     private final ReservedKeywordUtils reservedKeywordUtils;
     private int start = 0;
@@ -22,6 +23,7 @@ public class Scanner {
     public Scanner(String source, StringParsingUtils stringParsingUtils, ReservedKeywordUtils reservedKeywordUtils) {
         this.source = source;
         this.tokens = new ArrayList<>();
+        this.errors = new ArrayList<>();
         this.stringParsingUtils = stringParsingUtils;
         this.reservedKeywordUtils = reservedKeywordUtils;
     }
@@ -29,17 +31,18 @@ public class Scanner {
     public Scanner(String source) {
         this.source = source;
         this.tokens = new ArrayList<>();
+        this.errors = new ArrayList<>();
         this.stringParsingUtils = new StringParsingUtils();
         this.reservedKeywordUtils = new ReservedKeywordUtils();
     }
 
-    public List<Token> scanTokens() {
+    public ScannerResults scanTokens() {
         while (!isAtEnd()) {
             start = current;
             scanToken();
         }
         tokens.add(new Token(EOF, currentLine));
-        return tokens;
+        return new ScannerResults(tokens, errors);
     }
 
     private void scanToken() {
@@ -132,7 +135,7 @@ public class Scanner {
     }
 
     private void error(String errorMessage, int line) {
-        System.out.printf("ERROR at line %s with message: %s%n", line, errorMessage);
+        errors.add(new LexerError(errorMessage, line));
     }
 
     private void lexChar() {
