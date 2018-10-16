@@ -112,7 +112,7 @@ public class Scanner {
                     lexIdentifier();
                 }
                 else {
-                    error("Unidentified lexema \"" + source.substring(start, current) + "\" at line", currentLine);
+                    error("Unidentified lexema \"" + source.substring(start, current), currentLine);
                 }
                 break;
         }
@@ -143,14 +143,11 @@ public class Scanner {
             if(peek() == '\n') {
                 currentLine++;
             }
-            if(peek() == '\\') {
-                char nextChar = peekNext();
-                if (nextChar == '\'' || stringParsingUtils.escapedChar(nextChar)) {
+            if(match('\\')) {
+                char nextChar = peek();
+                if (nextChar != '\'' && !stringParsingUtils.escapedChar(nextChar)) {
                     advance();
-                }
-                else {
                     error("Illegal escaped character \" \\" + nextChar + "\"", currentLine);
-                    return;
                 }
             }
             advance();
@@ -215,12 +212,14 @@ public class Scanner {
             int amount = collectNumbers();
             if(amount == 0) {
                 error("Exponential should have numbers after e", currentLine);
+                collectAlphanumeric();
                 return;
             }
         }
 
         if(isAlphaNumeric(peek())) {
             error("Numbers should not have trailing letters", currentLine);
+            collectAlphanumeric();
             return;
         }
 
@@ -249,19 +248,24 @@ public class Scanner {
         return amount;
     }
 
+    private int collectAlphanumeric() {
+        int amount = 0;
+        while (isAlphaNumeric(peek())) {
+            advance();
+            amount++;
+        }
+        return amount;
+    }
+
     private void lexString() {
         while(peek() != '"' && !isAtEnd()) {
             if(peek() == '\n') {
                 currentLine++;
             }
-            if(peek() == '\\') {
-                char nextChar = peekNext();
-                if (nextChar == '"' || stringParsingUtils.escapedChar(nextChar)) {
-                    advance();
-                }
-                else {
+            if(match('\\')) {
+                char nextChar = peek();
+                if (nextChar != '"' && !stringParsingUtils.escapedChar(nextChar)) {
                     error("Illegal escaped character \" \\" + nextChar + "\"", currentLine);
-                    return;
                 }
             }
             advance();
