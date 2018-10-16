@@ -21,11 +21,11 @@ public class Main {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
-        String tableFormat = "%4s|%4s|%15s|%-50s%n";
+        String tableFormat = "%4s|%4s|%-15s|%-50s%n";
         System.out.printf(tableFormat, "ID", "LN", "TYPE", "VALUE");
         System.out.printf(tableFormat, "----", "----", "---------------", "--------------------------------------------------");
         for (Token token : tokens) {
-            Object value = token.getLiteral() == null ? "" : token.getLexeme();
+            Object value = token.getLiteral() == null ? "" : token.getLiteral();
             System.out.printf(tableFormat, tokens.indexOf(token), token.getLine(), token.getType(), value);
         }
     }

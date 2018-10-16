@@ -4,9 +4,9 @@ package com.jole;
 public enum TokenType {
     // Tokens
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE, CURLY_LEFT, CURLY_RIGHT, // ()[]{}
-    COMMA, MINUS, PLUS, SEMICOLON, SLASH, STAR, PERCENT,                  // .,-+;/*%
+    COMMA, MINUS, PLUS, SEMICOLON, SLASH, STAR, MOD,                  // .,-+;/*%
 
-    NOT, NOT_EQUAL,         // ! !=
+    NOT, // NOT
     EQUAL, EQUAL_EQUAL,     // = ==
     GREATER, GREATER_EQUAL, // > >=
     LESS, LESS_EQUAL,       // < <=

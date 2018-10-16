@@ -16,7 +16,8 @@ public class Scanner {
     private final ReservedKeywordUtils reservedKeywordUtils;
     private int start = 0;
     private int current = 0;
-    private int line = 1;
+    private int currentLine = 1;
+    private int startLine;
 
     public Scanner(String source, StringParsingUtils stringParsingUtils, ReservedKeywordUtils reservedKeywordUtils) {
         this.source = source;
@@ -37,14 +38,15 @@ public class Scanner {
             start = current;
             scanToken();
         }
-        tokens.add(new Token(EOF, line));
+        tokens.add(new Token(EOF, currentLine));
         return tokens;
     }
 
     private void scanToken() {
         char c = advance();
+        startLine = currentLine;
         switch (c) {
-            case '"': lexString(); break;
+            case  '"': lexString(); break;
             case '\'': lexChar(); break;
 
             case  '(': addToken(LEFT_PAREN); break;
@@ -58,9 +60,8 @@ public class Scanner {
 
             case  '+': addToken(match('=') ? PLUS_EQUAL : PLUS); break;
             case  '-': addToken(match('=') ? MINUS_EQUAL : MINUS); break;
-            case  '!': addToken(match('=') ? NOT_EQUAL : NOT); break;
             case  '*': addToken(match('=') ? MUL_EQUAL : STAR); break;
-            case  '%': addToken(match('=') ? MOD_EQUAL : PERCENT); break;
+            case  '%': addToken(match('=') ? MOD_EQUAL : MOD); break;
             case  '=': addToken(match('=') ? EQUAL_EQUAL : EQUAL); break;
             case  '>':
                 if (match('=')) {
@@ -82,7 +83,10 @@ public class Scanner {
                         advance();
                     }
                 }
-                if(match('=')) {
+                else if(match('*')) {
+                    parseMultilineComment();
+                }
+                else if(match('=')) {
                     addToken(DIV_EQUAL);
                 }
                 else {
@@ -95,7 +99,7 @@ public class Scanner {
                 // do nothing
                 break;
             case '\n':
-                line++;
+                currentLine++;
                 break;
             default:
                 if(isDigit(c) || (c == '.' && isDigit(peek())) ) {
@@ -105,10 +109,26 @@ public class Scanner {
                     lexIdentifier();
                 }
                 else {
-                    error("Unidentified lexema \"" + source.substring(start, current) + "\" at line", line);
+                    error("Unidentified lexema \"" + source.substring(start, current) + "\" at line", currentLine);
                 }
                 break;
         }
+    }
+
+    private void parseMultilineComment() {
+        while ((peek() != '*' || peekNext() != '/') && !isAtEnd()) {
+            if (peek() == '\n') {
+                currentLine++;
+            }
+            if(match('/') && match('*')) {
+                parseMultilineComment();
+            }
+            else if (!isAtEnd()){
+                advance();
+            }
+        }
+        match('*');
+        match('/');
     }
 
     private void error(String errorMessage, int line) {
@@ -118,15 +138,22 @@ public class Scanner {
     private void lexChar() {
         while(peek() != '\'' && !isAtEnd()) {
             if(peek() == '\n') {
-                line++;
+                currentLine++;
             }
             if(peek() == '\\') {
-                advance();
+                char nextChar = peekNext();
+                if (nextChar == '\'' || stringParsingUtils.escapedChar(nextChar)) {
+                    advance();
+                }
+                else {
+                    error("Illegal escaped character \" \\" + nextChar + "\"", currentLine);
+                    return;
+                }
             }
             advance();
         }
         if(isAtEnd()) {
-            error("Unterminated char", line);
+            error("Unterminated char", startLine);
             return;
         }
 
@@ -139,7 +166,7 @@ public class Scanner {
             addToken(CHAR, unescapedValue);
         }
         else {
-            error("Char should be of one character length and is of: " + unescapedValue.length(), line);
+            error("Char should be of one character length and is of: " + unescapedValue.length(), currentLine);
         }
     }
 
@@ -182,7 +209,16 @@ public class Scanner {
             if (peek() == '-') {
                 advance();
             }
-            collectNumbers();
+            int amount = collectNumbers();
+            if(amount == 0) {
+                error("Exponential should have numbers after e", currentLine);
+                return;
+            }
+        }
+
+        if(isAlphaNumeric(peek())) {
+            error("Numbers should not have trailing letters", currentLine);
+            return;
         }
 
         String value = source.substring(start, current);
@@ -197,24 +233,38 @@ public class Scanner {
         }
     }
 
-    private void collectNumbers() {
+    /**
+     *
+     * @return amount of collected numbers
+     */
+    private int collectNumbers() {
+        int amount = 0;
         while (isDigit(peek())) {
             advance();
+            amount++;
         }
+        return amount;
     }
 
     private void lexString() {
         while(peek() != '"' && !isAtEnd()) {
             if(peek() == '\n') {
-                line++;
+                currentLine++;
             }
             if(peek() == '\\') {
-                advance();
+                char nextChar = peekNext();
+                if (nextChar == '"' || stringParsingUtils.escapedChar(nextChar)) {
+                    advance();
+                }
+                else {
+                    error("Illegal escaped character \" \\" + nextChar + "\"", currentLine);
+                    return;
+                }
             }
             advance();
         }
         if(isAtEnd()) {
-            error("Unterminated string", line);
+            error("Unterminated string", startLine);
             return;
         }
 
@@ -278,7 +328,7 @@ public class Scanner {
 
     private void addToken(TokenType tokenType, Object literal) {
         String text = source.substring(start, current);
-        tokens.add(new Token(tokenType, text, literal, line));
+        tokens.add(new Token(tokenType, text, literal, startLine));
     }
 
     private boolean isAtEnd() {

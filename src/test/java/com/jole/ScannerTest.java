@@ -107,18 +107,6 @@ public class ScannerTest {
         assertThat(tokens.get(0).getLexeme(), is(code));
     }
 
-    @Test
-    void shouldLexNegativeInteger() {
-        String code = "-12";
-        Integer value = Integer.parseInt(code);
-
-        Scanner testScan = new Scanner(code);
-        List<Token> tokens = testScan.scanTokens();
-        assertThat(tokens.get(0).getType(), is(INTEGER));
-        assertThat(tokens.get(0).getLiteral(), is(value));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-    }
-
     // Identifiers
     @Test
     void shouldLexIdentifier() {
@@ -247,5 +235,52 @@ public class ScannerTest {
         assertThat(tokens.get(0).getType(), is(OUTPUT));
         assertThat(tokens.get(1).getType(), is(OUTPUT_SIGN));
         assertThat(tokens.get(2).getType(), is(IDENTIFIER));
+    }
+
+
+    // GENERAL
+    @Test
+    void shouldNotParseIllegalInt() {
+        String code = "123aa";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), not(is(INTEGER)));
+    }
+
+    @Test
+    void shouldIgnoreSingleLineComments() {
+        String code = "//This is a comment. A number is after new line and it should be parsed\n12";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(INTEGER));
+    }
+
+    @Test
+    void shouldIgnoreMultiLineComments() {
+        String code = "/* This is a  multiline comment. \n A number is after the comment and it should be parsed*/ 12";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(INTEGER));
+    }
+
+    @Test
+    void shouldIgnoreUnclosedMultiLineComments() {
+        String code = "/* This is an unclosed multiline comment";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(EOF));
+    }
+
+    @Test
+    void shouldIgnoreNestedComments() {
+        String code = "/*  /*  /* /**/ // text  */  */  */";
+
+        Scanner testScan = new Scanner(code);
+        List<Token> tokens = testScan.scanTokens();
+        assertThat(tokens.get(0).getType(), is(EOF));
     }
 }

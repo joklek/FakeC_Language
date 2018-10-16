@@ -14,6 +14,7 @@ public class ReservedKeywordUtils {
     public ReservedKeywordUtils() {
         keywords.put("AND", AND);
         keywords.put("OR", OR);
+        keywords.put("NOT", NOT);
         keywords.put("return", RETURN);
         keywords.put("break", BREAK);
         keywords.put("continue", CONTINUE);
