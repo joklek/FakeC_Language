@@ -32,6 +32,14 @@ public class ScannerTest {
         assertThat(scannerResults.hasErrors(), is(false));
     }
 
+    private void scanAndAssertResolvedValueAndType(String code, Integer value, TokenType expectedType) {
+        Scanner testScan = new Scanner(code);
+        ScannerResults scannerResults = testScan.scanTokens();
+        List<Token> tokens = scannerResults.getTokens();
+        assertThat(tokens.get(0).getType(), is(expectedType));
+        assertThat(tokens.get(0).getLiteral(), is(value));
+        assertThat(scannerResults.hasErrors(), is(false));
+    }
 
     // FLOAT
     @Test
@@ -204,7 +212,7 @@ public class ScannerTest {
         Integer value = 12;
         String code = "//This is a comment. A number is after new line and it should be parsed\n" + value;
 
-        scanAndAssertValueWithType(value.toString(), value, INTEGER);
+        scanAndAssertResolvedValueAndType(code, value, INTEGER);
     }
 
     @Test
@@ -212,7 +220,7 @@ public class ScannerTest {
         Integer value = 12;
         String code = "/* This is a  multiline comment. \n A number is after the comment and it should be parsed*/" + value;
 
-        scanAndAssertValueWithType(value.toString(), value, INTEGER);
+        scanAndAssertResolvedValueAndType(code, value, INTEGER);
     }
 
     @Test
