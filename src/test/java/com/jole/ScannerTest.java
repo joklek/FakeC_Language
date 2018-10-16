@@ -9,19 +9,37 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ScannerTest {
+
+    private void scanAndAssertValueWithType(String code, Object value, TokenType expectedType) {
+        Scanner testScan = new Scanner(code);
+        ScannerResults scannerResults = testScan.scanTokens();
+        List<Token> tokens = scannerResults.getTokens();
+        assertThat(tokens.get(0).getType(), is(expectedType));
+        assertThat(tokens.get(0).getLiteral(), is(value));
+        assertThat(tokens.get(0).getLexeme(), is(code));
+        assertThat(scannerResults.hasErrors(), is(false));
+    }
+
+    private void scanAndAssertLexemeWithTypeNoValue(String code, TokenType expectedType) {
+        scanAndAssertValueWithType(code, null, expectedType);
+    }
+
+    private void scanAndAssertResolvedType(String code, TokenType expectedType) {
+        Scanner testScan = new Scanner(code);
+        ScannerResults scannerResults = testScan.scanTokens();
+        List<Token> tokens = scannerResults.getTokens();
+        assertThat(tokens.get(0).getType(), is(expectedType));
+        assertThat(scannerResults.hasErrors(), is(false));
+    }
+
+
     // FLOAT
     @Test
     void shouldLexSimpleFloat() {
         String code = "12.12";
         Double value = Double.parseDouble(code);
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(FLOAT));
-        assertThat(tokens.get(0).getLiteral(), is(value));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, value, FLOAT);
     }
 
     @Test
@@ -29,13 +47,7 @@ public class ScannerTest {
         String code = "12e1";
         Double value = Double.parseDouble(code);
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(FLOAT));
-        assertThat(tokens.get(0).getLiteral(), is(value));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, value, FLOAT);
     }
 
     @Test
@@ -43,13 +55,7 @@ public class ScannerTest {
         String code = "12e-1";
         Double value = Double.parseDouble(code);
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(FLOAT));
-        assertThat(tokens.get(0).getLiteral(), is(value));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, value, FLOAT);
     }
 
     @Test
@@ -57,13 +63,7 @@ public class ScannerTest {
         String code = ".12";
         Double value = Double.parseDouble(code);
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(FLOAT));
-        assertThat(tokens.get(0).getLiteral(), is(value));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, value, FLOAT);
     }
 
     @Test
@@ -71,13 +71,7 @@ public class ScannerTest {
         String code = ".12e10";
         Double value = Double.parseDouble(code);
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(FLOAT));
-        assertThat(tokens.get(0).getLiteral(), is(value));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, value, FLOAT);
     }
 
     @Test
@@ -85,13 +79,7 @@ public class ScannerTest {
         String code = "12.";
         Double value = Double.parseDouble(code);
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(FLOAT));
-        assertThat(tokens.get(0).getLiteral(), is(value));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, value, FLOAT);
     }
 
     @Test
@@ -99,13 +87,7 @@ public class ScannerTest {
         String code = "12.e12";
         Double value = Double.parseDouble(code);
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(FLOAT));
-        assertThat(tokens.get(0).getLiteral(), is(value));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, value, FLOAT);
     }
 
     // INTEGER
@@ -114,38 +96,20 @@ public class ScannerTest {
         String code = "12";
         Integer value = Integer.parseInt(code);
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(INTEGER));
-        assertThat(tokens.get(0).getLiteral(), is(value));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, value, INTEGER);
     }
 
     // Identifiers
     @Test
     void shouldLexIdentifier() {
         String code = "text_12";
-
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(IDENTIFIER));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, code, IDENTIFIER);
     }
 
     @Test
     void shouldLexReservedKeyword() {
         String code = "return";
-
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(RETURN));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertLexemeWithTypeNoValue(code, RETURN);
     }
 
     // Strings
@@ -154,13 +118,7 @@ public class ScannerTest {
         String stringContent = "text";
         String code = "\"" + stringContent +"\"";
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(STRING));
-        assertThat(tokens.get(0).getLiteral(), is(stringContent));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, stringContent, STRING);
     }
 
     @Test
@@ -168,13 +126,7 @@ public class ScannerTest {
         String stringContent = "\n \r \t \\ \" abc";
         String code = "\"" + "\\n \\r \\t \\\\ \\\" abc" + "\""; // \n \r \t \\ " abc
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(STRING));
-        assertThat(tokens.get(0).getLiteral(), is(stringContent));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, stringContent, STRING);
     }
 
     @Test
@@ -182,13 +134,7 @@ public class ScannerTest {
         String stringContent = "\\";        //  \
         String code = "\"" + "\\\\" + "\""; // "\\"
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(STRING));
-        assertThat(tokens.get(0).getLiteral(), is(stringContent));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, stringContent, STRING);
     }
 
     @Test
@@ -196,13 +142,7 @@ public class ScannerTest {
         String stringContent = "";
         String code = "\"" + "\"";
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(STRING));
-        assertThat(tokens.get(0).getLiteral(), is(stringContent));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, stringContent, STRING);
     }
 
     // Char
@@ -211,13 +151,7 @@ public class ScannerTest {
         String wantedChar = "a";
         String code = "'a'";
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(CHAR));
-        assertThat(tokens.get(0).getLiteral(), is(wantedChar));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, wantedChar, CHAR);
     }
 
     @Test
@@ -225,13 +159,7 @@ public class ScannerTest {
         String wantedChar = "'";
         String code = "'\\''";
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(CHAR));
-        assertThat(tokens.get(0).getLiteral(), is(wantedChar));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, wantedChar, CHAR);
     }
 
     @Test
@@ -239,13 +167,7 @@ public class ScannerTest {
         String wantedChar = "\\";
         String code = "'\\\\'";
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(CHAR));
-        assertThat(tokens.get(0).getLiteral(), is(wantedChar));
-        assertThat(tokens.get(0).getLexeme(), is(code));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(code, wantedChar, CHAR);
     }
 
     // IO
@@ -279,45 +201,31 @@ public class ScannerTest {
     // GENERAL
     @Test
     void shouldIgnoreSingleLineComments() {
-        String code = "//This is a comment. A number is after new line and it should be parsed\n12";
+        Integer value = 12;
+        String code = "//This is a comment. A number is after new line and it should be parsed\n" + value;
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(INTEGER));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(value.toString(), value, INTEGER);
     }
 
     @Test
     void shouldIgnoreMultiLineComments() {
-        String code = "/* This is a  multiline comment. \n A number is after the comment and it should be parsed*/ 12";
+        Integer value = 12;
+        String code = "/* This is a  multiline comment. \n A number is after the comment and it should be parsed*/" + value;
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(INTEGER));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertValueWithType(value.toString(), value, INTEGER);
     }
 
     @Test
     void shouldIgnoreUnclosedMultiLineComments() {
         String code = "/* This is an unclosed multiline comment";
+        TokenType expectedType = EOF;
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(EOF));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertResolvedType(code, expectedType);
     }
 
     @Test
     void shouldIgnoreNestedComments() {
         String code = "/*  /*  /* /**/ // text  */  */  */";
-
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(EOF));
-        assertThat(scannerResults.hasErrors(), is(false));
+        scanAndAssertResolvedType(code, EOF);
     }
 }
