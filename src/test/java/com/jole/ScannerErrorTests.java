@@ -14,18 +14,14 @@ public class ScannerErrorTests {
     void shouldReturnErrorOnUnterminatedString() {
         String code = "\"";
 
-        Scanner testScan = new Scanner(code);
-        List<LexerError> errors = testScan.scanTokens().getErrors();
-        assertThat(errors.size(), is(1));
+        assertScanGetsErrors(code, 1);
     }
 
     @Test
     void shouldReturnErrorOnBadEscapeString() {
         String code = "\"\\.\"";
 
-        Scanner testScan = new Scanner(code);
-        List<LexerError> errors = testScan.scanTokens().getErrors();
-        assertThat(errors.size(), is(1));
+        assertScanGetsErrors(code, 1);
     }
 
     // CHAR
@@ -33,18 +29,14 @@ public class ScannerErrorTests {
     void shouldReturnErrorOnUnterminatedChar() {
         String code = "'";
 
-        Scanner testScan = new Scanner(code);
-        List<LexerError> errors = testScan.scanTokens().getErrors();
-        assertThat(errors.size(), is(1));
+        assertScanGetsErrors(code, 1);
     }
 
     @Test
     void shouldReturnErrorOnBadEscapeChar() {
         String code = "'\\.'";
 
-        Scanner testScan = new Scanner(code);
-        List<LexerError> errors = testScan.scanTokens().getErrors();
-        assertThat(errors.size(), is(2));  // one error for bad escape symbol, another for incorrect size
+        assertScanGetsErrors(code, 2);
     }
 
 
@@ -52,9 +44,7 @@ public class ScannerErrorTests {
     void shouldReturnErrorOnEmptyChar() {
         String code = "''";
 
-        Scanner testScan = new Scanner(code);
-        List<LexerError> errors = testScan.scanTokens().getErrors();
-        assertThat(errors.size(), is(1));
+        assertScanGetsErrors(code, 1);
     }
 
     // EXPONENT
@@ -63,9 +53,7 @@ public class ScannerErrorTests {
         String[] codes = {"12e", "12.0e", "12.e", ".2e"};
 
         for(String code: codes) {
-            Scanner testScan = new Scanner(code);
-            List<LexerError> errors = testScan.scanTokens().getErrors();
-            assertThat(errors.size(), is(1));
+            assertScanGetsErrors(code, 1);
         }
     }
 
@@ -73,34 +61,38 @@ public class ScannerErrorTests {
     void shouldReturnErrorOnZeroExponent() {
         String code = ".e12";
 
-        Scanner testScan = new Scanner(code);
-        List<LexerError> errors = testScan.scanTokens().getErrors();
-        assertThat(errors.size(), is(1));
+        assertScanGetsErrors(code, 1);
     }
 
     // GENERAL
     @Test
-    void shouldNotParseIllegalInt() {
-        String code = "123aa";
+    void shouldNotParseIllegalInts() {
+        String[] codes = {"123aa", "123aa12"};
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        List<LexerError> errors = scannerResults.getErrors();
-        assertThat(tokens.get(0).getType(), is(EOF));
-        assertThat(errors.size(), is(1));
+        assertCodeShouldNotProduceCodeAndOneError(codes);
     }
 
     @Test
     void shouldNotParseIllegalExponent() {
-        String code = "123ea";
+        String[] codes = {"123ea", "123ea12"};
 
-        Scanner testScan = new Scanner(code);
-        ScannerResults scannerResults = testScan.scanTokens();
-        List<Token> tokens = scannerResults.getTokens();
-        List<LexerError> errors = scannerResults.getErrors();
-        assertThat(tokens.get(0).getType(), is(EOF));
-        assertThat(errors.size(), is(1));
+        assertCodeShouldNotProduceCodeAndOneError(codes);
     }
 
+    private void assertCodeShouldNotProduceCodeAndOneError(String[] codes) {
+        for(String code: codes) {
+            Scanner testScan = new Scanner(code);
+            ScannerResults scannerResults = testScan.scanTokens();
+            List<Token> tokens = scannerResults.getTokens();
+            List<LexerError> errors = scannerResults.getErrors();
+            assertThat(tokens.get(0).getType(), is(EOF));
+            assertThat(errors.size(), is(1));
+        }
+    }
+
+    private void assertScanGetsErrors(String code, int amountOfErrors) {
+        Scanner testScan = new Scanner(code);
+        List<LexerError> errors = testScan.scanTokens().getErrors();
+        assertThat(errors.size(), is(amountOfErrors));
+    }
 }

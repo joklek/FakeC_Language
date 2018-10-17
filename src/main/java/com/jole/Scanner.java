@@ -112,7 +112,7 @@ public class Scanner {
                     lexIdentifier();
                 }
                 else {
-                    error("Unidentified lexema \"" + source.substring(start, current), currentLine);
+                    error("Unidentified lexema \"" + source.substring(start, current) + "\"", currentLine);
                 }
                 break;
         }
