@@ -171,9 +171,7 @@ public class Scanner {
     }
 
     private void lexIdentifier() {
-        while (isAlphaNumeric(peek())) {
-            advance();
-        }
+        collectAlphanumeric();
 
         String text = source.substring(start, current);
         TokenType type = reservedKeywordUtils.getTokenType(text);
