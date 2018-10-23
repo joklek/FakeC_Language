@@ -1,4 +1,7 @@
 digraph G{
+
+node [shape = doublecircle]; OUT;
+node [shape = oval];
     
 MAIN -> OUT[label = "\\n, \\r, \\t, \" \""];
     
@@ -63,21 +66,20 @@ MAIN ->LESS[label = "<"];
     LESS -> OUTPUT_SIGN[label = "<"]
         OUTPUT_SIGN -> OUT;
     LESS -> LESS_EQUAL[label = "="];
-        GREATER_EQUAL -> OUT;
+        LESS_EQUAL-> OUT;
+        
 # TODO needs more work
 MAIN ->SLASH[label = "/"];
-    SLASH -> COMMENT;
+    SLASH -> COMMENT[label = "/"];
         COMMENT -> COMMENT;
         COMMENT -> OUT[label = "\\n"];
     SLASH -> DIV_EQUAL[label = "="];
         DIV_EQUAL -> OUT;
     SLASH -> MULTILINE_CMT[label = "*"];
         MULTILINE_CMT -> MULTILINE_CMT;
-        MULTILINE_CMT -> MULTILINE_SLASH[label = "/"];
-            MULTILINE_SLASH -> MULTILINE_CMT[label = "*"];
-            MULTILINE_SLASH -> MULTILINE_CMT;
-       MULTILINE_CMT -> MULTILINE_STAR[label = "*"];
+        MULTILINE_CMT -> MULTILINE_STAR[label = "*"];
            MULTILINE_STAR -> OUT[label = "/"];
+           MULTILINE_STAR -> MULTILINE_STAR[label = "*"];
            MULTILINE_STAR -> MULTILINE_CMT;
     SLASH -> OUT;
 
@@ -135,53 +137,20 @@ MAIN -> NUMBER[label = "isNumber()"]
     TRAILING_LETTER -> ERROR_TRAILING_LETTER;
         ERROR_TRAILING_LETTER -> OUT;
 
+MAIN -> i_TOKEN[label = "i"];
+    i_TOKEN -> IF[label = "f"]; 
+        IF -> OUT;
+        IF -> IDENT[label = "isAlphaNumeric()"];
+    i_TOKEN -> IDENT[label = "isAlphaNumeric()"];
+    i_TOKEN -> in_TOKEN[label = "n"];
+        in_TOKEN -> IDENT[label = "isAlphaNumeric()"];
+        in_TOKEN -> INT_TYPE[label = "t"];
+            INT_TYPE -> OUT;
+            INT_TYPE -> IDENT[label = "isAlphaNumeric()"];
+
 MAIN -> IDENT[label = "isAlpha()"];
     IDENT -> IDENT[label = "isAlphaNumeric()"];
-    IDENT -> IDENT_IDENTIFY;
-        IDENT_IDENTIFY -> AND[label = "AND"];
-            AND -> OUT;
-        IDENT_IDENTIFY -> OR[label = "OR"];
-            OR -> OUT;
-        IDENT_IDENTIFY -> NOT[label = "NOT"];
-            NOT -> OUT;
-        IDENT_IDENTIFY -> RETURN[label = "return"];
-            RETURN -> OUT;
-        IDENT_IDENTIFY -> BREAK[label = "break"];
-            BREAK -> OUT;
-        IDENT_IDENTIFY -> CONTINUE[label = "continue"];
-            CONTINUE -> OUT;
-        IDENT_IDENTIFY -> WHILE[label = "while"];
-            WHILE -> OUT;
-        IDENT_IDENTIFY -> FOR[label = "for"];
-            FOR -> OUT;
-        IDENT_IDENTIFY -> IF[label = "if"];
-            IF -> OUT;
-        IDENT_IDENTIFY -> ELSE[label = "else"];
-            ELSE -> OUT;
-        IDENT_IDENTIFY -> TRUE[label = "true"];
-            TRUE -> OUT;
-        IDENT_IDENTIFY -> FALSE[label = "false"];
-            FALSE -> OUT;
-        IDENT_IDENTIFY -> NULL[label = "null"];
-            NULL -> OUT;
-        IDENT_IDENTIFY -> FLOAT_TYPE[label = "float"];
-            FLOAT_TYPE -> OUT;
-        IDENT_IDENTIFY -> INT_TYPE[label = "int"];
-            INT_TYPE -> OUT;
-        IDENT_IDENTIFY -> CHAR_TYPE[label = "char"];
-            CHAR_TYPE -> OUT;
-        IDENT_IDENTIFY -> BOOL_TYPE[label = "bool"];
-            BOOL_TYPE -> OUT;
-        IDENT_IDENTIFY -> STRING_TYPE[label = "string"];
-            STRING_TYPE -> OUT;
-        IDENT_IDENTIFY -> VOID_TYPE[label = "void"];
-            VOID_TYPE -> OUT;
-        IDENT_IDENTIFY -> INPUT[label = "input"];
-            INPUT -> OUT;
-        IDENT_IDENTIFY -> OUTPUT[label = "output"];
-            OUTPUT -> OUT;
-        IDENT_IDENTIFY -> IDENTIFIER;
-            IDENTIFIER -> OUT;
+    IDENT -> OUT;
 
 
 MAIN -> ERROR_UNKNOWN_SYMB[label = "other symbol"];
