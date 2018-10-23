@@ -203,15 +203,15 @@ public class Scanner {
             }
             int amount = collectNumbers();
             if(amount == 0) {
-                error("Exponential should have numbers after e", currentLine);
                 collectAlphanumeric();
+                error("Exponential should have numbers after e", currentLine);
                 return;
             }
         }
 
-        if(isAlphaNumeric(peek())) {
-            error("Numbers should not have trailing letters", currentLine);
+        if(isAlpha(peek())) {
             collectAlphanumeric();
+            error("Numbers should not have trailing letters \"" + source.substring(start, current) + "\"", currentLine);
             return;
         }
 

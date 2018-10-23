@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Main {
+public class Lexer {
 
     public static void main(String[] args) {
         CodeCollector codeCollector = new CodeCollector(new SourceFromFile());
@@ -20,14 +20,13 @@ public class Main {
             errorsForFiles.put(fileName, errors);
         });
 
-        errorsForFiles.forEach((key, value) -> showErrors(key, value));
+        errorsForFiles.forEach(Lexer::showErrors);
     }
 
     private static List<LexerError> run(String fileName, String source) {
         Scanner scanner = new Scanner(source);
         ScannerResults scannerResults = scanner.scanTokens();
         List<Token> tokens = scannerResults.getTokens();
-        List<LexerError> errors = scannerResults.getErrors();
 
         String tableFormat = "%4s|%4s|%-15s|%-50s%n";
         System.out.println("Lexemas for file: " + fileName);
@@ -38,7 +37,7 @@ public class Main {
             System.out.printf(tableFormat, tokens.indexOf(token), token.getLine(), token.getType(), value);
         }
         System.out.println();
-        return errors;
+        return scannerResults.getErrors();
     }
 
     private static void showErrors(String fileName, List<LexerError> errors) {

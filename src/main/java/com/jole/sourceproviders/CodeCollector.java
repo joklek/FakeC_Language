@@ -1,13 +1,11 @@
 package com.jole.sourceproviders;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+// TODO: Should this code really be here, no way to pass out errors right now
 public class CodeCollector {
 
     private final SourceProvider provider;
@@ -23,7 +21,7 @@ public class CodeCollector {
      * @return map with key as filename and value as the source code from the file
      */
     public Map<String, String> getAllRelatedCode(String filename) {
-        Map<String, String> mapOfCode = new HashMap<>();
+        Map<String, String> mapOfCode = new LinkedHashMap<>();  // LinkedHashMap so the order of insertion is kept
         return getAllRelatedCodeRecursively(filename, mapOfCode);
     }
 
@@ -38,6 +36,7 @@ public class CodeCollector {
         return mapOfCode;
     }
 
+    // TODO What if duplicates?
     protected List<String> getIncludedFileNames(String source) {
         Matcher matcher = pattern.matcher(source);
 
