@@ -1,39 +1,48 @@
 package com.jole;
 
+import com.jole.sourceproviders.CodeCollector;
+import com.jole.sourceproviders.SourceFromFile;
 import com.jole.tokens.Token;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
-        runFile(args[0]);
+    public static void main(String[] args) {
+        CodeCollector codeCollector = new CodeCollector(new SourceFromFile());
+
+        Map<String, List<LexerError>> errorsForFiles = new HashMap<>();
+
+        codeCollector.getAllRelatedCode(args[0]).forEach((fileName, source) -> {
+            List<LexerError> errors = run(fileName, source);
+            errorsForFiles.put(fileName, errors);
+        });
+
+        errorsForFiles.forEach((key, value) -> showErrors(key, value));
     }
 
-    private static void runFile(String fileName) throws IOException {
-        byte[] bytes = Files.readAllBytes(Paths.get(fileName));
-        run(new String(bytes, Charset.defaultCharset()), fileName);
-    }
-
-    private static void run(String source, String fileName) {
+    private static List<LexerError> run(String fileName, String source) {
         Scanner scanner = new Scanner(source);
         ScannerResults scannerResults = scanner.scanTokens();
         List<Token> tokens = scannerResults.getTokens();
         List<LexerError> errors = scannerResults.getErrors();
 
         String tableFormat = "%4s|%4s|%-15s|%-50s%n";
+        System.out.println("Lexemas for file: " + fileName);
         System.out.printf(tableFormat, "ID", "LN", "TYPE", "VALUE");
         System.out.printf(tableFormat, "----", "----", "---------------", "--------------------------------------------------");
         for (Token token : tokens) {
             Object value = token.getLiteral() == null ? "" : token.getLiteral();
             System.out.printf(tableFormat, tokens.indexOf(token), token.getLine(), token.getType(), value);
         }
+        System.out.println();
+        return errors;
+    }
 
-        if(scannerResults.hasErrors()) {
+    private static void showErrors(String fileName, List<LexerError> errors) {
+        if(!errors.isEmpty()) {
             String errorColor = (char)27 + "[31m";
             for(LexerError error: errors) {
                 System.out.printf("%sERROR at file '%s':line %s with message: %s%n", errorColor, fileName, error.getLine(), error.getErrorMessage());

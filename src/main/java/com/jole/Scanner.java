@@ -22,14 +22,6 @@ public class Scanner {
     private int currentLine = 1;
     private int startLine;
 
-    public Scanner(String source, StringParsingUtils stringParsingUtils, ReservedKeywordUtils reservedKeywordUtils) {
-        this.source = source;
-        this.tokens = new ArrayList<>();
-        this.errors = new ArrayList<>();
-        this.stringParsingUtils = stringParsingUtils;
-        this.reservedKeywordUtils = reservedKeywordUtils;
-    }
-
     public Scanner(String source) {
         this.source = source;
         this.tokens = new ArrayList<>();
