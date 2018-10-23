@@ -204,7 +204,7 @@ public class Scanner {
             int amount = collectNumbers();
             if(amount == 0) {
                 collectAlphanumeric();
-                error("Exponential should have numbers after e", currentLine);
+                error("Exponential should have numbers after e: \"" + source.substring(start, current) + "\"", currentLine);  // TODO export substring logic to method
                 return;
             }
         }

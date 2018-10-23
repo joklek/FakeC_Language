@@ -42,9 +42,8 @@ public class Lexer {
 
     private static void showErrors(String fileName, List<LexerError> errors) {
         if(!errors.isEmpty()) {
-            String errorColor = (char)27 + "[31m";
             for(LexerError error: errors) {
-                System.out.printf("%sERROR at file '%s':line %s with message: %s%n", errorColor, fileName, error.getLine(), error.getErrorMessage());
+                System.err.printf("%s:%d:error:%s%n", fileName, error.getLine(), error.getErrorMessage());
             }
         }
     }
