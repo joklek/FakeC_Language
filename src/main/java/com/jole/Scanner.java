@@ -1,12 +1,14 @@
 package com.jole;
 
+import com.jole.tokens.Token;
+import com.jole.tokens.TokenType;
 import com.jole.utils.ReservedKeywordUtils;
 import com.jole.utils.StringParsingUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jole.TokenType.*;
+import static com.jole.tokens.TokenType.*;
 
 public class Scanner {
 

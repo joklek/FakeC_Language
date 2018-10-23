@@ -1,4 +1,4 @@
-package com.jole;
+package com.jole.tokens;
 
 public class Token {
     private final TokenType type;

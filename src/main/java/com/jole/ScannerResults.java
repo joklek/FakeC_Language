@@ -1,5 +1,7 @@
 package com.jole;
 
+import com.jole.tokens.Token;
+
 import java.util.List;
 
 public class ScannerResults {

@@ -1,5 +1,7 @@
 package com.jole;
 
+import com.jole.tokens.Token;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -12,9 +14,8 @@ public class Main {
         runFile(args[0]);
     }
 
-    private static void runFile(String path) throws IOException {
-        byte[] bytes = Files.readAllBytes(Paths.get(path));
-        String fileName = Paths.get(path).getFileName().toString();
+    private static void runFile(String fileName) throws IOException {
+        byte[] bytes = Files.readAllBytes(Paths.get(fileName));
         run(new String(bytes, Charset.defaultCharset()), fileName);
     }
 

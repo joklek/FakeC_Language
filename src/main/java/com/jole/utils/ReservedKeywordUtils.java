@@ -1,11 +1,11 @@
 package com.jole.utils;
 
-import com.jole.TokenType;
+import com.jole.tokens.TokenType;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.jole.TokenType.*;
+import static com.jole.tokens.TokenType.*;
 
 public class ReservedKeywordUtils {
 

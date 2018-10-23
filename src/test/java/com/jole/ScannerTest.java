@@ -1,10 +1,12 @@
 package com.jole;
 
+import com.jole.tokens.Token;
+import com.jole.tokens.TokenType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.jole.TokenType.*;
+import static com.jole.tokens.TokenType.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
