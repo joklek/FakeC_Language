@@ -1,4 +1,4 @@
-package com.jole;
+package com.jole.fakec;
 
 public class LexerError {
 

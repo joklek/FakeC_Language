@@ -1,8 +1,8 @@
-package com.jole;
+package com.jole.fakec;
 
-import com.jole.sourceproviders.CodeCollector;
-import com.jole.sourceproviders.SourceFromFile;
-import com.jole.tokens.Token;
+import com.jole.fakec.sourceproviders.CodeCollector;
+import com.jole.fakec.sourceproviders.SourceFromFile;
+import com.jole.fakec.tokens.Token;
 
 import java.util.HashMap;
 import java.util.List;

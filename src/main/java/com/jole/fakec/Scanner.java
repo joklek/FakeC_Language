@@ -1,14 +1,12 @@
-package com.jole;
+package com.jole.fakec;
 
-import com.jole.tokens.Token;
-import com.jole.tokens.TokenType;
-import com.jole.utils.ReservedKeywordUtils;
-import com.jole.utils.StringParsingUtils;
+import com.jole.fakec.tokens.Token;
+import com.jole.fakec.tokens.TokenType;
+import com.jole.fakec.utils.StringParsingUtils;
+import com.jole.fakec.utils.ReservedKeywordUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.jole.tokens.TokenType.*;
 
 public class Scanner {
 
@@ -35,7 +33,7 @@ public class Scanner {
             start = current;
             scanToken();
         }
-        tokens.add(new Token(EOF, currentLine));
+        tokens.add(new Token(TokenType.EOF, currentLine));
         return new ScannerResults(tokens, errors);
     }
 
@@ -46,33 +44,33 @@ public class Scanner {
             case  '"': lexString(); break;
             case '\'': lexChar(); break;
 
-            case  '(': addToken(LEFT_PAREN); break;
-            case  ')': addToken(RIGHT_PAREN); break;
-            case  '{': addToken(CURLY_LEFT); break;
-            case  '}': addToken(CURLY_RIGHT); break;
-            case  '[': addToken(LEFT_BRACE); break;
-            case  ']': addToken(RIGHT_BRACE); break;
-            case  ',': addToken(COMMA); break;
-            case  ';': addToken(SEMICOLON); break;
+            case  '(': addToken(TokenType.LEFT_PAREN); break;
+            case  ')': addToken(TokenType.RIGHT_PAREN); break;
+            case  '{': addToken(TokenType.CURLY_LEFT); break;
+            case  '}': addToken(TokenType.CURLY_RIGHT); break;
+            case  '[': addToken(TokenType.LEFT_BRACE); break;
+            case  ']': addToken(TokenType.RIGHT_BRACE); break;
+            case  ',': addToken(TokenType.COMMA); break;
+            case  ';': addToken(TokenType.SEMICOLON); break;
 
-            case  '+': addToken(match('=') ? PLUS_EQUAL : PLUS); break;
-            case  '-': addToken(match('=') ? MINUS_EQUAL : MINUS); break;
-            case  '*': addToken(match('=') ? MUL_EQUAL : STAR); break;
-            case  '%': addToken(match('=') ? MOD_EQUAL : MOD); break;
-            case  '=': addToken(match('=') ? EQUAL_EQUAL : EQUAL); break;
-            case  '!': addToken(match('=') ? NOT_EQUAL : NOT); break;
+            case  '+': addToken(match('=') ? TokenType.PLUS_EQUAL : TokenType.PLUS); break;
+            case  '-': addToken(match('=') ? TokenType.MINUS_EQUAL : TokenType.MINUS); break;
+            case  '*': addToken(match('=') ? TokenType.MUL_EQUAL : TokenType.STAR); break;
+            case  '%': addToken(match('=') ? TokenType.MOD_EQUAL : TokenType.MOD); break;
+            case  '=': addToken(match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL); break;
+            case  '!': addToken(match('=') ? TokenType.NOT_EQUAL : TokenType.NOT); break;
             case  '>':
                 if (match('=')) {
-                    addToken(GREATER_EQUAL);
+                    addToken(TokenType.GREATER_EQUAL);
                 } else {
-                    addToken(match('>') ? INPUT_SIGN : GREATER);
+                    addToken(match('>') ? TokenType.INPUT_SIGN : TokenType.GREATER);
                 }
                 break;
             case  '<':
                 if (match('=')) {
-                    addToken(LESS_EQUAL);
+                    addToken(TokenType.LESS_EQUAL);
                 } else {
-                    addToken(match('<') ? OUTPUT_SIGN : LESS);
+                    addToken(match('<') ? TokenType.OUTPUT_SIGN : TokenType.LESS);
                 }
                 break;
             case  '/':
@@ -85,10 +83,10 @@ public class Scanner {
                     parseMultilineComment();
                 }
                 else if(match('=')) {
-                    addToken(DIV_EQUAL);
+                    addToken(TokenType.DIV_EQUAL);
                 }
                 else {
-                    addToken(SLASH);
+                    addToken(TokenType.SLASH);
                 }
                 break;
             case ' ':
@@ -158,7 +156,7 @@ public class Scanner {
         String value = source.substring(start + 1, current - 1);
         String unescapedValue = stringParsingUtils.unescapeCharSymbols(value);
         if (unescapedValue.length() == 1) {
-            addToken(CHAR, unescapedValue);
+            addToken(TokenType.CHAR, unescapedValue);
         }
         else {
             error("Char should be of one character length and is of: " + unescapedValue.length(), currentLine);
@@ -172,7 +170,7 @@ public class Scanner {
         TokenType type = reservedKeywordUtils.getTokenType(text);
         // check if text is reserved
         if (type == null) {
-            type = IDENTIFIER;
+            type = TokenType.IDENTIFIER;
             addToken(type, text);
         }
         else {
@@ -219,12 +217,12 @@ public class Scanner {
         String value = source.substring(start, current);
         if(isFloat) {
             Double unescapedValue = Double.parseDouble(value);
-            addToken(FLOAT, unescapedValue);
+            addToken(TokenType.FLOAT, unescapedValue);
         }
         else {
 
             Integer unescapedValue = Integer.parseInt(value);
-            addToken(INTEGER, unescapedValue);
+            addToken(TokenType.INTEGER, unescapedValue);
         }
     }
 
@@ -273,7 +271,7 @@ public class Scanner {
 
         String value = source.substring(start + 1, current - 1);
         String unescapedValue = stringParsingUtils.unescapeSymbols(value);
-        addToken(STRING, unescapedValue);
+        addToken(TokenType.STRING, unescapedValue);
     }
 
     /**

@@ -1,4 +1,4 @@
-package com.jole.tokens;
+package com.jole.fakec.tokens;
 
 public class Token {
     private final TokenType type;

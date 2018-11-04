@@ -1,4 +1,4 @@
-package com.jole.tokens;
+package com.jole.fakec.tokens;
 
 @SuppressWarnings("squid:CommentedOutCodeLine")
 public enum TokenType {

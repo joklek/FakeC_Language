@@ -1,12 +1,13 @@
-package com.jole;
+package com.jole.fakec;
 
-import com.jole.tokens.Token;
-import com.jole.tokens.TokenType;
+import com.jole.fakec.tokens.Token;
+import com.jole.fakec.tokens.TokenType;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.jole.tokens.TokenType.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -49,7 +50,7 @@ public class ScannerTest {
         String code = "12.12";
         Double value = Double.parseDouble(code);
 
-        scanAndAssertValueWithType(code, value, FLOAT);
+        scanAndAssertValueWithType(code, value, TokenType.FLOAT);
     }
 
     @Test
@@ -57,7 +58,7 @@ public class ScannerTest {
         String code = "12e1";
         Double value = Double.parseDouble(code);
 
-        scanAndAssertValueWithType(code, value, FLOAT);
+        scanAndAssertValueWithType(code, value, TokenType.FLOAT);
     }
 
     @Test
@@ -65,7 +66,7 @@ public class ScannerTest {
         String code = "12e-1";
         Double value = Double.parseDouble(code);
 
-        scanAndAssertValueWithType(code, value, FLOAT);
+        scanAndAssertValueWithType(code, value, TokenType.FLOAT);
     }
 
     @Test
@@ -73,7 +74,7 @@ public class ScannerTest {
         String code = ".12";
         Double value = Double.parseDouble(code);
 
-        scanAndAssertValueWithType(code, value, FLOAT);
+        scanAndAssertValueWithType(code, value, TokenType.FLOAT);
     }
 
     @Test
@@ -81,7 +82,7 @@ public class ScannerTest {
         String code = ".12e10";
         Double value = Double.parseDouble(code);
 
-        scanAndAssertValueWithType(code, value, FLOAT);
+        scanAndAssertValueWithType(code, value, TokenType.FLOAT);
     }
 
     @Test
@@ -89,7 +90,7 @@ public class ScannerTest {
         String code = "12.";
         Double value = Double.parseDouble(code);
 
-        scanAndAssertValueWithType(code, value, FLOAT);
+        scanAndAssertValueWithType(code, value, TokenType.FLOAT);
     }
 
     @Test
@@ -97,7 +98,7 @@ public class ScannerTest {
         String code = "12.e12";
         Double value = Double.parseDouble(code);
 
-        scanAndAssertValueWithType(code, value, FLOAT);
+        scanAndAssertValueWithType(code, value, TokenType.FLOAT);
     }
 
     // INTEGER
@@ -106,20 +107,20 @@ public class ScannerTest {
         String code = "12";
         Integer value = Integer.parseInt(code);
 
-        scanAndAssertValueWithType(code, value, INTEGER);
+        scanAndAssertValueWithType(code, value, TokenType.INTEGER);
     }
 
     // Identifiers
     @Test
     void shouldLexIdentifier() {
         String code = "text_12";
-        scanAndAssertValueWithType(code, code, IDENTIFIER);
+        scanAndAssertValueWithType(code, code, TokenType.IDENTIFIER);
     }
 
     @Test
     void shouldLexReservedKeyword() {
         String code = "return";
-        scanAndAssertLexemeWithTypeNoValue(code, RETURN);
+        scanAndAssertLexemeWithTypeNoValue(code, TokenType.RETURN);
     }
 
     // Strings
@@ -128,7 +129,7 @@ public class ScannerTest {
         String stringContent = "text";
         String code = "\"" + stringContent +"\"";
 
-        scanAndAssertValueWithType(code, stringContent, STRING);
+        scanAndAssertValueWithType(code, stringContent, TokenType.STRING);
     }
 
     @Test
@@ -136,7 +137,7 @@ public class ScannerTest {
         String stringContent = "\n \r \t \\ \" abc";
         String code = "\"" + "\\n \\r \\t \\\\ \\\" abc" + "\""; // \n \r \t \\ " abc
 
-        scanAndAssertValueWithType(code, stringContent, STRING);
+        scanAndAssertValueWithType(code, stringContent, TokenType.STRING);
     }
 
     @Test
@@ -144,7 +145,7 @@ public class ScannerTest {
         String stringContent = "\\";        //  \
         String code = "\"" + "\\\\" + "\""; // "\\"
 
-        scanAndAssertValueWithType(code, stringContent, STRING);
+        scanAndAssertValueWithType(code, stringContent, TokenType.STRING);
     }
 
     @Test
@@ -152,7 +153,7 @@ public class ScannerTest {
         String stringContent = "";
         String code = "\"" + "\"";
 
-        scanAndAssertValueWithType(code, stringContent, STRING);
+        scanAndAssertValueWithType(code, stringContent, TokenType.STRING);
     }
 
     // Char
@@ -161,7 +162,7 @@ public class ScannerTest {
         String wantedChar = "a";
         String code = "'a'";
 
-        scanAndAssertValueWithType(code, wantedChar, CHAR);
+        scanAndAssertValueWithType(code, wantedChar, TokenType.CHAR);
     }
 
     @Test
@@ -169,7 +170,7 @@ public class ScannerTest {
         String wantedChar = "'";
         String code = "'\\''";
 
-        scanAndAssertValueWithType(code, wantedChar, CHAR);
+        scanAndAssertValueWithType(code, wantedChar, TokenType.CHAR);
     }
 
     @Test
@@ -177,7 +178,7 @@ public class ScannerTest {
         String wantedChar = "\\";
         String code = "'\\\\'";
 
-        scanAndAssertValueWithType(code, wantedChar, CHAR);
+        scanAndAssertValueWithType(code, wantedChar, TokenType.CHAR);
     }
 
     // IO
@@ -188,9 +189,9 @@ public class ScannerTest {
         Scanner testScan = new Scanner(code);
         ScannerResults scannerResults = testScan.scanTokens();
         List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(INPUT));
-        assertThat(tokens.get(1).getType(), is(INPUT_SIGN));
-        assertThat(tokens.get(2).getType(), is(IDENTIFIER));
+        MatcherAssert.assertThat(tokens.get(0).getType(), CoreMatchers.is(TokenType.INPUT));
+        MatcherAssert.assertThat(tokens.get(1).getType(), CoreMatchers.is(TokenType.INPUT_SIGN));
+        MatcherAssert.assertThat(tokens.get(2).getType(), CoreMatchers.is(TokenType.IDENTIFIER));
         assertThat(scannerResults.hasErrors(), is(false));
     }
 
@@ -201,9 +202,9 @@ public class ScannerTest {
         Scanner testScan = new Scanner(code);
         ScannerResults scannerResults = testScan.scanTokens();
         List<Token> tokens = scannerResults.getTokens();
-        assertThat(tokens.get(0).getType(), is(OUTPUT));
-        assertThat(tokens.get(1).getType(), is(OUTPUT_SIGN));
-        assertThat(tokens.get(2).getType(), is(IDENTIFIER));
+        MatcherAssert.assertThat(tokens.get(0).getType(), CoreMatchers.is(TokenType.OUTPUT));
+        MatcherAssert.assertThat(tokens.get(1).getType(), CoreMatchers.is(TokenType.OUTPUT_SIGN));
+        MatcherAssert.assertThat(tokens.get(2).getType(), CoreMatchers.is(TokenType.IDENTIFIER));
         assertThat(scannerResults.hasErrors(), is(false));
     }
 
@@ -214,7 +215,7 @@ public class ScannerTest {
         Integer value = 12;
         String code = "//This is a comment. A number is after new line and it should be parsed\n" + value;
 
-        scanAndAssertResolvedValueAndType(code, value, INTEGER);
+        scanAndAssertResolvedValueAndType(code, value, TokenType.INTEGER);
     }
 
     @Test
@@ -222,13 +223,13 @@ public class ScannerTest {
         Integer value = 12;
         String code = "/* This is a  multiline comment. \n A number is after the comment and it should be parsed*/" + value;
 
-        scanAndAssertResolvedValueAndType(code, value, INTEGER);
+        scanAndAssertResolvedValueAndType(code, value, TokenType.INTEGER);
     }
 
     @Test
     void shouldIgnoreUnclosedMultiLineComments() {
         String code = "/* This is an unclosed multiline comment";
-        TokenType expectedType = EOF;
+        TokenType expectedType = TokenType.EOF;
 
         scanAndAssertResolvedType(code, expectedType);
     }
@@ -236,6 +237,6 @@ public class ScannerTest {
     @Test
     void shouldIgnoreNestedComments() {
         String code = "/*  /*  /* /**/ // text  */  */  */";
-        scanAndAssertResolvedType(code, EOF);
+        scanAndAssertResolvedType(code, TokenType.EOF);
     }
 }

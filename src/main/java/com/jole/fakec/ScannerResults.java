@@ -1,6 +1,6 @@
-package com.jole;
+package com.jole.fakec;
 
-import com.jole.tokens.Token;
+import com.jole.fakec.tokens.Token;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.jole.sourceproviders;
+package com.jole.fakec.sourceproviders;
 
 public interface SourceProvider {
     String getSource(String fileName);
