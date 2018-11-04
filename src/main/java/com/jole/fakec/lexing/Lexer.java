@@ -1,7 +1,8 @@
-package com.jole.fakec;
+package com.jole.fakec.lexing;
 
-import com.jole.fakec.sourceproviders.CodeCollector;
-import com.jole.fakec.sourceproviders.SourceFromFile;
+import com.jole.fakec.lexing.error.LexerError;
+import com.jole.fakec.lexing.sourceproviders.CodeCollector;
+import com.jole.fakec.lexing.sourceproviders.SourceFromFile;
 import com.jole.fakec.tokens.Token;
 
 import java.util.HashMap;

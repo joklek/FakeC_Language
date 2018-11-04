@@ -1,4 +1,4 @@
-package com.jole.fakec;
+package com.jole.fakec.lexing;
 
 import com.jole.fakec.tokens.Token;
 import com.jole.fakec.tokens.TokenType;
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ScannerTest {

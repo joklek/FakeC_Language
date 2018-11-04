@@ -1,9 +1,10 @@
-package com.jole.fakec;
+package com.jole.fakec.lexing;
 
+import com.jole.fakec.lexing.error.LexerError;
 import com.jole.fakec.tokens.Token;
 import com.jole.fakec.tokens.TokenType;
-import com.jole.fakec.utils.StringParsingUtils;
-import com.jole.fakec.utils.ReservedKeywordUtils;
+import com.jole.fakec.lexing.utils.ReservedKeywordUtils;
+import com.jole.fakec.lexing.utils.StringParsingUtils;
 
 import java.util.ArrayList;
 import java.util.List;

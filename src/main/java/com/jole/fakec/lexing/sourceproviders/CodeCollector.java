@@ -1,6 +1,9 @@
-package com.jole.fakec.sourceproviders;
+package com.jole.fakec.lexing.sourceproviders;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;

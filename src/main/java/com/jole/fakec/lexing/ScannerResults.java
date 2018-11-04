@@ -1,5 +1,6 @@
-package com.jole.fakec;
+package com.jole.fakec.lexing;
 
+import com.jole.fakec.lexing.error.LexerError;
 import com.jole.fakec.tokens.Token;
 
 import java.util.List;

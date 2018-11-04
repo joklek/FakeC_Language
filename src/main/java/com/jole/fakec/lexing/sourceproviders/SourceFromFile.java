@@ -1,4 +1,4 @@
-package com.jole.fakec.sourceproviders;
+package com.jole.fakec.lexing.sourceproviders;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

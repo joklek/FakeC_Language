@@ -1,4 +1,4 @@
-package com.jole.fakec;
+package com.jole.fakec.lexing;
 
 import com.jole.fakec.tokens.TokenType;
 import org.junit.jupiter.params.ParameterizedTest;

@@ -1,4 +1,4 @@
-package com.jole.fakec.utils;
+package com.jole.fakec.lexing.utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
