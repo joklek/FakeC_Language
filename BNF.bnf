@@ -1,35 +1,35 @@
 
 <program> ::=  <function> | <function> <program>
                        
-; FUNCTIONS
+// FUNCTIONS
 <function> ::= <fn_type_specifier> <identifier> <fn_params> <block>
 <fn_params> ::= "(" ")" | "(" <parameters> ")"
 <parameters> ::= <parameter> | <parameter> "," <parameters>
 <parameter> ::= <variable_type_specifier> <identifier>
 
-; STATEMENTS
+// STATEMENTS
 <block> ::= "{" <statements> "}" | "{" "}"
 <statements> ::= <statement> | <statement> <statements>
 <statement> ::= <single_statement> ";" | <control_statement>
-<single_statement> ::= <expression> |           ; 12+1;
-                       <exit_keyword> |         ; break;
-                       "return" <expression> |  ; return sum(12,1);
-                       <assigment_statement> |  ; a = 5; b = c; c = a + 10; c += 10;
-                       <var_declaration> |      ; int a; int a = b; also arrays
-                       <io_statement>           ; input >> a; output << b;
+<single_statement> ::= <expression> |           // 12+1;
+                       <exit_keyword> |         // break;
+                       "return" <expression> |  // return sum(12,1);
+                       <assigment_statement> |  // a = 5; b = c; c = a + 10; c += 10;
+                       <var_declaration> |      // int a; int a = b; also arrays
+                       <io_statement>           // input >> a; output << b;
 
 <exit_keyword> ::= "return" | "break" | "continue"
 <assigment_statement> ::= <identifier> <assigment_op> <expression>
 
-<var_declaration> ::= <type_atomic_specifier> <atomic_declarators> |   ; int a, b = 12*2, c
+<var_declaration> ::= <type_atomic_specifier> <atomic_declarators> |   // int a, b = 12*2, c
                       <type_array_specifier> <array_declarators>
-<atomic_declarators> ::= <atomic_declarator> | <atomic_declarator> "," <atomic_declarators>  ; a, a = 12*2, b            
-<atomic_declarator> ::= <identifier> | <identifier> <assigment_eq_op> <expression>              ; a ARBA a = 12*2
+<atomic_declarators> ::= <atomic_declarator> | <atomic_declarator> "," <atomic_declarators>  //a, a = 12*2, b
+<atomic_declarator> ::= <identifier> | <identifier> <assigment_eq_op> <expression>           // a ARBA a = 12*2
 
 <array_declarators> ::= <array_declarator> | <array_declarator> "," <array_declarators>
 <array_declarator> ::= <array_declarator_with_size> | <array_declarator_with_copy>
-<array_declarator_with_size> ::= <identifier> "[" <expression> "]"           ; (char[]) newArray[size];
-<array_declarator_with_copy> ::= <identifier> <assigment_eq_op> <identifier> ; (int[]) copyOfArray = intArray; nera expression, nes nieko nepaexpressinsi cia mandrai. Skliaustuose ne sitos lexemos dalis
+<array_declarator_with_size> ::= <identifier> "[" <expression> "]"           // (char[]) newArray[size];
+<array_declarator_with_copy> ::= <identifier> <assigment_eq_op> <identifier> // (int[]) copyOfArray = intArray; nera expression, nes nieko nepaexpressinsi cia mandrai. Skliaustuose ne sitos lexemos dalis
 
 <io_statement> ::= <input_statement> | <output_statement>
 <input_statement> ::= "input" ">>" <identifier_list>
@@ -37,10 +37,10 @@
 
 <identifier_list> ::= <identifier>  | <identifier> "," <identifier_list>
 
-;; CONTROL STATEMENTS
+// CONTROL STATEMENTS
 <control_statement> ::= <while_statement> | <for_statement> | <if_statements>
 <while_statement> ::= "while" "(" <expression> ")" <block>
-<for_statement> ::= "for" "(" <simple_statement> ";" <expression> ";" <expression> ")" <block>
+<for_statement> ::= "for" "(" <simple_statement> ";" <expression> ";" <expression> ")" <block> // buvo <simple_statement>, no idea kas tai yra
 
 <if_statements> ::= <if_statement> | <elseif_statement> | <else_statement>
 
@@ -49,12 +49,12 @@
 <elseif_part> ::= "else" "if" "(" <expression> ")" <block>
 <else_statement> ::= <if_statement> "else" <block> | <elseif_statement> "else" <block>
 
-; EXPRESSIONS
+// EXPRESSIONS
 <expression> ::= <expression> <or_op> <term4>   | <term4>
 <term4> ::= <term4> <and_op> <term3>            | <term3>
 <term3> ::= <term2> <equality_op> <term3>       | <term2>
 <term2> ::= <term1> <comparison_op> <term2>     | <term1>
-<term1> ::= <term1> <add_sub_op> <term0>        | <term0>
+<term1> ::= <term1> <sign_op> <term0>           | <term0>
 <term0> ::= <term0> <mul_div_op> <term_postfix> | <term_postfix>
 
 <term_postfix> ::= <term_postfix> <inc_dec_op> | <prefix_term>
@@ -69,16 +69,16 @@
                <array_access>
                
 <function_call> ::= <identifier> "(" <argument_list> ")" | <identifier> "(" ")"
-<argument_list> ::= <expression> | <expressions> "," <argument_list>
+<argument_list> ::= <expression> | <expression> "," <argument_list>
 
 <type_value> ::= <number> | <null> | <char> | <string> | <bool>
 
-; VALUES
-;; ARRAYS
+// VALUES
+// ARRAYS
 <array_access> ::= <expression> "[" <expression> "]"
 
-;; NUMBERS
-;;; INTEGER
+// NUMBERS
+// INTEGER
 <integer> ::= <digit> | <integer><digit>
 
 <float_regular> ::= <integer>"."<integer> |
@@ -86,46 +86,45 @@
             "." <integer>  
 <float_exponent> ::= <integer> "e" <integer> | 
                      <float_regular> "e" <integer> | 
-                     <integer> "e" <add_sub_op> <integer> |  
-               <float_regular> "e" <add_sub_op> <integer>
+                     <integer> "e" <sign_op> <integer> |
+               <float_regular> "e" <sign_op> <integer>
 
 <float> ::= <float_regular> | <float_exponent>
 
 <number> ::= <float> | <integer>
 <char> ::= "'"<ascii_without_single_quote_and_backslash>"'" | "'\''" | "'\\'"
 
-;;; STRING
-<string> ::= """<string_contents>""" || """"
+// STRING
+<string> ::= "\""<string_contents>"\"" | """"
 <string_contents> ::= <string_content> | <string_content><string_contents>
 <string_content> ::= <escaped_string_symbols> | <ascii_without_quote_and_backslash>
 <escaped_string_symbols> ::= "\\" | "\n" | "\t" | "\0" | "\""
 
-; IDENTIFIERS
-<identifier> ::= <letter_or_under> | <identifier> <letter_or_under_number> ;[a-zA-Z_][a-zA-Z0-9_]*
+// IDENTIFIERS
+<identifier> ::= <letter_or_under> | <identifier> <letter_or_under_number> //[a-zA-Z_][a-zA-Z0-9_]*
 
-; VALUES
+// VALUES
 <null> ::= "null"
 <bool> ::= "true" | "false"
 
-; TYPES
+// TYPES
 <variable_type_specifier> ::= <type_atomic_specifier> | <type_array_specifier>
 <type_atomic_specifier> ::= "float" | "int" | "char" | "bool" | "string"
 <type_array_specifier> ::= <type_atomic_specifier> "[]"
 <fn_type_specifier> ::= <variable_type_specifier> | "void"
 
-; COMMENTS
-<comment_line> ::= "//" <comment_content> <endl???>  || "//" <endl???>        ; TODO multiline
+// COMMENTS
+<comment_line> ::= "//" <comment_content> | "//"       // TODO multiline
 <comment_multi> ::= "/*" <comment_multi_content> "*/"
 <comment_content> ::= <ascii> | <ascii> <comment_content>
 <comment_multi_content> ::= <ascii> | <endl> | <ascii> <comment_multi_content>
 
-; OPERATORS
-<inc_dec_op> :: "++" | "--"
+// OPERATORS
+<inc_dec_op> ::= "++" | "--"
 <sign_op> ::= "+" | "-"
 <mul_div_op> ::= "*" | "/" | "%"
 <comparison_op> ::= "<=" | ">=" | "<" | ">"
 <equality_op> ::= "==" | "!="
-<logic_op> ::= <and_op> | <or_op>
 <and_op> ::= "AND"
 <or_op>  ::= "OR"
 <not> ::= "!"
@@ -133,9 +132,9 @@
 <assigment_eq_op> ::= "="
 <assigment_with_modification_op> ::= "+=" | "-=" | "*=" | "/=" | "!="
 
-; SYMBOLS
-<letter_or_under> ::= <letter> | <under>                 ;[a-zA-Z_]
-<letter_or_under_number> ::= <letter_or_under> | <digit> ;[a-zA-Z0-9_]
+// SYMBOLS
+<letter_or_under> ::= <letter> | <under>                 //[a-zA-Z_]
+<letter_or_under_number> ::= <letter_or_under> | <digit> //[a-zA-Z0-9_]
 
 <ascii>   ::= <ascii_without_quote_and_backslash> | """ | "\"
 <ascii_without_quote_and_backslash> ::= <symbol_no_quote_backslash> | <letter> | <digit>
@@ -144,7 +143,7 @@
 <digits>  ::= <digit> | <digits> <digit>
 <decimal> ::= <integer> '.' <integer>
 
-; o gal tiesiog sukurt atskirus symbol tipus, kur nemegstami charai pakeiciami ju alternatyvom?
+// o gal tiesiog sukurt atskirus symbol tipus, kur nemegstami charai pakeiciami ju alternatyvom?
 <symbol_no_quote_backslash_under> ::= "!" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "[" | "]" | "^" | "`" | "{" | "|" | "}" | "~"
 <symbol_no_single_quote_backslash> ::= "!" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "[" | "]" | "^" | "{" | "|" | "}" | "~" | "_" | """ 
 <symbol_no_quote_backslash> ::= <symbol_no_quote_backslash_under> | <under>
