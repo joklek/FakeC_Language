@@ -128,10 +128,10 @@
 <logic_op> ::= <and_op> | <or_op>
 <and_op> ::= "AND"
 <or_op>  ::= "OR"
-<not> ::= "NOT"
+<not> ::= "!"
 <assigment_op> ::= <assigment_eq_op> | <assigment_with_modification_op>
 <assigment_eq_op> ::= "="
-<assigment_with_modification_op> ::= "+=" | "-=" | "*=" | "/="
+<assigment_with_modification_op> ::= "+=" | "-=" | "*=" | "/=" | "!="
 
 ; SYMBOLS
 <letter_or_under> ::= <letter> | <under>                 ;[a-zA-Z_]

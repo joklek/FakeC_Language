@@ -1,5 +1,3 @@
-#include <test.txt>
-
 int main() {
     2;
     true;
@@ -17,7 +15,7 @@ int main() {
  * also featuring expressions and, constants and variables in conditions
 */
 bool ifs(int a, int b, int c, bool d) {
-    if (a == b - 1) {
+    if (a != b - 1) {
         if ( a==c) return false;
     }
     else if ( ) {

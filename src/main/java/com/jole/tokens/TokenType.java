@@ -4,13 +4,12 @@ package com.jole.tokens;
 public enum TokenType {
     // Tokens
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE, CURLY_LEFT, CURLY_RIGHT, // ()[]{}
-    COMMA, MINUS, PLUS, SEMICOLON, SLASH, STAR, MOD,                  // .,-+;/*%
+    COMMA, MINUS, PLUS, SEMICOLON, SLASH, STAR, MOD, NOT,                 // .,-+;/*%!
 
-    NOT, // NOT
     EQUAL, EQUAL_EQUAL,     // = ==
     GREATER, GREATER_EQUAL, // > >=
     LESS, LESS_EQUAL,       // < <=
-    PLUS_EQUAL, MINUS_EQUAL, MUL_EQUAL, DIV_EQUAL, MOD_EQUAL, // += -= *= /= %=
+    PLUS_EQUAL, MINUS_EQUAL, MUL_EQUAL, DIV_EQUAL, MOD_EQUAL, NOT_EQUAL, // += -= *= /= %=
 
     // Literals
     IDENTIFIER, STRING, INTEGER, FLOAT, CHAR,

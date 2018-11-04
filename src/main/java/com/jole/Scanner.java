@@ -60,6 +60,7 @@ public class Scanner {
             case  '*': addToken(match('=') ? MUL_EQUAL : STAR); break;
             case  '%': addToken(match('=') ? MOD_EQUAL : MOD); break;
             case  '=': addToken(match('=') ? EQUAL_EQUAL : EQUAL); break;
+            case  '!': addToken(match('=') ? NOT_EQUAL : NOT); break;
             case  '>':
                 if (match('=')) {
                     addToken(GREATER_EQUAL);

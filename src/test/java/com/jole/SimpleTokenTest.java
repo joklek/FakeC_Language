@@ -35,6 +35,8 @@ public class SimpleTokenTest {
                 arguments("%=", MOD_EQUAL),
                 arguments("=", EQUAL),
                 arguments("==", EQUAL_EQUAL),
+                arguments("!", NOT),
+                arguments("!=", NOT_EQUAL),
 
                 arguments(">", GREATER),
                 arguments(">=", GREATER_EQUAL),
