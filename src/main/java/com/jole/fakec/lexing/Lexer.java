@@ -11,20 +11,25 @@ import java.util.Map;
 
 public class Lexer {
 
-    public static void main(String[] args) {
+    public Map<String, List<Token>> lexFile(String mainFile) {
         CodeCollector codeCollector = new CodeCollector(new SourceFromFile());
 
         Map<String, List<LexerError>> errorsForFiles = new HashMap<>();
+        Map<String, List<Token>> tokensForFiles = new HashMap<>();
 
-        codeCollector.getAllRelatedCode(args[0]).forEach((fileName, source) -> {
-            List<LexerError> errors = run(fileName, source);
+        codeCollector.getAllRelatedCode(mainFile).forEach((fileName, source) -> {
+            ScannerResults results = run(fileName, source);
+            List<LexerError> errors = results.getErrors();
+            List<Token> tokens = results.getTokens();
             errorsForFiles.put(fileName, errors);
+            tokensForFiles.put(fileName, tokens);
         });
 
-        errorsForFiles.forEach(Lexer::showErrors);
+        errorsForFiles.forEach(this::showErrors);
+        return tokensForFiles;
     }
 
-    private static List<LexerError> run(String fileName, String source) {
+    private ScannerResults run(String fileName, String source) {
         Scanner scanner = new Scanner(source);
         ScannerResults scannerResults = scanner.scanTokens();
         List<Token> tokens = scannerResults.getTokens();
@@ -38,10 +43,10 @@ public class Lexer {
             System.out.printf(tableFormat, tokens.indexOf(token), token.getLine(), token.getType(), value);
         }
         System.out.println();
-        return scannerResults.getErrors();
+        return scannerResults;
     }
 
-    private static void showErrors(String fileName, List<LexerError> errors) {
+    private void showErrors(String fileName, List<LexerError> errors) {
         if(!errors.isEmpty()) {
             for(LexerError error: errors) {
                 System.err.printf("%s:%d:error:%s%n", fileName, error.getLine(), error.getErrorMessage());
