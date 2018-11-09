@@ -1,5 +1,6 @@
 package com.joklek.fakec.generator;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -90,7 +91,9 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println("import java.util.List;");
         writer.println("import com.joklek.fakec.tokens.Token;");
         writer.println();
-        writer.println(String.format("abstract class %s {", baseName));
+        writer.println(String.format("public abstract class %s {", baseName));
+
+        defineVisitor(writer, baseName, types);
 
         for (String type : types) {
             String[] splitType = type.split(":");
@@ -100,30 +103,59 @@ public class SourceGeneratorMojo extends AbstractMojo {
             defineType(writer, baseName, className, fields);
         }
 
+        // The base accept() method.
+        writer.println();
+        writer.println("  public abstract <R> R accept(Visitor<R> visitor);");
+
         writer.println("}");
         writer.close();
     }
 
+    private void defineVisitor(PrintWriter writer, String baseName, List<String> types) {
+            writer.println("  public interface Visitor<R> {");
+            for (String type : types) {
+                String typeName = type.split(":")[0].trim();
+                writer.println(String.format("    R visit%s%s (%s %s);", typeName, baseName, typeName, baseName.toLowerCase()));
+            }
+
+            writer.println("  }");
+        }
+
     private void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
-        writer.println(String.format("  static class %s extends %s {", className, baseName));
+        writer.println(String.format("  public static class %s extends %s {", className, baseName));
 
         // Fields.
         String[] fields = fieldList.split(", ");
         writer.println();
         for (String field : fields) {
-            writer.println(String.format("    final %s;", field));
+            writer.println(String.format("    private final %s;", field));
         }
 
         writer.println();
         // Constructor.
-        writer.println(String.format("    %s(%s) {", className, fieldList));
+        writer.println(String.format("    public %s(%s) {", className, fieldList));
         // Store parameters in fields.
         for (String field : fields) {
             String name = field.split(" ")[1];
             writer.println(String.format("      this.%s = %s;", name, name));
         }
-
         writer.println("    }");
+        writer.println();
+
+        // Getters
+        for (String field : fields) {
+            String[] typeAndName = field.split(" ");
+            writer.println(String.format("    public %s get%s() {", typeAndName[0].trim(), StringUtils.capitalize(typeAndName[1].trim())));
+            writer.println(String.format("      return %s;", typeAndName[1].trim()));
+            writer.println("    }");
+            writer.println();
+        }
+
+        // Visitor pattern.
+        writer.println("    public <R> R accept(Visitor<R> visitor) {");
+        writer.println(String.format("      return visitor.visit%s%s(this);", className, baseName));
+        writer.println("    }");
+
         writer.println("  }");
     }
 }
