@@ -54,8 +54,32 @@ public class Scanner {
             case  ',': addToken(TokenType.COMMA); break;
             case  ';': addToken(TokenType.SEMICOLON); break;
 
-            case  '+': addToken(match('=') ? TokenType.PLUS_EQUAL : TokenType.PLUS); break;
-            case  '-': addToken(match('=') ? TokenType.MINUS_EQUAL : TokenType.MINUS); break;
+            case  '+':
+                TokenType plusType;
+                if (match('=')) {
+                    plusType = TokenType.PLUS_EQUAL;
+                }
+                else if(match('+')) {
+                    plusType = TokenType.INC;
+                }
+                else {
+                    plusType = TokenType.PLUS;
+                }
+                addToken(plusType);
+                break;
+            case  '-':
+                TokenType minusType;
+                if (match('=')) {
+                    minusType = TokenType.MINUS_EQUAL;
+                }
+                else if(match('-')) {
+                    minusType = TokenType.DEC;
+                }
+                else {
+                    minusType = TokenType.MINUS;
+                }
+                addToken(minusType);
+                break;
             case  '*': addToken(match('=') ? TokenType.MUL_EQUAL : TokenType.STAR); break;
             case  '%': addToken(match('=') ? TokenType.MOD_EQUAL : TokenType.MOD); break;
             case  '=': addToken(match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL); break;

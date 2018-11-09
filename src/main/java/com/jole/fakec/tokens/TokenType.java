@@ -4,7 +4,7 @@ package com.jole.fakec.tokens;
 public enum TokenType {
     // Tokens
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE, CURLY_LEFT, CURLY_RIGHT, // ()[]{}
-    COMMA, MINUS, PLUS, SEMICOLON, SLASH, STAR, MOD, NOT,                 // .,-+;/*%!
+    COMMA, MINUS, PLUS, SEMICOLON, SLASH, STAR, MOD, NOT, INC, DEC,                 // .,-+;/*%!,--,++
 
     EQUAL, EQUAL_EQUAL,     // = ==
     GREATER, GREATER_EQUAL, // > >=
