@@ -1,24 +1,16 @@
 package com.joklek.fakec.parsing.error;
 
 import com.joklek.fakec.error.Error;
+import com.joklek.fakec.tokens.Token;
+import com.joklek.fakec.tokens.TokenType;
 
-public class ParserError implements Error {
+public class ParserError extends RuntimeException {
 
     private String errorMessage;
-    private int line;
+    private Token token;
 
-    public ParserError(String errorMessage, int line) {
+    public ParserError(String errorMessage, Token token) {
         this.errorMessage = errorMessage;
-        this.line = line;
-    }
-
-    @Override
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    @Override
-    public int getLine() {
-        return line;
+        this.token = token;
     }
 }
