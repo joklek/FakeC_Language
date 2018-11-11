@@ -90,6 +90,7 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println();
         writer.println("import java.util.List;");
         writer.println("import com.joklek.fakec.tokens.Token;");
+        writer.println("import com.joklek.fakec.tokens.TokenType;");
         writer.println();
         writer.println(String.format("public abstract class %s {", baseName));
 
@@ -117,23 +118,34 @@ public class SourceGeneratorMojo extends AbstractMojo {
                 String typeName = type.split(":")[0].trim();
                 writer.println(String.format("    R visit%s%s (%s %s);", typeName, baseName, typeName, baseName.toLowerCase()));
             }
-
             writer.println("  }");
         }
 
     private void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
         writer.println(String.format("  public static class %s extends %s {", className, baseName));
-
-        // Fields.
-        String[] fields = fieldList.split(", ");
         writer.println();
+
+        String[] fields = fieldList.split(", ");
+
+        defineFields(writer, fields);
+        defineConstructor(writer, className, fieldList, fields);
+        defineGetters(writer, fields);
+
+        defineAccept(writer, baseName, className);
+
+        writer.println("  }");
+    }
+
+    private void defineFields(PrintWriter writer, String[] fields) {
         for (String field : fields) {
             writer.println(String.format("    private final %s;", field));
         }
-
         writer.println();
-        // Constructor.
+    }
+
+    private void defineConstructor(PrintWriter writer, String className, String fieldList, String[] fields) {
         writer.println(String.format("    public %s(%s) {", className, fieldList));
+
         // Store parameters in fields.
         for (String field : fields) {
             String name = field.split(" ")[1];
@@ -141,8 +153,9 @@ public class SourceGeneratorMojo extends AbstractMojo {
         }
         writer.println("    }");
         writer.println();
+    }
 
-        // Getters
+    private void defineGetters(PrintWriter writer, String[] fields) {
         for (String field : fields) {
             String[] typeAndName = field.split(" ");
             writer.println(String.format("    public %s get%s() {", typeAndName[0].trim(), StringUtils.capitalize(typeAndName[1].trim())));
@@ -150,12 +163,11 @@ public class SourceGeneratorMojo extends AbstractMojo {
             writer.println("    }");
             writer.println();
         }
+    }
 
-        // Visitor pattern.
+    private void defineAccept(PrintWriter writer, String baseName, String className) {
         writer.println("    public <R> R accept(Visitor<R> visitor) {");
         writer.println(String.format("      return visitor.visit%s%s(this);", className, baseName));
         writer.println("    }");
-
-        writer.println("  }");
     }
 }

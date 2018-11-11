@@ -110,6 +110,9 @@ hs_err_pid*
 
 ### Maven ###
 target/
+plugin.xml
+plugin-help.xml
+*/pom.properties
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
@@ -121,3 +124,5 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 # End of https://www.gitignore.io/api/java,intellij
+AstGenerator/target/classes/META-INF/maven/com.joklek/FakeC-maven-ast-generator/plugin-help.xml
+AstGenerator/target/classes/META-INF/maven/plugin.xml

@@ -33,6 +33,7 @@
                 <configuration>
                     <resourceFiles>
                         <parameter>Expr</parameter>
+                        <parameter>Stmt</parameter>
                     </resourceFiles>
                 </configuration>
             </plugin>

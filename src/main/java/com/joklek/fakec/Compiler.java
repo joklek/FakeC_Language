@@ -4,6 +4,7 @@ import com.joklek.fakec.lexing.Lexer;
 import com.joklek.fakec.parsing.AstPrinter;
 import com.joklek.fakec.parsing.Parser;
 import com.joklek.fakec.parsing.ast.Expr;
+import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 
@@ -20,12 +21,12 @@ public class Compiler {
         Map<String, List<Token>> tokensForFile = lexer.lexFile(filename);
 
         Parser parser = new Parser(tokensForFile.get(filename));
-        Expr expression = parser.parse();
+        List<Stmt> statements = parser.parse();
 
         // Stop if there was a syntax error.
         if (hadError) return;
 
-        System.out.println(new AstPrinter().print(expression));
+        System.out.println(new AstPrinter().print(statements.get(0)));
     }
 
     public static void error(Token token, String message) {
