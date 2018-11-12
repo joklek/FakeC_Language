@@ -89,6 +89,7 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println(String.format("package %s;", currentPackage));
         writer.println();
         writer.println("import java.util.List;");
+        writer.println("import java.util.Map;");
         writer.println("import com.joklek.fakec.tokens.Token;");
         writer.println("import com.joklek.fakec.tokens.TokenType;");
         writer.println();
@@ -125,10 +126,14 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println(String.format("  public static class %s extends %s {", className, baseName));
         writer.println();
 
-        String[] fields = fieldList.split(", ");
+        String[] fields = fieldList.split("; ");
+
+        for(int i = 0; i < fields.length; i++) {
+            fields[i] = fields[i].trim();
+        }
 
         defineFields(writer, fields);
-        defineConstructor(writer, className, fieldList, fields);
+        defineConstructor(writer, className, fieldList.replace(';', ','), fields);
         defineGetters(writer, fields);
 
         defineAccept(writer, baseName, className);
