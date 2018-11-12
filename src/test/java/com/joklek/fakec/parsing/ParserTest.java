@@ -1,39 +1,63 @@
 package com.joklek.fakec.parsing;
 
-import com.joklek.fakec.parsing.nodes.DefFunc;
-import com.joklek.fakec.parsing.nodes.Node;
-import com.joklek.fakec.parsing.nodes.Program;
-import com.joklek.fakec.parsing.nodes.Type;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.joklek.fakec.tokens.TokenType.*;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+
+// TODO: These test sucks because I'm using the printer class. Should probably create a dedicated visitor
 public class ParserTest {
-    @Test
-    void shouldFormEmptyFunction() {
-        // int ident (){}
-        List<Token> tokens = formTokens(INT_TYPE, IDENTIFIER, LEFT_PAREN, RIGHT_PAREN, CURLY_LEFT, CURLY_RIGHT);
-        /*Parser parser = new Parser(tokens);
-        ParserResults parserResults = parser.parse());
-        Program rootNode = (Program) parserResults.getRootNode();
-        List<Node> nodes = rootNode.getNodes();
+    private AstPrinter printer = new AstPrinter();
 
-        assertThat(parserResults.getErrors().isEmpty(), is(true));
-        assertThat(nodes.size(), is(1));
-        DefFunc node = (DefFunc) nodes.get(0);
-        assertThat(node.getReturnType(), is(instanceOf(Type.TypeInt.class)));
-        assertThat(node.getParameters().isEmpty(), is(true));
-        assertThat(node.getBody().getStatements().isEmpty(), is(true));*/
+    private static Stream<Arguments> tokenAndExpectedResult() {
+        return Stream.of(
+                arguments(IDENTIFIER, "name", "name", "name"),
+                arguments(FALSE, null, false, "false"),
+                arguments(TRUE, null, true, "true"),
+                arguments(NULL, null, null, "null"),
+                arguments(INTEGER, null, 12, "12"),
+                arguments(FLOAT, null, 12.12, "12.12"),
+                arguments(STRING, null, "test", "test")
+        );
     }
+    @ParameterizedTest
+    @MethodSource("tokenAndExpectedResult")
+    void shouldFormVariable(TokenType type, String lexeme, Object literal, String expectedValue) {
+        List<Token> tokens = Arrays.asList(new Token(type, lexeme, literal, 0), new Token(TokenType.EOF, 0));
+        Parser parser = new Parser(tokens);
+        assertThat(printer.print(parser.primary()), is(expectedValue));
+    }
+
+    @Test
+    void shouldParseUnarySimple() {
+        Token integer = new Token(INTEGER, null, 12, 0);
+        List<Token> tokens = Arrays.asList(integer, new Token(STAR, 0), integer, new Token(TokenType.EOF, 0));
+        Parser parser = new Parser(tokens);
+        assertThat(printer.print(parser.multiplication()), is("BinaryExpr(STAR):\r\n" +
+                                                              "  Left: 12\r\n" +
+                                                              "  Right: 12"));
+    }
+
+   /* @Test
+    void shouldParseMultiplication() {
+        List<Token> tokens = Arrays.asList(new Token(type, lexeme, literal, 0), new Token(TokenType.EOF, 0));
+        Parser parser = new Parser(tokens);
+        assertThat(printer.print(parser.multiplication()), is(expectedValue));
+    }*/
 
     private List<Token> formTokens(TokenType... args) {
         List<Token> tokens = new ArrayList<>();

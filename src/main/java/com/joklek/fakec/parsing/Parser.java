@@ -3,21 +3,22 @@ package com.joklek.fakec.parsing;
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ParserError;
-import com.joklek.fakec.parsing.nodes.*;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static com.joklek.fakec.tokens.TokenType.*;
 
+@SuppressWarnings("WeakerAccess")
 public class Parser {
 
     private List<Token> tokens;
     private List<ParserError> errors;
     private int offset;
+
+    private static final TokenType[] FUNCTION_TYPES = {STRING_TYPE, FLOAT_TYPE, CHAR_TYPE, INT_TYPE, BOOL_TYPE, VOID_TYPE};
+    private static final TokenType[] VARIABLE_TYPES = {STRING_TYPE, FLOAT_TYPE, CHAR_TYPE, INT_TYPE, BOOL_TYPE};
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -25,29 +26,98 @@ public class Parser {
         this.offset = 0;
     }
 
-    public List<Stmt> parse() {
-        List<Stmt> statements = new ArrayList<>();
-        while (!isAtEnd()) {
-            statements.add(declaration());
+    // <program> ::= {<function>}<EOF>
+    public Stmt.Program parseProgram() {
+        List<Stmt.Function> functions = new ArrayList<>();
+        while(current().getType() != EOF) {
+            functions.add(parseFunction());
+        }
+        return new Stmt.Program(functions);
+    }
+
+    // <fn_type_specifier> <identifier> <fn_params> <block>
+    protected Stmt.Function parseFunction() {
+        TokenType type = consume(FUNCTION_TYPES, "Functions should start with type").getType();
+        Token name = consume(IDENTIFIER, "Expect function name.");
+
+        Map<Token, TokenType> parameters = parseParams();
+
+        if(!check(CURLY_LEFT) ){
+            throw error(current(), "Expect '{' before function body.");
         }
 
+        List<Stmt> body = parseBlock();
+        return new Stmt.Function(type, name, parameters, body);
+    }
+
+    // <fn_params> ::= "(" [<parameter> {"," <parameter>}] ")"
+    //   <parameter> ::= <variable_type_specifier> <identifier>
+    private Map<Token, TokenType> parseParams() {
+        consume(LEFT_PAREN, "Expect '(' after function name.");
+        Map<Token, TokenType> parameters = new HashMap<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                TokenType parameterType = consume(VARIABLE_TYPES, "Parameter should start with type").getType();
+                Token parameterName = consume(IDENTIFIER, "Expect parameter name.");
+                if(parameters.containsKey(parameterName)) {
+                    throw error(parameterName, String.format("Function parameter names should be unique, but '%s' is repeated", parameterName.getLexeme()));
+                }
+                parameters.put(parameterName, parameterType);
+            } while (match(COMMA));
+        }
+        consume(RIGHT_PAREN, "Expect ')' after function parameters.");
+        return parameters;
+    }
+
+    // TODO can handle block nesting?
+    // <block> ::= "{" {statement} "}"
+    protected List<Stmt> parseBlock() {
+        consume(CURLY_LEFT, "Expect '{' for block start.");
+        List<Stmt> statements = new ArrayList<>();
+
+        while (!check(CURLY_RIGHT) && !isAtEnd()) {
+            statements.add(parseStatement());
+        }
+
+        consume(CURLY_RIGHT, "Expect '}' after block.");
         return statements;
     }
 
-    private Stmt declaration() {
-        try {
-            if (match(INT_TYPE, FLOAT_TYPE, CHAR_TYPE, STRING_TYPE, BOOL_TYPE)) {
-                return varDeclaration();
-            }
-            return statement();
-        } catch (ParserError error) {
-            synchronize();
-            return null;
+    // <statement>  ::= <expression> ";" | <exit_keyword> ";"| "return" <expression> ";"| <assigment_statement> ";"| <var_declaration> ";"| <io_statement> ";" | <while_statement> | <for_statement> | <if_statements>
+    protected Stmt parseStatement() {
+        TokenType type = current().getType();
+
+        switch (type) {
+            case RETURN:
+                return parseReturntStmt();
+            case BREAK:
+                advance();
+                consume(SEMICOLON, "Unclosed continue statement, semicolon is missing");
+                return new Stmt.Break(previous());
+            case CONTINUE:
+                advance();
+                consume(SEMICOLON, "Unclosed continue statement, semicolon is missing");
+                return new Stmt.Continue(previous());
+            case WHILE:
+                return whileStatement();
+            case FOR:
+                return forStatement();
+            case IF:
+                return ifStatement();
+            case INPUT:
+                return parseInput();
+            case OUTPUT:
+                return printStatement();
+            default:
+                if(Arrays.asList(VARIABLE_TYPES).contains(type)) {
+                    return parseVarDecStmt();
+                }
+                return expressionStatement();
         }
     }
 
-    private Stmt varDeclaration() {
-        TokenType type = previous().getType();
+    protected Stmt parseVarDecStmt() {
+        TokenType type = consume(VARIABLE_TYPES, "Expect variable type.").getType();
         Token name = consume(IDENTIFIER, "Expect variable name.");
 
         Expr initializer = null;
@@ -59,33 +129,26 @@ public class Parser {
         return new Stmt.Var(type, name, initializer);
     }
 
-    private Stmt statement() {
-        if (match(FOR)) {
-            return forStatement();
+    protected Stmt parseReturntStmt() {
+        Token keyword = consume(RETURN);
+
+        Expr value = null;
+        if (!check(SEMICOLON)) {
+            value = expression();
         }
-        if (match(WHILE)) {
-            return whileStatement();
-        }
-        if (match(IF)) {
-            return ifStatement();
-        }
-        if (match(OUTPUT)) {
-            return printStatement();
-        }
-        if (match(LEFT_BRACE)) {
-            return new Stmt.Block(block());
-        }
-        return expressionStatement();
+
+        consume(SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
     }
 
-    private Stmt forStatement() {
+    protected Stmt forStatement() {
         consume(LEFT_PAREN, "Expect '(' after 'for'.");
 
         Stmt initializer;
         if (match(SEMICOLON)) {
             initializer = null;
         } else if (match(INT_TYPE)) {
-            initializer = varDeclaration();
+            initializer = parseVarDecStmt();
         } else {
             initializer = expressionStatement();
         }
@@ -102,7 +165,7 @@ public class Parser {
         }
         consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 
-        Stmt body = statement();
+        Stmt body = parseStatement();
 
         if (increment != null) {
             body = new Stmt.Block(Arrays.asList(
@@ -122,58 +185,64 @@ public class Parser {
         return body;
     }
 
-    private Stmt whileStatement() {
+    protected Stmt whileStatement() {
         consume(LEFT_PAREN, "Expect '(' after 'while'.");
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expect ')' after condition.");
-        Stmt body = statement();
+        Stmt body = parseStatement();
 
         return new Stmt.While(condition, body);
     }
 
-    private Stmt ifStatement() {
+    protected Stmt ifStatement() {
         consume(LEFT_PAREN, "Expect '(' after 'if'.");
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expect ')' after if condition.");
 
-        Stmt thenBranch = statement();
+        Stmt thenBranch = parseStatement();
         Stmt elseBranch = null;
         if (match(ELSE)) {
-            elseBranch = statement();
+            elseBranch = parseStatement();
         }
 
         return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
-    private List<Stmt> block() {
-        List<Stmt> statements = new ArrayList<>();
-
-        while (!check(RIGHT_BRACE) && !isAtEnd()) {
-            statements.add(declaration());
+    // <output_statement> ::= "output" "<<" <argument_list>
+    protected Stmt printStatement() {
+        consume(OUTPUT_SIGN, "Output sign << should follow output keyword");
+        List<Expr> printExpressions = new ArrayList<>();
+        printExpressions.add(expression());
+        while (current().getType() == COMMA) {
+            printExpressions.add(expression());
         }
-
-        consume(RIGHT_BRACE, "Expect '}' after block.");
-        return statements;
+        consume(SEMICOLON, "Expect ';' after values.");
+        return new Stmt.Print(printExpressions);
     }
 
-    private Stmt printStatement() {
-        consume(OUTPUT_SIGN, "Output sign << should follow input keyword");
-        Expr value = expression();
-        consume(SEMICOLON, "Expect ';' after value.");
-        return new Stmt.Print(value);
+    // <input_statement> ::= "input" ">>" <identifier> {"," <identifier>}
+    private Stmt parseInput() {
+        consume(INPUT_SIGN, "Input sign >> should follow input keyword");
+        List<Token> inputTokens = new ArrayList<>();
+        inputTokens.add(consume(IDENTIFIER, "Input and only accept variables"));
+        while (current().getType() == COMMA) {
+            inputTokens.add(consume(IDENTIFIER, "Input and only accept variables"));
+        }
+        consume(SEMICOLON, "Expect ';' after variables.");
+        return new Stmt.Output(inputTokens);
     }
 
-    private Stmt expressionStatement() {
+    protected Stmt expressionStatement() {
         Expr expr = expression();
         consume(SEMICOLON, "Expect ';' after expression.");
         return new Stmt.Expression(expr);
     }
 
-    private Expr expression() {
+    protected Expr expression() {
         return assignment();
     }
 
-    private Expr assignment() {
+    protected Expr assignment() {
         Expr expr = or();
 
         if (match(EQUAL)) {
@@ -191,7 +260,7 @@ public class Parser {
         return expr;
     }
 
-    private Expr or() {
+    protected Expr or() {
         Expr expr = and();
 
         while (match(OR)) {
@@ -203,7 +272,7 @@ public class Parser {
         return expr;
     }
 
-    private Expr and() {
+    protected Expr and() {
         Expr expr = equality();
 
         while (match(AND)) {
@@ -215,7 +284,7 @@ public class Parser {
         return expr;
     }
 
-    private Expr equality() {
+    protected Expr equality() {
         Expr expr = comparison();
 
         while (match(NOT_EQUAL, EQUAL_EQUAL)) {
@@ -227,7 +296,7 @@ public class Parser {
         return expr;
     }
 
-    private Expr comparison() {
+    protected Expr comparison() {
         Expr expr = addition();
 
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
@@ -239,7 +308,7 @@ public class Parser {
         return expr;
     }
 
-    private Expr addition() {
+    protected Expr addition() {
         Expr expr = multiplication();
 
         while (match(MINUS, PLUS)) {
@@ -251,7 +320,7 @@ public class Parser {
         return expr;
     }
 
-    private Expr multiplication() {
+    protected Expr multiplication() {
         Expr expr = unary();
 
         while (match(SLASH, STAR)) {
@@ -263,8 +332,8 @@ public class Parser {
         return expr;
     }
 
-    private Expr unary() {
-        if (match(NOT, MINUS)) {
+    protected Expr unary() {
+        if (match(NOT, MINUS, PLUS)) {
             Token operator = previous();
             Expr right = unary();
             return new Expr.Unary(operator, right);
@@ -273,7 +342,7 @@ public class Parser {
         return call();
     }
 
-    private Expr call() {
+    protected Expr call() {
         Expr expr = primary();
 
         while (true) {
@@ -286,7 +355,7 @@ public class Parser {
         return expr;
     }
 
-    private Expr finishCall(Expr callee) {
+    protected Expr finishCall(Expr callee) {
         List<Expr> arguments = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
             do {
@@ -299,7 +368,7 @@ public class Parser {
         return new Expr.Call(callee, paren, arguments);
     }
 
-    private Expr primary() {
+    protected Expr primary() {
         if (match(FALSE)) {
             return new Expr.Literal(false);
         }
@@ -325,11 +394,29 @@ public class Parser {
         throw error(current(), "Expect expression.");
     }
 
+
+    private Token consume(TokenType type) {
+        if (check(type)) {
+            return advance();
+        }
+
+        throw error(current(), "Expected: " + type + "was: " + current().getType());
+    }
+
     private Token consume(TokenType type, String message) {
         if (check(type)) {
             return advance();
         }
 
+        throw error(current(), message);
+    }
+
+    private Token consume(TokenType[] types, String message) {
+        for(TokenType type: types) {
+            if (check(type)) {
+                return advance();
+            }
+        }
         throw error(current(), message);
     }
 

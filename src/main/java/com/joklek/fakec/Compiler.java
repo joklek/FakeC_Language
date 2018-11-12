@@ -21,12 +21,14 @@ public class Compiler {
         Map<String, List<Token>> tokensForFile = lexer.lexFile(filename);
 
         Parser parser = new Parser(tokensForFile.get(filename));
-        List<Stmt> statements = parser.parse();
+        Stmt.Program program = parser.parseProgram();
+        System.out.println(new AstPrinter().print(program));
+        /*List<Stmt> statements = parser.parse();
 
         // Stop if there was a syntax error.
         if (hadError) return;
 
-        System.out.println(new AstPrinter().print(statements.get(0)));
+        System.out.println(new AstPrinter().print(statements.get(0)));*/
     }
 
     public static void error(Token token, String message) {
