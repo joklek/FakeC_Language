@@ -3,7 +3,6 @@ package com.joklek.fakec;
 import com.joklek.fakec.lexing.Lexer;
 import com.joklek.fakec.parsing.AstPrinter;
 import com.joklek.fakec.parsing.Parser;
-import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;

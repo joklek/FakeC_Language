@@ -10,13 +10,13 @@
 // STATEMENTS
 <block> ::= "{" <statements> "}" | "{" "}"
 <statements> ::= <statement> | <statement> <statements>
-<statement> ::= <single_statement> ";" | <control_statement>
-<single_statement> ::= <expression> |           // 12+1;
-                       <exit_keyword> |         // break;
-                       "return" <expression> |  // return sum(12,1);
-                       <assigment_statement> |  // a = 5; b = c; c = a + 10; c += 10;
-                       <var_declaration> |      // int a; int a = b; also arrays
-                       <io_statement>           // input >> a; output << b;
+<statement>  ::= <expression> ";"  |         // 12+1;
+                 <exit_keyword> ";"|         // break;
+                 "return" <expression> ";"|  // return sum(12,1);
+                 <assigment_statement> ";"|  // a = 5; b = c; c = a + 10; c += 10;
+                 <var_declaration> ";"|      // int a; int a = b; also arrays
+                 <io_statement> ";"          // input >> a; output << b;
+                 <while_statement> | <for_statement> | <if_statements>
 
 <exit_keyword> ::= "return" | "break" | "continue"
 <assigment_statement> ::= <identifier> <assigment_op> <expression>
@@ -38,9 +38,8 @@
 <identifier_list> ::= <identifier>  | <identifier> "," <identifier_list>
 
 // CONTROL STATEMENTS
-<control_statement> ::= <while_statement> | <for_statement> | <if_statements>
 <while_statement> ::= "while" "(" <expression> ")" <block>
-<for_statement> ::= "for" "(" <simple_statement> ";" <expression> ";" <expression> ")" <block> // buvo <simple_statement>, no idea kas tai yra
+<for_statement> ::= "for" "(" (<assigment_statement> | <var_declaration>) ";" <expression> ";" <expression> ")" <block>
 
 <if_statements> ::= <if_statement> | <elseif_statement> | <else_statement>
 
