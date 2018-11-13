@@ -28,9 +28,10 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         String right = buildBranch("Right: ", expr.getRight());
         return String.format("BinaryExpr(%s):%n" +
                                "%s%n" +
-                               "%s", expr.getOperator().getType(), left, right);
+                               "%s%n", expr.getOperator().getType(), left, right);
     }
 
+    // TODO
     @Override
     public String visitGroupingExpr(Expr.Grouping expr) {
         return buildBranch("group", expr.getExpression());
@@ -51,7 +52,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitLogicalExpr(Expr.Logical expr) {
-        return buildBranch(expr.getOperator().getLexeme(), expr.getLeft(), expr.getRight());
+        String left = buildBranch("Left: ", expr.getLeft());
+        String right = buildBranch("Right: ", expr.getRight());
+        return String.format("LogicalExpr(%s):%n" +
+                "%s%n" +
+                "%s", expr.getOperator().getType(), left, right);
     }
 
     @Override
@@ -63,12 +68,21 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
-        return buildBranch(expr.getName() + " = ", expr.getValue());
+        return buildBranch(String.format("AssignExpr: %n" +
+                                         "VAR: %s%n" +
+                                          "Value: ", expr.getName().getLexeme()), expr.getValue());
     }
 
     @Override
     public String visitCallExpr(Expr.Call expr) {
-        return null;
+        StringBuilder builder = new StringBuilder(String.format("CallExpr: %n"));
+        List<Expr> arguments = expr.getArguments();
+
+        for (int i = 0; i < arguments.size(); i++) {
+            Expr expression = arguments.get(i);
+            builder.append(indent(buildBranch(String.format("args[%d]: ", i), expression)));
+        }
+        return builder.toString();
     }
 
     @Override
@@ -97,24 +111,20 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         }
         String paramsTree = paramsInfo.toString();
 
-        StringBuilder statementsInfo = new StringBuilder();
-        List<Stmt> body = stmt.getBody();
-        for(int i = 0; i < body.size(); i++) {
-            String stmtInfo = buildBranch(String.format("STMT[%d]: ", i), body.get(i));
-            statementsInfo.append(indent(stmtInfo));
-            statementsInfo.append(System.lineSeparator());
-        }
-        String statementsTree = statementsInfo.toString();
-
+        String blockTree = visitBlockStmt(stmt.getBody());
         return String.format("Name: %s%n" +
                                       "Type: %s%n" +
                                       "%s" +
-                                      "%s", stmt.getName().getLexeme(), stmt.getType(), paramsTree, statementsTree);
+                                      "%s", stmt.getName().getLexeme(), stmt.getType(), paramsTree, blockTree);
     }
 
+
+    // TODO Fix megaindent
     @Override
     public String visitReturnStmt(Stmt.Return stmt) {
-        return stmt.getValue() == null ? "RETURN" : buildBranch("RETURN: ", stmt.getValue());
+        return stmt.getValue() == null
+                ? "RETURN"
+                : buildBranch("RETURN: ", stmt.getValue());
     }
 
     @Override
@@ -124,22 +134,44 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitIfStmt(Stmt.If stmt) {
+        stmt.getCondition();
+        stmt.getElseBranch();
+        stmt.getThenBranch();
         return null;
     }
 
     @Override
     public String visitWhileStmt(Stmt.While stmt) {
-        return null;
-    }
-
-    @Override
-    public String visitPrintStmt(Stmt.Print stmt) {
-        return null;
+        String condition = buildBranch("CONTIDITION: ", stmt.getCondition());
+        String body = buildBranch("BODY: ", stmt.getBody());
+        return String.format("WHILE: %n" +
+                               "%s" +
+                               "%s", condition, body);
     }
 
     @Override
     public String visitOutputStmt(Stmt.Output stmt) {
-        return null;
+        StringBuilder builder = new StringBuilder(String.format("OUTPUT: %n"));
+        List<Expr> expressions = stmt.getExpressions();
+
+        for (int i = 0; i < expressions.size(); i++) {
+            Expr expr = expressions.get(i);
+            builder.append(indent(buildBranch(String.format("PrintedExpr[%d]: ", i), expr)));
+            builder.append(System.lineSeparator());
+        }
+        return builder.toString();
+    }
+
+    @Override
+    public String visitInputStmt(Stmt.Input stmt) {
+        StringBuilder builder = new StringBuilder(String.format("INPUT: %n"));
+        List<Token> variables = stmt.getVariables();
+
+        for (int i = 0; i < variables.size(); i++) {
+            Token variable = variables.get(i);
+            builder.append(indent(String.format("InputVar[%d]: %s%n", i, variable.getLexeme())));
+        }
+        return builder.toString();
     }
 
     @Override
@@ -154,7 +186,14 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitBlockStmt(Stmt.Block stmt) {
-        return null;
+        StringBuilder statementsInfo = new StringBuilder();
+        List<Stmt> body = stmt.getStatements();
+        for(int i = 0; i < body.size(); i++) {
+            String stmtInfo = buildBranch(String.format("STMT[%d]: ", i), body.get(i));
+            statementsInfo.append(stmtInfo);
+            //statementsInfo.append(System.lineSeparator());
+        }
+        return statementsInfo.toString();
     }
 
     @Override
@@ -184,6 +223,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
             String part = stmt.accept(this);
             builder.append(indentAllButFirst(part));
         }
+
         return builder.toString();
     }
 

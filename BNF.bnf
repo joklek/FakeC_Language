@@ -58,8 +58,8 @@
 
 <term_postfix> ::= <term_postfix> <inc_dec_op> | <prefix_term>
 <prefix_term> ::= <inc_dec_op> <prefix_term>   | <term_not>
-<term_not>    ::=  <not> <term_not>            | <termUnary>
-<termUnary>  ::= <sign_op> <element>           | <element>
+<term_not>    ::= <not> <term_not>             | <termUnary>
+<termUnary>  ::=  <sign_op> <element>          | <element>
 
 <element> ::= "(" <expression> ")" |
                <identifier> |

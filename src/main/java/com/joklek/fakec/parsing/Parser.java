@@ -10,7 +10,7 @@ import java.util.*;
 
 import static com.joklek.fakec.tokens.TokenType.*;
 
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "squid:CommentedOutCodeLine"})
 public class Parser {
 
     private List<Token> tokens;
@@ -46,7 +46,7 @@ public class Parser {
             throw error(current(), "Expect '{' before function body.");
         }
 
-        List<Stmt> body = parseBlock();
+        Stmt.Block body = parseBlock();
         return new Stmt.Function(type, name, parameters, body);
     }
 
@@ -71,7 +71,7 @@ public class Parser {
 
     // TODO can handle block nesting?
     // <block> ::= "{" {statement} "}"
-    protected List<Stmt> parseBlock() {
+    protected Stmt.Block parseBlock() {
         consume(CURLY_LEFT, "Expect '{' for block start.");
         List<Stmt> statements = new ArrayList<>();
 
@@ -80,7 +80,7 @@ public class Parser {
         }
 
         consume(CURLY_RIGHT, "Expect '}' after block.");
-        return statements;
+        return new Stmt.Block(statements);
     }
 
     // <statement>  ::= <expression> ";" | <exit_keyword> ";"| "return" <expression> ";"| <assigment_statement> ";"| <var_declaration> ";"| <io_statement> ";" | <while_statement> | <for_statement> | <if_statements>
@@ -101,13 +101,13 @@ public class Parser {
             case WHILE:
                 return whileStatement();
             case FOR:
-                return forStatement();
+                return forStatement();  // TODO
             case IF:
-                return ifStatement();
+                return ifStatement(); // TODO
             case INPUT:
                 return parseInput();
             case OUTPUT:
-                return printStatement();
+                return parseOutput();
             default:
                 if(Arrays.asList(VARIABLE_TYPES).contains(type)) {
                     return parseVarDecStmt();
@@ -142,7 +142,7 @@ public class Parser {
     }
 
     protected Stmt forStatement() {
-        consume(LEFT_PAREN, "Expect '(' after 'for'.");
+        /*consume(LEFT_PAREN, "Expect '(' after 'for'.");
 
         Stmt initializer;
         if (match(SEMICOLON)) {
@@ -165,7 +165,7 @@ public class Parser {
         }
         consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 
-        Stmt body = parseStatement();
+        Stmt body = parseBlock();
 
         if (increment != null) {
             body = new Stmt.Block(Arrays.asList(
@@ -182,19 +182,22 @@ public class Parser {
             body = new Stmt.Block(Arrays.asList(initializer, body));
         }
 
-        return body;
+        return body;*/
+        return null;
     }
 
     protected Stmt whileStatement() {
+        consume(WHILE);
         consume(LEFT_PAREN, "Expect '(' after 'while'.");
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expect ')' after condition.");
-        Stmt body = parseStatement();
+        Stmt.Block body = parseBlock();
 
         return new Stmt.While(condition, body);
     }
 
     protected Stmt ifStatement() {
+        consume(IF);
         consume(LEFT_PAREN, "Expect '(' after 'if'.");
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expect ')' after if condition.");
@@ -209,27 +212,29 @@ public class Parser {
     }
 
     // <output_statement> ::= "output" "<<" <argument_list>
-    protected Stmt printStatement() {
+    protected Stmt parseOutput() {
+        consume(OUTPUT);
         consume(OUTPUT_SIGN, "Output sign << should follow output keyword");
         List<Expr> printExpressions = new ArrayList<>();
         printExpressions.add(expression());
-        while (current().getType() == COMMA) {
+        while (match(COMMA)) {
             printExpressions.add(expression());
         }
         consume(SEMICOLON, "Expect ';' after values.");
-        return new Stmt.Print(printExpressions);
+        return new Stmt.Output(printExpressions);
     }
 
     // <input_statement> ::= "input" ">>" <identifier> {"," <identifier>}
     private Stmt parseInput() {
+        consume(INPUT);
         consume(INPUT_SIGN, "Input sign >> should follow input keyword");
         List<Token> inputTokens = new ArrayList<>();
         inputTokens.add(consume(IDENTIFIER, "Input and only accept variables"));
-        while (current().getType() == COMMA) {
+        while (match(COMMA)) {
             inputTokens.add(consume(IDENTIFIER, "Input and only accept variables"));
         }
         consume(SEMICOLON, "Expect ';' after variables.");
-        return new Stmt.Output(inputTokens);
+        return new Stmt.Input(inputTokens);
     }
 
     protected Stmt expressionStatement() {
@@ -238,28 +243,12 @@ public class Parser {
         return new Stmt.Expression(expr);
     }
 
+    // <expression> ::= <term4> {<or_op> <term4>}
     protected Expr expression() {
-        return assignment();
+        return or();
     }
 
-    protected Expr assignment() {
-        Expr expr = or();
-
-        if (match(EQUAL)) {
-            Token equals = previous();
-            Expr value = assignment();
-
-            if (expr instanceof Expr.Variable) {
-                Token name = ((Expr.Variable)expr).getName();
-                return new Expr.Assign(name, value);
-            }
-
-            error(equals, "Invalid assignment target.");
-        }
-
-        return expr;
-    }
-
+    // <expression> ::= <term4> {<or_op> <term4>}
     protected Expr or() {
         Expr expr = and();
 
@@ -272,6 +261,7 @@ public class Parser {
         return expr;
     }
 
+    // <term4> ::= <term3> {<and_op> <term3>}
     protected Expr and() {
         Expr expr = equality();
 
@@ -284,6 +274,7 @@ public class Parser {
         return expr;
     }
 
+    // <term3> ::= <term2> { <equality_op> <term2> }
     protected Expr equality() {
         Expr expr = comparison();
 
@@ -296,6 +287,7 @@ public class Parser {
         return expr;
     }
 
+    // <term2> ::= <term1> { <comparison_op> <term1> }
     protected Expr comparison() {
         Expr expr = addition();
 
@@ -308,6 +300,7 @@ public class Parser {
         return expr;
     }
 
+    // <term1> ::= <term0> {<sign_op> <term0>}
     protected Expr addition() {
         Expr expr = multiplication();
 
@@ -320,10 +313,11 @@ public class Parser {
         return expr;
     }
 
+    // <term0> ::= <term_postfix> {<mul_div_op> <term_postfix>}
     protected Expr multiplication() {
         Expr expr = unary();
 
-        while (match(SLASH, STAR)) {
+        while (match(SLASH, STAR, MOD)) {
             Token operator = previous();
             Expr right = unary();
             expr = new Expr.Binary(expr, operator, right);
@@ -335,22 +329,55 @@ public class Parser {
     protected Expr unary() {
         if (match(NOT, MINUS, PLUS)) {
             Token operator = previous();
-            Expr right = unary();
+            //Expr right = unary();
+            Expr right = call();
             return new Expr.Unary(operator, right);
         }
 
         return call();
     }
 
+    protected Expr primary() {
+        if (match(FALSE)) {
+            return new Expr.Literal(false);
+        }
+        if (match(TRUE)) {
+            return new Expr.Literal(true);
+        }
+        if (match(NULL)) {
+            return new Expr.Literal(null);
+        }
+        if (match(IDENTIFIER)) {
+            Token identifier = previous();
+            TokenType currentType = current().getType();
+            if(currentType == LEFT_BRACE) {
+                // TODO ARRAY
+            }
+            else if(currentType == LEFT_PAREN) {
+                return call();
+            }
+            else {
+                return new Expr.Variable(identifier);
+            }
+        }
+
+        if (match(INTEGER, FLOAT, STRING)) {
+            return new Expr.Literal(previous().getLiteral());
+        }
+
+        if (match(LEFT_PAREN)) {
+            Expr expr = expression();
+            consume(RIGHT_PAREN, "Expect ')' after expression.");
+            return new Expr.Grouping(expr);
+        }
+        throw error(current(), "Expect expression.");
+    }
+
+    // TODO TEST
     protected Expr call() {
         Expr expr = primary();
-
-        while (true) {
-            if (match(LEFT_PAREN)) {
-                expr = finishCall(expr);
-            } else {
-                break;
-            }
+        while (match(LEFT_PAREN)) {
+            expr = finishCall(expr);
         }
         return expr;
     }
@@ -368,32 +395,24 @@ public class Parser {
         return new Expr.Call(callee, paren, arguments);
     }
 
-    protected Expr primary() {
-        if (match(FALSE)) {
-            return new Expr.Literal(false);
-        }
-        if (match(TRUE)) {
-            return new Expr.Literal(true);
-        }
-        if (match(NULL)) {
-            return new Expr.Literal(null);
-        }
-        if (match(IDENTIFIER)) {
-            return new Expr.Variable(previous());
+    // TODO WTF?
+    protected Expr assignment() {
+        Expr expr = or();
+
+        if (match(EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable)expr).getName();
+                return new Expr.Assign(name, value);
+            }
+
+            error(equals, "Invalid assignment target.");
         }
 
-        if (match(INTEGER, FLOAT, STRING)) {
-            return new Expr.Literal(previous().getLiteral());
-        }
-
-        if (match(LEFT_PAREN)) {
-            Expr expr = expression();
-            consume(RIGHT_PAREN, "Expect ')' after expression.");
-            return new Expr.Grouping(expr);
-        }
-        throw error(current(), "Expect expression.");
+        return expr;
     }
-
 
     private Token consume(TokenType type) {
         if (check(type)) {
