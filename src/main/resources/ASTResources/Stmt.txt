@@ -8,5 +8,6 @@ While      : Expr condition; Block body
 Output     : List<Expr> expressions
 Input      : List<Token> variables
 Var        : TokenType type; Token name; Expr initializer
+Array      : TokenType type; Token name; Expr initializer
 Break      : Token token
 Continue   : Token token

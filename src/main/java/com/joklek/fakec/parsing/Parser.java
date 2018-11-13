@@ -117,17 +117,73 @@ public class Parser {
         }
     }
 
+    // <atomic_declaration> ::= <type_atomic_specifier> <identifier> ["=" <expression>] {, <identifier> ["=" <expression>]}
     protected Stmt parseVarDecStmt() {
         TokenType type = consume(VARIABLE_TYPES, "Expect variable type.").getType();
+        if(check(LEFT_BRACE)) {
+            return parseArrayDecStmt(type);
+        }
+
         Token name = consume(IDENTIFIER, "Expect variable name.");
 
         Expr initializer = null;
         if (match(EQUAL)) {
             initializer = parseExpression();
         }
+        Stmt declaration = new Stmt.Var(type, name, initializer);
+
+        if(check(COMMA)) {
+            List<Stmt> declarations = new ArrayList<>();
+            declarations.add(declaration);
+            while(match(COMMA)) {
+                name = consume(IDENTIFIER, "Expect variable name.");
+                initializer = null;
+                if (match(EQUAL)) {
+                    initializer = parseExpression();
+                }
+                declarations.add(new Stmt.Var(type, name, initializer));
+            }
+            declaration = new Stmt.Block(declarations);
+        }
 
         consume(SEMICOLON, "Expect ';' after variable declaration.");
-        return new Stmt.Var(type, name, initializer);
+        return declaration;
+    }
+
+    // <array_declaration>  ::= <type_atomic_specifier> "[" "]" <identifier> ("["<expression>"]" | "=" <expression>)
+    private Stmt parseArrayDecStmt(TokenType type) {
+        consume(LEFT_BRACE);
+        consume(RIGHT_BRACE, "Right brace should follow left brace in array declaration.");
+        Token name = consume(IDENTIFIER, "Expect variable name.");
+
+        Expr initializer = parseArrayDeclarator(name);
+        Stmt declaration = new Stmt.Array(type, name, initializer);
+
+        if(check(COMMA)) {
+            List<Stmt> declarations = new ArrayList<>();
+            declarations.add(declaration);
+            while(match(COMMA)) {
+                name = consume(IDENTIFIER, "Expect variable name.");
+                initializer =  parseArrayDeclarator(name);
+                declarations.add(new Stmt.Array(type, name, initializer));
+            }
+            declaration = new Stmt.Block(declarations);
+        }
+
+        consume(SEMICOLON, "Expect ';' after array declaration.");
+        return declaration;
+    }
+
+    private Expr parseArrayDeclarator(Token name) {
+        Expr initializer = null;
+        if (match(LEFT_BRACE)) {
+            Expr size = parseExpression();
+            consume(RIGHT_BRACE, "Right brace should follow array size declaration");
+            initializer = new Expr.ArrayCreate(name, size);
+        } else if (match(EQUAL)) {
+            initializer = parseExpression();
+        }
+        return initializer;
     }
 
     protected Stmt parseReturnStmt() {
@@ -212,14 +268,14 @@ public class Parser {
 
         Stmt.Block elseBranch = null;
 
-        while (current().getType() == ELSE && peekType() == IF) {
+        while (check(ELSE) && peekType() == IF) {
             consume(ELSE);
             consume(IF);
             consume(LEFT_PAREN, "Expect '(' after 'if'.");
             condition = parseExpression();
             consume(RIGHT_PAREN, "Expect ')' after if condition.");
             thenBranch = parseBlock();
-            branches.put(condition, thenBranch); // TODO: What if same condition
+            branches.put(condition, thenBranch);
         }
         if (match(ELSE)) {
             elseBranch = parseBlock();
@@ -294,7 +350,7 @@ public class Parser {
         while (match(OR)) {
             Token operator = previous();
             Expr right = parseAnd();
-            expr = new Expr.Logical(expr, operator, right);
+            expr = new Expr.Binary(expr, operator, right);
         }
 
         return expr;
@@ -307,7 +363,7 @@ public class Parser {
         while (match(AND)) {
             Token operator = previous();
             Expr right = parseEquality();
-            expr = new Expr.Logical(expr, operator, right);
+            expr = new Expr.Binary(expr, operator, right);
         }
 
         return expr;
@@ -354,34 +410,62 @@ public class Parser {
 
     // <term0> ::= <term_postfix> {<mul_div_op> <term_postfix>}
     protected Expr parseMultiplication() {
-        Expr expr = unary();
+        //Expr expr = parsePostfixExpr();
+        Expr expr = parsePrefixExpr();
 
         while (match(SLASH, STAR, MOD)) {
             Token operator = previous();
-            Expr right = unary();
+            //Expr right = parsePostfixExpr();
+            Expr right = parsePrefixExpr();
             expr = new Expr.Binary(expr, operator, right);
         }
 
         return expr;
     }
 
-    /* TODO
-    <term_postfix> ::= <term_postfix> <inc_dec_op> | <prefix_term>
-    <prefix_term> ::= <inc_dec_op> <prefix_term>   | <term_not>
-    <term_not>    ::= <not> <term_not>             | <termUnary>
-    <termUnary>  ::=  <sign_op> <element>          | <element>
-    */
+    // TODO
+    /*//<term_postfix> ::= <expression> <inc_dec_op> | <prefix_term>
+    protected Expr parsePostfixExpr() {
+        if(peekType() == INC || peekType() == DEC) {
+            return new Expr.Assign(current(), new Expr.Binary(new Expr.Variable(current()), new Token(PLUS, current().getLine()), new Expr.Literal(1)));
+        }
+        else if(peekType() == DEC) {
+            return new Expr.Assign(current(), new Expr.Binary(new Expr.Variable(current()), new Token(MINUS, current().getLine()), new Expr.Literal(1)));
+        }
+        return parsePrefixExpr();
+    }*/
+
+    // ++i ::=
+    private Expr parsePrefixExpr() {
+        if(match(INC, DEC) && check(IDENTIFIER)) {
+            TokenType type = previous().getType() == INC ? PLUS : MINUS;
+            Token identifier = consume(IDENTIFIER, "An identifier should follow a prefix operator");
+            return new Expr.Assign(identifier, new Expr.Binary(new Expr.Variable(identifier), new Token(type, identifier.getLine()), new Expr.Literal(1)));
+        }
+        return parseNotExpr();
+    }
+
+    private Expr parseNotExpr() {
+        Expr expr = null;
+        while(match(NOT)) {
+            expr = new Expr.Unary(previous(), parseNotExpr());
+        }
+        if (expr != null) {
+            return expr;
+        }
+        return unary();
+    }
 
     //<termUnary>  ::=  <sign_op> <element> | <element>
     protected Expr unary() {
         if (match(NOT, MINUS, PLUS)) {
             Token operator = previous();
             //Expr right = unary();
-            Expr right = call();
+            Expr right = parseElement();
             return new Expr.Unary(operator, right);
         }
 
-        return call();
+        return parseElement();
     }
 
     // <element> ::= "(" <expression> ")" | <identifier> | <type_value> | <function_call> | <array_access>
@@ -398,11 +482,11 @@ public class Parser {
         if (match(IDENTIFIER)) {
             Token identifier = previous();
             TokenType currentType = current().getType();
-            if(currentType == LEFT_BRACE) {
-                // TODO ARRAY
-            }
-            else if(currentType == LEFT_PAREN) {
+            if(currentType == LEFT_PAREN) {
                 return call();
+            }
+            else if(currentType == LEFT_BRACE) {
+                return parseArrayAccess();
             }
             else {
                 return new Expr.Variable(identifier);
@@ -421,26 +505,29 @@ public class Parser {
         throw error(current(), "Expect expression.");
     }
 
-    // TODO TEST
-    protected Expr call() {
-        Expr expr = parseElement();
-        while (match(LEFT_PAREN)) {
-            expr = finishCall(expr);
-        }
-        return expr;
+    // TODO Identifier to Expression
+    private Expr parseArrayAccess() {
+        Token identifier = previous();
+        consume(LEFT_BRACE);
+        Expr expression = parseExpression();
+        consume(RIGHT_BRACE);
+        return new Expr.ArrayAccess(identifier, expression);
     }
 
-    protected Expr finishCall(Expr callee) {
+    // <function_call> ::= <identifier> "(" <argument_list> ")" | <identifier> "(" ")"
+    protected Expr call() {
+        Token identifier = previous();
+        consume(LEFT_PAREN);
+
         List<Expr> arguments = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
             do {
                 arguments.add(parseExpression());
             } while (match(COMMA));
         }
+        consume(RIGHT_PAREN, "Expect ')' after arguments.");
 
-        Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
-
-        return new Expr.Call(callee, paren, arguments);
+        return new Expr.Call(identifier, arguments);
     }
 
     private Token consume(TokenType type) {
