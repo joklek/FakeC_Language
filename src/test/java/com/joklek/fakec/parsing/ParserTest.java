@@ -39,7 +39,7 @@ public class ParserTest {
     void shouldFormVariable(TokenType type, String lexeme, Object literal, String expectedValue) {
         List<Token> tokens = Arrays.asList(new Token(type, lexeme, literal, 0), new Token(TokenType.EOF, 0));
         Parser parser = new Parser(tokens);
-        assertThat(printer.print(parser.primary()), is(expectedValue));
+        assertThat(printer.print(parser.parseElement()), is(expectedValue));
     }
 
     @Test
@@ -47,7 +47,7 @@ public class ParserTest {
         Token integer = new Token(INTEGER, null, 12, 0);
         List<Token> tokens = Arrays.asList(integer, new Token(STAR, 0), integer, new Token(TokenType.EOF, 0));
         Parser parser = new Parser(tokens);
-        assertThat(printer.print(parser.multiplication()), is("BinaryExpr(STAR):\r\n" +
+        assertThat(printer.print(parser.parseMultiplication()), is("BinaryExpr(STAR):\r\n" +
                                                               "  Left: 12\r\n" +
                                                               "  Right: 12"));
     }

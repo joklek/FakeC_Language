@@ -5,6 +5,7 @@ import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +28,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         String left = buildBranch("Left: ", expr.getLeft());
         String right = buildBranch("Right: ", expr.getRight());
         return String.format("BinaryExpr(%s):%n" +
-                               "%s%n" +
-                               "%s%n", expr.getOperator().getType(), left, right);
+                               "%s" +
+                               "%s", expr.getOperator().getType(), left, right);
     }
 
     // TODO
@@ -40,14 +41,14 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitLiteralExpr(Expr.Literal expr) {
         if (expr.getValue() == null) {
-            return "null";
+            return "null" + System.lineSeparator();
         }
-        return expr.getValue().toString();
+        return expr.getValue().toString() + System.lineSeparator();
     }
 
     @Override
     public String visitVariableExpr(Expr.Variable expr) {
-        return expr.getName().getLexeme();
+        return expr.getName().getLexeme() + System.lineSeparator();
     }
 
     @Override
@@ -55,7 +56,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         String left = buildBranch("Left: ", expr.getLeft());
         String right = buildBranch("Right: ", expr.getRight());
         return String.format("LogicalExpr(%s):%n" +
-                "%s%n" +
+                "%s" +
                 "%s", expr.getOperator().getType(), left, right);
     }
 
@@ -123,7 +124,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitReturnStmt(Stmt.Return stmt) {
         return stmt.getValue() == null
-                ? "RETURN"
+                ? "RETURN" + System.lineSeparator()
                 : buildBranch("RETURN: ", stmt.getValue());
     }
 
@@ -134,10 +135,26 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitIfStmt(Stmt.If stmt) {
-        stmt.getCondition();
-        stmt.getElseBranch();
-        stmt.getThenBranch();
-        return null;
+        Map<Expr, Stmt.Block> branches = stmt.getBranches();
+
+        StringBuilder builder = new StringBuilder(String.format("IF:%n"));
+        int position = 0;
+        for (Map.Entry<Expr, Stmt.Block> conditionAndBody : branches.entrySet()) {
+            String condition = buildBranch("Condition: ", conditionAndBody.getKey());
+            String body = conditionAndBody.getValue().getStatements().isEmpty() ? "Body:" + System.lineSeparator() : buildBranch("Body: ", conditionAndBody.getValue());
+            String branchInfo = String.format("Branch[%d]: %n" +
+                    "%s" +
+                    "%s", position, indent(condition), indent(body));
+            builder.append(branchInfo);
+            position++;
+        }
+
+        if (stmt.getElseBranch() != null) {
+            String elseBranch = stmt.getElseBranch().getStatements().isEmpty() ? "Else:" + System.lineSeparator() : buildBranch("Else: ", stmt.getElseBranch());
+            builder.append(elseBranch);
+        }
+
+        return builder.toString();
     }
 
     @Override
@@ -157,7 +174,6 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         for (int i = 0; i < expressions.size(); i++) {
             Expr expr = expressions.get(i);
             builder.append(indent(buildBranch(String.format("PrintedExpr[%d]: ", i), expr)));
-            builder.append(System.lineSeparator());
         }
         return builder.toString();
     }
@@ -191,19 +207,18 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         for(int i = 0; i < body.size(); i++) {
             String stmtInfo = buildBranch(String.format("STMT[%d]: ", i), body.get(i));
             statementsInfo.append(stmtInfo);
-            //statementsInfo.append(System.lineSeparator());
         }
         return statementsInfo.toString();
     }
 
     @Override
     public String visitBreakStmt(Stmt.Break stmt) {
-        return "BREAK";
+        return "BREAK" + System.lineSeparator();
     }
 
     @Override
     public String visitContinueStmt(Stmt.Continue stmt) {
-        return "CONTINUE";
+        return "CONTINUE" + System.lineSeparator();
     }
 
     private String buildBranch(String name, Expr... exprs) {

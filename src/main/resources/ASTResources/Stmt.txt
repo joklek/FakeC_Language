@@ -3,7 +3,7 @@ Function   : TokenType type; Token name; Map<Token,TokenType> params; Block body
 Block      : List<Stmt> statements
 Return     : Token keyword; Expr value
 Expression : Expr expression
-If         : Expr condition; Stmt thenBranch; Stmt elseBranch
+If         : Map<Expr,Block> branches; Block elseBranch
 While      : Expr condition; Block body
 Output     : List<Expr> expressions
 Input      : List<Token> variables
