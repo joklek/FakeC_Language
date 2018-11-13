@@ -20,7 +20,7 @@ public class Compiler {
         Map<String, List<Token>> tokensForFile = lexer.lexFile(filename);
 
         Parser parser = new Parser(tokensForFile.get(filename));
-        Stmt.Program program = parser.parseProgram();
+        Stmt.Program program = parser.parseProgram().getRootNode();
         System.out.println(new AstPrinter().print(program));
         /*List<Stmt> statements = parser.parse();
 

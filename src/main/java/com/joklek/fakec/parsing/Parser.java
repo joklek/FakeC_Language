@@ -28,17 +28,28 @@ public class Parser {
     }
 
     // <program> ::= {<function>}<EOF>
-    public Stmt.Program parseProgram() {
+    public ParserResults parseProgram() {
         List<Stmt.Function> functions = new ArrayList<>();
         while(current().getType() != EOF) {
-            functions.add(parseFunction());
+            try{
+                functions.add(parseFunction());
+            }
+            catch (ParserError e) {
+                errors.add(e);
+                synchronize();
+            }
         }
-        return new Stmt.Program(functions);
+        Stmt.Program program = new Stmt.Program(functions);
+        return new ParserResults(program, errors);
     }
 
-    // <fn_type_specifier> <identifier> <fn_params> <block>
+    // <fn_type_specifier> ["[""]"] <identifier> <fn_params> <block>
     protected Stmt.Function parseFunction() {
         TokenType type = consume(FUNCTION_TYPES, "Functions should start with type").getType();
+        if(Arrays.asList(VARIABLE_TYPES).contains(type) && match(LEFT_BRACE)) {
+            consume(RIGHT_BRACE, "Array type functions should not have anything between type braces");
+            // TODO: Implement array methods
+        }
         Token name = consume(IDENTIFIER, "Expect function name.");
 
         Map<Token, TokenType> parameters = parseParams();
@@ -59,6 +70,10 @@ public class Parser {
         if (!check(RIGHT_PAREN)) {
             do {
                 TokenType parameterType = consume(VARIABLE_TYPES, "Parameter should start with type").getType();
+                if(match(LEFT_BRACE)) {
+                    consume(RIGHT_BRACE, "Array type functions should not have anything between type braces");
+                    // TODO: Implement array methods
+                }
                 Token parameterName = consume(IDENTIFIER, "Expect parameter name.");
                 if(parameters.containsKey(parameterName)) {
                     throw error(parameterName, String.format("Function parameter names should be unique, but '%s' is repeated", parameterName.getLexeme()));
@@ -77,7 +92,13 @@ public class Parser {
         List<Stmt> statements = new ArrayList<>();
 
         while (!check(CURLY_RIGHT) && !isAtEnd()) {
-            statements.add(parseStatement());
+            try {
+                statements.add(parseStatement());
+            }
+            catch (ParserError e) {
+                errors.add(e);
+                synchronize();
+            }
         }
 
         consume(CURLY_RIGHT, "Expect '}' after block.");
@@ -314,7 +335,7 @@ public class Parser {
 
     protected Stmt parseExprStatement() {
         Expr expr = parseExpression();
-        consume(SEMICOLON, "Expect ';' after expression.");
+         consume(SEMICOLON, "Expect ';' after expression.");
         return new Stmt.Expression(expr);
     }
 
@@ -336,8 +357,12 @@ public class Parser {
                 Token name = ((Expr.Variable)expr).getName();
                 return new Expr.Assign(name, value);
             }
+            else if (expr instanceof Expr.ArrayAccess) {
+                Token name = ((Expr.ArrayAccess)expr).getArray();
+                return new Expr.Assign(name, value);
+            }
 
-            error(equals, "Invalid assignment target.");
+            throw error(equals, "Invalid assignment target.");
         }
 
         return expr;
@@ -581,12 +606,17 @@ public class Parser {
                 case VOID_TYPE:
                 case STRING_TYPE:
                 case FOR:
-                case IF:
                 case WHILE:
                 case INPUT:
                 case OUTPUT:
                 case RETURN:
+                case BREAK:
+                case CONTINUE:
                     return;
+                case IF:
+                    if(previous().getType() != ELSE) {
+                        return;
+                    }
             }
             advance();
         }

@@ -1,20 +1,20 @@
 package com.joklek.fakec.parsing;
 
+import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ParserError;
-import com.joklek.fakec.parsing.nodes.Node;
 
 import java.util.List;
 
 public class ParserResults {
-    private final Node rootNode;
+    private final Stmt.Program rootNode;
     private final List<ParserError> errors;
 
-    public ParserResults(Node rootNode, List<ParserError> errors) {
+    public ParserResults(Stmt.Program rootNode, List<ParserError> errors) {
         this.rootNode = rootNode;
         this.errors = errors;
     }
 
-    public Node getRootNode() {
+    public Stmt.Program getRootNode() {
         return rootNode;
     }
 
