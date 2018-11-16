@@ -1,13 +1,13 @@
 Program    : List<Function> functions
-Function   : TokenType type; Token name; Map<Token,TokenType> params; Block body
+Function   : DataType type; Token name; List<Pair<Token,DataType>> params; Block body
 Block      : List<Stmt> statements
 Return     : Token keyword; Expr value
 Expression : Expr expression
-If         : Map<Expr,Block> branches; Block elseBranch
+If         : List<Pair<Expr,Block>> branches; Block elseBranch
 While      : Expr condition; Block body
 Output     : List<Expr> expressions
 Input      : List<Token> variables
-Var        : TokenType type; Token name; Expr initializer
-Array      : TokenType type; Token name; Expr initializer
+Var        : DataType type; Token name; Expr initializer
+Array      : DataType type; Token name; Expr initializer
 Break      : Token token
 Continue   : Token token

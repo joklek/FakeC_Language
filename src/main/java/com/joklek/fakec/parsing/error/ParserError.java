@@ -13,4 +13,12 @@ public class ParserError extends RuntimeException {
         this.errorMessage = errorMessage;
         this.token = token;
     }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public Token getToken() {
+        return token;
+    }
 }

@@ -90,8 +90,11 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println();
         writer.println("import java.util.List;");
         writer.println("import java.util.Map;");
+        writer.println("import org.apache.commons.lang3.tuple.Pair;");
         writer.println("import com.joklek.fakec.tokens.Token;");
-        writer.println("import com.joklek.fakec.tokens.TokenType;");
+        writer.println("import com.joklek.fakec.parsing.types.DataType;");
+        writer.println("import com.joklek.fakec.parsing.types.OperationType;");
+        writer.println("import com.joklek.fakec.parsing.types.VarType;");
         writer.println();
         writer.println(String.format("public abstract class %s {", baseName));
 

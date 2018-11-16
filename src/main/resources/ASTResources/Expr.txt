@@ -1,7 +1,7 @@
-Binary      : Expr left; Token operator; Expr right
+Binary      : Expr left; OperationType operator; Expr right
 Grouping    : Expr expression
 Literal     : Object value
-Unary       : Token operator; Expr right
+Unary       : OperationType operator; Expr right
 Variable    : Token name
 Assign      : Token name; Expr value
 Call        : Token ident; List<Expr> arguments

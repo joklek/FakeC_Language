@@ -3,8 +3,10 @@ package com.joklek.fakec.parsing;
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ParserError;
+import com.joklek.fakec.parsing.types.*;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
@@ -17,12 +19,17 @@ public class Parser {
     private List<ParserError> errors;
     private int offset;
 
+    private final OperationConverter operationConverter;
+    private final TypeConverter typeConverter;
+
     private static final TokenType[] FUNCTION_TYPES = {STRING_TYPE, FLOAT_TYPE, CHAR_TYPE, INT_TYPE, BOOL_TYPE, VOID_TYPE};
     private static final TokenType[] VARIABLE_TYPES = {STRING_TYPE, FLOAT_TYPE, CHAR_TYPE, INT_TYPE, BOOL_TYPE};
     private static final TokenType[] VARIABLES_OF_TYPE = {STRING, FLOAT, CHAR, INTEGER};
 
-    public Parser(List<Token> tokens) {
+    public Parser(List<Token> tokens, OperationConverter operationConverter, TypeConverter typeConverter) {
         this.tokens = tokens;
+        this.operationConverter = operationConverter;
+        this.typeConverter = typeConverter;
         this.errors = new ArrayList<>();
         this.offset = 0;
     }
@@ -35,7 +42,6 @@ public class Parser {
                 functions.add(parseFunction());
             }
             catch (ParserError e) {
-                errors.add(e);
                 synchronize();
             }
         }
@@ -45,14 +51,15 @@ public class Parser {
 
     // <fn_type_specifier> ["[""]"] <identifier> <fn_params> <block>
     protected Stmt.Function parseFunction() {
-        TokenType type = consume(FUNCTION_TYPES, "Functions should start with type").getType();
-        if(Arrays.asList(VARIABLE_TYPES).contains(type) && match(LEFT_BRACE)) {
+        Token lexerType = consume(FUNCTION_TYPES, "Functions should start with type");
+        DataType type = typeConverter.convertToken(lexerType); // Todo check if null
+        if(Arrays.asList(VARIABLE_TYPES).contains(lexerType) && match(LEFT_BRACE)) {
             consume(RIGHT_BRACE, "Array type functions should not have anything between type braces");
             // TODO: Implement array methods
         }
         Token name = consume(IDENTIFIER, "Expect function name.");
 
-        Map<Token, TokenType> parameters = parseParams();
+        List<Pair<Token, DataType>> parameters = parseParams();
 
         if(!check(CURLY_LEFT) ){
             throw error(current(), "Expect '{' before function body.");
@@ -64,21 +71,19 @@ public class Parser {
 
     // <fn_params> ::= "(" [<parameter> {"," <parameter>}] ")"
     //   <parameter> ::= <variable_type_specifier> <identifier>
-    private Map<Token, TokenType> parseParams() {
+    private List<Pair<Token, DataType>> parseParams() {
         consume(LEFT_PAREN, "Expect '(' after function name.");
-        Map<Token, TokenType> parameters = new HashMap<>();
+        List<Pair<Token, DataType>>  parameters = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
             do {
-                TokenType parameterType = consume(VARIABLE_TYPES, "Parameter should start with type").getType();
+                Token lexerParamType = consume(VARIABLE_TYPES, "Parameter should start with type");
+                DataType dataType = typeConverter.convertToken(lexerParamType); // todo check if null
                 if(match(LEFT_BRACE)) {
                     consume(RIGHT_BRACE, "Array type functions should not have anything between type braces");
                     // TODO: Implement array methods
                 }
                 Token parameterName = consume(IDENTIFIER, "Expect parameter name.");
-                if(parameters.containsKey(parameterName)) {
-                    throw error(parameterName, String.format("Function parameter names should be unique, but '%s' is repeated", parameterName.getLexeme()));
-                }
-                parameters.put(parameterName, parameterType);
+                parameters.add(Pair.of(parameterName, dataType));
             } while (match(COMMA));
         }
         consume(RIGHT_PAREN, "Expect ')' after function parameters.");
@@ -96,7 +101,6 @@ public class Parser {
                 statements.add(parseStatement());
             }
             catch (ParserError e) {
-                errors.add(e);
                 synchronize();
             }
         }
@@ -140,7 +144,8 @@ public class Parser {
 
     // <atomic_declaration> ::= <type_atomic_specifier> <identifier> ["=" <expression>] {, <identifier> ["=" <expression>]}
     protected Stmt parseVarDecStmt() {
-        TokenType type = consume(VARIABLE_TYPES, "Expect variable type.").getType();
+        Token tokenType = consume(VARIABLE_TYPES, "Expect variable type.");
+        DataType type = typeConverter.convertToken(tokenType);
         if(check(LEFT_BRACE)) {
             return parseArrayDecStmt(type);
         }
@@ -172,7 +177,7 @@ public class Parser {
     }
 
     // <array_declaration>  ::= <type_atomic_specifier> "[" "]" <identifier> ("["<expression>"]" | "=" <expression>)
-    private Stmt parseArrayDecStmt(TokenType type) {
+    private Stmt parseArrayDecStmt(DataType type) {
         consume(LEFT_BRACE);
         consume(RIGHT_BRACE, "Right brace should follow left brace in array declaration.");
         Token name = consume(IDENTIFIER, "Expect variable name.");
@@ -278,14 +283,14 @@ public class Parser {
 
     protected Stmt ifStatement() {
         consume(IF);
-        Map<Expr, Stmt.Block> branches = new HashMap<>();
+        List<Pair<Expr, Stmt.Block>> branches = new ArrayList<>();
 
         consume(LEFT_PAREN, "Expect '(' after 'if'.");
         Expr condition = parseExpression();
         consume(RIGHT_PAREN, "Expect ')' after if condition.");
 
         Stmt.Block thenBranch = parseBlock();
-        branches.put(condition, thenBranch);
+        branches.add(Pair.of(condition, thenBranch));
 
         Stmt.Block elseBranch = null;
 
@@ -296,7 +301,7 @@ public class Parser {
             condition = parseExpression();
             consume(RIGHT_PAREN, "Expect ')' after if condition.");
             thenBranch = parseBlock();
-            branches.put(condition, thenBranch);
+            branches.add(Pair.of(condition, thenBranch));
         }
         if (match(ELSE)) {
             elseBranch = parseBlock();
@@ -341,17 +346,17 @@ public class Parser {
 
     // <expression> ::= <term4> {<or_op> <term4>}
     protected Expr parseExpression() {
-        return assignment();
+        return parseAssignment();
     }
 
 
     // TOOD FIX BNF
-    protected Expr assignment() {
+    protected Expr parseAssignment() {
         Expr expr = parseOr();
 
         if (match(EQUAL, PLUS_EQUAL, MINUS_EQUAL, MUL_EQUAL, DIV_EQUAL, MOD_EQUAL)) {
             Token equals = previous();
-            Expr value = assignment();
+            Expr value = parseAssignment();
 
             if (expr instanceof Expr.Variable) {
                 Token name = ((Expr.Variable)expr).getName();
@@ -373,7 +378,7 @@ public class Parser {
         Expr expr = parseAnd();
 
         while (match(OR)) {
-            Token operator = previous();
+            OperationType operator = operationConverter.convertToken(previous());
             Expr right = parseAnd();
             expr = new Expr.Binary(expr, operator, right);
         }
@@ -386,7 +391,7 @@ public class Parser {
         Expr expr = parseEquality();
 
         while (match(AND)) {
-            Token operator = previous();
+            OperationType operator = operationConverter.convertToken(previous());
             Expr right = parseEquality();
             expr = new Expr.Binary(expr, operator, right);
         }
@@ -399,7 +404,7 @@ public class Parser {
         Expr expr = parseComparison();
 
         while (match(NOT_EQUAL, EQUAL_EQUAL)) {
-            Token operator = previous();
+            OperationType operator = operationConverter.convertToken(previous());
             Expr right = parseComparison();
             expr = new Expr.Binary(expr, operator, right);
         }
@@ -412,7 +417,7 @@ public class Parser {
         Expr expr = parseAddition();
 
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
-            Token operator = previous();
+            OperationType operator = operationConverter.convertToken(previous());
             Expr right = parseAddition();
             expr = new Expr.Binary(expr, operator, right);
         }
@@ -425,7 +430,7 @@ public class Parser {
         Expr expr = parseMultiplication();
 
         while (match(MINUS, PLUS)) {
-            Token operator = previous();
+            OperationType operator = operationConverter.convertToken(previous());
             Expr right = parseMultiplication();
             expr = new Expr.Binary(expr, operator, right);
         }
@@ -439,7 +444,7 @@ public class Parser {
         Expr expr = parsePrefixExpr();
 
         while (match(SLASH, STAR, MOD)) {
-            Token operator = previous();
+            OperationType operator = operationConverter.convertToken(previous());
             //Expr right = parsePostfixExpr();
             Expr right = parsePrefixExpr();
             expr = new Expr.Binary(expr, operator, right);
@@ -448,7 +453,8 @@ public class Parser {
         return expr;
     }
 
-    // TODO
+    // TODO inject statement?
+    // or do this in other steps, not now
     /*//<term_postfix> ::= <expression> <inc_dec_op> | <prefix_term>
     protected Expr parsePostfixExpr() {
         if(peekType() == INC || peekType() == DEC) {
@@ -460,12 +466,14 @@ public class Parser {
         return parsePrefixExpr();
     }*/
 
+    // TODO inject statement?
     // ++i ::=
     private Expr parsePrefixExpr() {
         if(match(INC, DEC) && check(IDENTIFIER)) {
             TokenType type = previous().getType() == INC ? PLUS : MINUS;
+            OperationType operator = operationConverter.convertToken(previous());
             Token identifier = consume(IDENTIFIER, "An identifier should follow a prefix operator");
-            return new Expr.Assign(identifier, new Expr.Binary(new Expr.Variable(identifier), new Token(type, identifier.getLine()), new Expr.Literal(1)));
+            return new Expr.Assign(identifier, new Expr.Binary(new Expr.Variable(identifier), operator, new Expr.Literal(1)));
         }
         return parseNotExpr();
     }
@@ -473,7 +481,8 @@ public class Parser {
     private Expr parseNotExpr() {
         Expr expr = null;
         while(match(NOT)) {
-            expr = new Expr.Unary(previous(), parseNotExpr());
+            OperationType operator = operationConverter.convertToken(previous());
+            expr = new Expr.Unary(operator, parseNotExpr());
         }
         if (expr != null) {
             return expr;
@@ -484,7 +493,7 @@ public class Parser {
     //<termUnary>  ::=  <sign_op> <element> | <element>
     protected Expr unary() {
         if (match(NOT, MINUS, PLUS)) {
-            Token operator = previous();
+            OperationType operator = operationConverter.convertToken(previous());
             //Expr right = unary();
             Expr right = parseElement();
             return new Expr.Unary(operator, right);
@@ -583,7 +592,6 @@ public class Parser {
     private ParserError error(Token token, String message) {
         ParserError error = new ParserError(message, token);
         errors.add(error);
-        com.joklek.fakec.Compiler.error(token, message);
         return error;
     }
 

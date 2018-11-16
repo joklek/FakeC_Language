@@ -2,8 +2,10 @@ package com.joklek.fakec.parsing;
 
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
+import com.joklek.fakec.parsing.types.DataType;
+import com.joklek.fakec.parsing.types.VarType;
 import com.joklek.fakec.tokens.Token;
-import com.joklek.fakec.tokens.TokenType;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +26,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         String right = buildBranch("Right: ", expr.getRight());
         return String.format("BinaryExpr(%s):%n" +
                                "%s" +
-                               "%s", expr.getOperator().getType(), left, right);
+                               "%s", expr.getOperator(), left, right);
     }
 
     @Override
@@ -48,7 +50,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
         String output = String.format("UnaryExpr(%s):%n" +
-                                      "Right: ", expr.getOperator().getType());
+                                      "Right: ", expr.getOperator());
         return buildBranch(output, expr.getRight());
     }
 
@@ -97,10 +99,10 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitFunctionStmt(Stmt.Function stmt) {
-        Map<Token, TokenType> params = stmt.getParams();
+        List<Pair<Token, DataType>> params = stmt.getParams();
         int count = 0;
         StringBuilder paramsInfo = new StringBuilder();
-        for(Map.Entry<Token, TokenType> param: params.entrySet()) {
+        for(Pair<Token, DataType> param: params) {
             paramsInfo.append(String.format("PARAM[%d]%n", count));
             String paramInfo = String.format("Name: %s%n" +
                     "Type: %s%n", param.getKey().getLexeme(), param.getValue());
@@ -131,11 +133,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitIfStmt(Stmt.If stmt) {
-        Map<Expr, Stmt.Block> branches = stmt.getBranches();
+        List<Pair<Expr, Stmt.Block>> branches = stmt.getBranches();
 
         StringBuilder builder = new StringBuilder(String.format("IF:%n"));
         int position = 0;
-        for (Map.Entry<Expr, Stmt.Block> conditionAndBody : branches.entrySet()) {
+        for (Pair<Expr, Stmt.Block> conditionAndBody : branches) {
             String condition = buildBranch("Condition: ", conditionAndBody.getKey());
             String body = conditionAndBody.getValue().getStatements().isEmpty() ? "Body:" + System.lineSeparator() : buildBranch("Body: ", conditionAndBody.getValue());
             String branchInfo = String.format("Branch[%d]: %n" +
