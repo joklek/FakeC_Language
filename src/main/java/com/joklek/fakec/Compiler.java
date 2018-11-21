@@ -38,7 +38,7 @@ public class Compiler {
         if (token.getType() == TokenType.EOF) {
             report(token.getLine(), " at end", message);
         } else {
-            report(token.getLine(), " at '" + token.getLexeme() + "'", message);
+            report(token.getLine(), "source.txt"," at '" + token.getLexeme() + "'", message);
         }
     }
 

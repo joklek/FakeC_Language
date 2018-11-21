@@ -52,10 +52,13 @@ public class Parser {
     // <fn_type_specifier> ["[""]"] <identifier> <fn_params> <block>
     protected Stmt.Function parseFunction() {
         Token lexerType = consume(FUNCTION_TYPES, "Functions should start with type");
-        DataType type = typeConverter.convertToken(lexerType); // Todo check if null
-        if(Arrays.asList(VARIABLE_TYPES).contains(lexerType) && match(LEFT_BRACE)) {
+        DataType type = typeConverter.convertToken(lexerType);
+        if(Arrays.asList(VARIABLE_TYPES).contains(lexerType.getType()) && match(LEFT_BRACE)) {
             consume(RIGHT_BRACE, "Array type functions should not have anything between type braces");
             // TODO: Implement array methods
+            // type should be set by a parseType method, which should analyze the array part also.
+            // Array and normal types should be somehow linked, so having simple enums is not viable
+            // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa
         }
         Token name = consume(IDENTIFIER, "Expect function name.");
 
@@ -147,6 +150,7 @@ public class Parser {
         Token tokenType = consume(VARIABLE_TYPES, "Expect variable type.");
         DataType type = typeConverter.convertToken(tokenType);
         if(check(LEFT_BRACE)) {
+            // should use new parseType method, and if return value is an array, then should parse array
             return parseArrayDecStmt(type);
         }
 
@@ -441,39 +445,41 @@ public class Parser {
     // <term0> ::= <term_postfix> {<mul_div_op> <term_postfix>}
     protected Expr parseMultiplication() {
         //Expr expr = parsePostfixExpr();
-        Expr expr = parsePrefixExpr();
+        Expr expr = parsePostfixExpr();
 
         while (match(SLASH, STAR, MOD)) {
             OperationType operator = operationConverter.convertToken(previous());
             //Expr right = parsePostfixExpr();
-            Expr right = parsePrefixExpr();
+            Expr right = parsePostfixExpr();
             expr = new Expr.Binary(expr, operator, right);
         }
 
         return expr;
     }
 
-    // TODO inject statement?
-    // or do this in other steps, not now
-    /*//<term_postfix> ::= <expression> <inc_dec_op> | <prefix_term>
+    // TODO cleanup
+    //<term_postfix> ::= <expression> <inc_dec_op> | <prefix_term>
     protected Expr parsePostfixExpr() {
-        if(peekType() == INC || peekType() == DEC) {
-            return new Expr.Assign(current(), new Expr.Binary(new Expr.Variable(current()), new Token(PLUS, current().getLine()), new Expr.Literal(1)));
+        Expr expression = parsePrefixExpr();
+        if(expression instanceof Expr.Unary) {
+            OperationType operator = ((Expr.Unary) expression).getOperator();
+            if(operator != OperationType.INC_PRE && operator != OperationType.DEC_PRE && match(INC, DEC)) {
+                OperationType type = previous().getType() == INC ? OperationType.INC_POST : OperationType.DEC_POST;
+                return new Expr.Unary(type, expression);
+            }
         }
-        else if(peekType() == DEC) {
-            return new Expr.Assign(current(), new Expr.Binary(new Expr.Variable(current()), new Token(MINUS, current().getLine()), new Expr.Literal(1)));
+        if(match(INC, DEC)) {
+            OperationType type = previous().getType() == INC ? OperationType.INC_POST : OperationType.DEC_POST;
+            return new Expr.Unary(type, expression);
         }
-        return parsePrefixExpr();
-    }*/
+        return expression;
+    }
 
-    // TODO inject statement?
     // ++i ::=
     private Expr parsePrefixExpr() {
-        if(match(INC, DEC) && check(IDENTIFIER)) {
-            TokenType type = previous().getType() == INC ? PLUS : MINUS;
-            OperationType operator = operationConverter.convertToken(previous());
-            Token identifier = consume(IDENTIFIER, "An identifier should follow a prefix operator");
-            return new Expr.Assign(identifier, new Expr.Binary(new Expr.Variable(identifier), operator, new Expr.Literal(1)));
+        if(match(INC, DEC)) {
+            OperationType type = previous().getType() == INC ? OperationType.INC_PRE : OperationType.DEC_PRE;
+            return new Expr.Unary(type, parseElement());
         }
         return parseNotExpr();
     }

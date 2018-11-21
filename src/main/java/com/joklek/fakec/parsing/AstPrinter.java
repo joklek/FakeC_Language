@@ -3,12 +3,10 @@ package com.joklek.fakec.parsing;
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.types.DataType;
-import com.joklek.fakec.parsing.types.VarType;
 import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
-import java.util.Map;
 
 public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 

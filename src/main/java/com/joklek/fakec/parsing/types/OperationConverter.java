@@ -20,6 +20,7 @@ public class OperationConverter implements TokenConverter<OperationType> {
         this.operationTokenMap.put(MINUS, OperationType.SUB);
         this.operationTokenMap.put(MOD, OperationType.MOD);
         this.operationTokenMap.put(NOT, OperationType.NOT);
+
         this.operationTokenMap.put(LESS, OperationType.LESS);
         this.operationTokenMap.put(LESS_EQUAL, OperationType.LESS_EQUAL);
         this.operationTokenMap.put(GREATER, OperationType.GREATER);
@@ -27,6 +28,7 @@ public class OperationConverter implements TokenConverter<OperationType> {
         this.operationTokenMap.put(EQUAL, OperationType.EQUAL);
         this.operationTokenMap.put(EQUAL_EQUAL, OperationType.EQUAL_EQUAL);
         this.operationTokenMap.put(NOT_EQUAL, OperationType.NOT_EQUAL);
+
         this.operationTokenMap.put(PLUS_EQUAL, OperationType.PLUS_EQUAL);
         this.operationTokenMap.put(MINUS_EQUAL, OperationType.MINUS_EQUAL);
         this.operationTokenMap.put(MUL_EQUAL, OperationType.MUL_EQUAL);
