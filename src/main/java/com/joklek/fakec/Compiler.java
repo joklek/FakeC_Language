@@ -4,6 +4,7 @@ import com.joklek.fakec.lexing.Lexer;
 import com.joklek.fakec.parsing.AstPrinter;
 import com.joklek.fakec.parsing.Parser;
 import com.joklek.fakec.parsing.ParserResults;
+import com.joklek.fakec.parsing.ScopeResolver;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ParserError;
 import com.joklek.fakec.parsing.types.OperationConverter;
@@ -23,6 +24,7 @@ public class Compiler {
 
         OperationConverter operationConverter = new OperationConverter();
         TypeConverter typeConverter = new TypeConverter();
+        // TODO work with more files than one
         Parser parser = new Parser(tokensForFile.get(filename), operationConverter, typeConverter);
         ParserResults results = parser.parseProgram();
         List<ParserError> errors = results.getErrors();
@@ -32,6 +34,9 @@ public class Compiler {
         for(ParserError error: errors) {
             error(error.getToken(), error.getErrorMessage(), filename);
         }
+
+        ScopeResolver scopeResolver = new ScopeResolver();
+        scopeResolver.visitProgramStmt(program);
     }
 
     private static void error(Token token, String message, String filename) {

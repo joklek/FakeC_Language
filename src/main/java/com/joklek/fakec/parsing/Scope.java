@@ -27,16 +27,26 @@ public class Scope {
         this.members = new HashMap<>();
     }
 
-    public void add(String name,Node node) {
+    /**
+     * Adds a name to scope
+     * @param name name of variable, function or etc.
+     * @param node the node of provided name
+     */
+    public ScopeError add(String name, Node node) {
         if(members.containsKey(name)) {
-            throw new ScopeError("Duplicate name found in scope", name);
+            return new ScopeError("Duplicate name found in scope", name);
         }
         else {
             members.put(name, node);
         }
+        return null;
     }
 
-
+    /**
+     * Resolve scope for name. Returns node for given name if it exists. Else throws {@link ScopeError}
+     * @param name name to be resolved
+     * @return node of resolved name
+     */
     public Node resolve(String name) {
         if(members.containsKey(name)) {
             return members.get(name);
