@@ -131,7 +131,7 @@ public class Parser {
             case WHILE:
                 return parseWhile();
             case FOR:
-                return forStatement();
+                return parseForStatement();
             case IF:
                 return ifStatement();
             case INPUT:
@@ -229,7 +229,7 @@ public class Parser {
         return new Stmt.Return(keyword, value);
     }
 
-    protected Stmt forStatement() {
+    protected Stmt parseForStatement() {
         consume(FOR);
         consume(LEFT_PAREN, "Expect '(' after 'for'.");
 

@@ -1,11 +1,13 @@
 package com.joklek.fakec.parsing.error;
 
+import com.joklek.fakec.tokens.Token;
+
 public class ScopeError extends RuntimeException {
 
     private String errorMessage;
-    private String erroneousName;
+    private Token erroneousName;
 
-    public ScopeError(String errorMessage, String erroneousName) {
+    public ScopeError(String errorMessage, Token erroneousName) {
         this.errorMessage = errorMessage;
         this.erroneousName = erroneousName;
     }
@@ -14,7 +16,7 @@ public class ScopeError extends RuntimeException {
         return errorMessage;
     }
 
-    public String getErroneousName() {
+    public Token getErroneousName() {
         return erroneousName;
     }
 }

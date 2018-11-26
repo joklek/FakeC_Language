@@ -1,12 +1,10 @@
 package com.joklek.fakec;
 
 import com.joklek.fakec.lexing.Lexer;
-import com.joklek.fakec.parsing.AstPrinter;
-import com.joklek.fakec.parsing.Parser;
-import com.joklek.fakec.parsing.ParserResults;
-import com.joklek.fakec.parsing.ScopeResolver;
+import com.joklek.fakec.parsing.*;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ParserError;
+import com.joklek.fakec.parsing.error.ScopeError;
 import com.joklek.fakec.parsing.types.OperationConverter;
 import com.joklek.fakec.parsing.types.TypeConverter;
 import com.joklek.fakec.tokens.Token;
@@ -32,14 +30,26 @@ public class Compiler {
         System.out.println(new AstPrinter().print(program));
 
         for(ParserError error: errors) {
-            error(error.getToken(), error.getErrorMessage(), filename);
+            error(error, filename);
         }
 
         ScopeResolver scopeResolver = new ScopeResolver();
-        scopeResolver.visitProgramStmt(program);
+        List<ScopeError> scopeErrors = scopeResolver.resolveNames(program, new Scope());
+
+        for(ScopeError error: scopeErrors) {
+            error(error, filename);
+        }
     }
 
-    private static void error(Token token, String message, String filename) {
+    private static void error(ScopeError error, String filename) {
+        Token token = error.getErroneousName();
+        String message = error.getErrorMessage();
+        report(token.getLine(), filename," at '" + token.getLexeme() + "'", message); // + " : " + error.getErroneousName().getLexeme());
+    }
+
+    private static void error(ParserError error, String filename) {
+        Token token = error.getToken();
+        String message = error.getErrorMessage();
         if (token.getType() == TokenType.EOF) {
             report(token.getLine(), filename," at end", message);
         } else {

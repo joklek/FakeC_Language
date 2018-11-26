@@ -1,14 +1,17 @@
 package com.joklek.fakec.parsing;
 
 import com.joklek.fakec.parsing.error.ScopeError;
-import com.joklek.fakec.parsing.types.Node;
+import com.joklek.fakec.parsing.types.DataType;
+import com.joklek.fakec.tokens.Token;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Scope {
 
+    // TODO discern between variable and function
     private final Scope parentScope;
-    private final Map<String, Node> members;
+    private final Map<Token, DataType> members;
 
     /**
      * Creates a scope with a provided parent scope
@@ -32,8 +35,8 @@ public class Scope {
      * @param name name of variable, function or etc.
      * @param node the node of provided name
      */
-    public ScopeError add(String name, Node node) {
-        if(members.containsKey(name)) {
+    public ScopeError add(Token name, DataType node) {
+        if(containsName(name)) {
             return new ScopeError("Duplicate name found in scope", name);
         }
         else {
@@ -47,8 +50,8 @@ public class Scope {
      * @param name name to be resolved
      * @return node of resolved name
      */
-    public Node resolve(String name) {
-        if(members.containsKey(name)) {
+    public DataType resolve(Token name) {
+        if(containsName(name)) {
             return members.get(name);
         }
         else if (parentScope != null) {
@@ -57,5 +60,15 @@ public class Scope {
         else {
             throw new ScopeError("Variable or function not found in current scope", name);
         }
+    }
+
+    // TODO think of better way of doing this
+    private boolean containsName(Token name) {
+        for(Token key: members.keySet()) {
+            if(key.getLexeme().equals(name.getLexeme())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
