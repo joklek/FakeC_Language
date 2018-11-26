@@ -107,9 +107,11 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
 
         // TODO remove duplicate code
         Stmt.Block elseBranch = stmt.getElseBranch();
-        elseBranch.setScope(scope);
-        deepErrors = elseBranch.accept(this);
-        errors.addAll(deepErrors);
+        if(elseBranch != null) {
+            elseBranch.setScope(scope);
+            deepErrors = elseBranch.accept(this);
+            errors.addAll(deepErrors);
+        }
 
         return errors;
     }
@@ -280,16 +282,65 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
 
     @Override
     public List<ScopeError> visitArrayStmt(Stmt.Array stmt) {
-        return null;
+        List<ScopeError> errors = new ArrayList<>();
+        Scope scope = stmt.getScope();
+
+        try {
+            scope.add(stmt.getName(), stmt.getType());
+        }
+        catch (ScopeError e) {
+            errors.add(e);
+        }
+
+        Expr initializer = stmt.getInitializer();
+        if(initializer != null) {
+            initializer.setScope(scope);
+            List<ScopeError> deepErrors = initializer.accept(this);
+            errors.addAll(deepErrors);
+        }
+
+        try {
+            scope.resolve(stmt.getName());
+        }
+        catch (ScopeError e) {
+            errors.add(e);
+        }
+        return errors;
     }
 
     @Override
     public List<ScopeError> visitArrayAccessExpr(Expr.ArrayAccess expr) {
-        return null;
+        Scope scope = expr.getScope();
+
+        Expr offset = expr.getOffset();
+        offset.setScope(scope);
+        List<ScopeError> deepErrors = offset.accept(this);
+        List<ScopeError> errors = new ArrayList<>(deepErrors);
+
+        try {
+            scope.resolve(expr.getArray());
+        }
+        catch (ScopeError e) {
+            errors.add(e);
+        }
+        return errors;
     }
 
     @Override
     public List<ScopeError> visitArrayCreateExpr(Expr.ArrayCreate expr) {
-        return null;
+        Scope scope = expr.getScope();
+
+        Expr offset = expr.getSize();
+        offset.setScope(scope);
+        List<ScopeError> deepErrors = offset.accept(this);
+        List<ScopeError> errors = new ArrayList<>(deepErrors);
+
+        try {
+            scope.resolve(expr.getArray());
+        }
+        catch (ScopeError e) {
+            errors.add(e);
+        }
+        return errors;
     }
 }

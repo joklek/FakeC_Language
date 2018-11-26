@@ -31,7 +31,7 @@ bool ifs(int a, int b, int c, bool d) {
 }
 
 float loops(float _ye) {
-    ye = 0.0;
+    _ye = 0.0;
     float toAdd = 1.0;
     while (_ye != 100.0) {
         _ye = _ye + toAdd;
@@ -96,7 +96,7 @@ bool dividesByTwo(int number) {
         output << a, "\n";
     }
 
-    method(true, 4);
+    ifs(true, 4);
 
     return number % 2 == 0;
 }
