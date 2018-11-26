@@ -56,9 +56,10 @@ public class Parser {
         if(Arrays.asList(VARIABLE_TYPES).contains(lexerType.getType()) && match(LEFT_BRACE)) {
             consume(RIGHT_BRACE, "Array type functions should not have anything between type braces");
             // TODO: Implement array methods
-            // type should be set by a parseType method, which should analyze the array part also.
-            // Array and normal types should be somehow linked, so having simple enums is not viable
-            // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa
+            //   type should be set by a parseType method, which should analyze the array part also.
+            //   Array and normal types should be somehow linked, so having simple enums is not viable
+            //   what if 2d array?
+            //   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa
         }
         Token name = consume(IDENTIFIER, "Expect function name.");
 

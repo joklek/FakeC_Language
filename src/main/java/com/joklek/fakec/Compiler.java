@@ -30,19 +30,19 @@ public class Compiler {
         System.out.println(new AstPrinter().print(program));
 
         for(ParserError error: errors) {
-            error(error.getToken(), error.getErrorMessage());
+            error(error.getToken(), error.getErrorMessage(), filename);
         }
     }
 
-    private static void error(Token token, String message) {
+    private static void error(Token token, String message, String filename) {
         if (token.getType() == TokenType.EOF) {
-            report(token.getLine(), " at end", message);
+            report(token.getLine(), filename," at end", message);
         } else {
-            report(token.getLine(), "source.txt"," at '" + token.getLexeme() + "'", message);
+            report(token.getLine(), filename," at '" + token.getLexeme() + "'", message);
         }
     }
 
-    private static void report(int line, String where, String message) {
-        System.err.println("[line " + line + "] Error" + where + ": " + message);
+    private static void report(int line, String filename, String where, String message) {
+        System.err.printf("%s:%d:error:%s%n", filename, line, "Error" + where + ": " + message);
     }
 }

@@ -95,8 +95,9 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println("import com.joklek.fakec.parsing.types.DataType;");
         writer.println("import com.joklek.fakec.parsing.types.OperationType;");
         writer.println("import com.joklek.fakec.parsing.types.VarType;");
+        writer.println("import com.joklek.fakec.parsing.types.Node;");
         writer.println();
-        writer.println(String.format("public abstract class %s {", baseName));
+        writer.println(String.format("public abstract class %s implements Node {", baseName));
 
         defineVisitor(writer, baseName, types);
 
