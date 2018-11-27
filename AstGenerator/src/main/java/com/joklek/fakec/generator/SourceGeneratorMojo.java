@@ -11,6 +11,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Generates AST nodes
@@ -77,7 +78,7 @@ public class SourceGeneratorMojo extends AbstractMojo {
         }
     }
 
-    private void defineAst(String outputDir, String baseName, List<String> types) throws IOException {
+    private void defineAst(String outputDir, String baseName, List<String> typesOld) throws IOException {
         File file = new File(outputDir, baseName + ".java");
         if(!file.exists()) {
             file.getParentFile().mkdirs();
@@ -101,8 +102,37 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println();
         writer.println(String.format("public abstract class %s implements Node {", baseName));
 
+        List<String> withSetters = new ArrayList<>();
+        for (String line : typesOld) {
+            if (line.charAt(0) == '+') {
+                withSetters.add(line);
+            }
+        }
+
+        List<String> types = new ArrayList<>();
+        for (String line : typesOld) {
+            if (!withSetters.contains(line)) {
+                types.add(line);
+            }
+        }
+
+        for(int i = 0; i < withSetters.size(); i++) {
+            withSetters.set(i, withSetters.get(i).substring(1));
+        }
+
         defineVisitor(writer, baseName, types);
-        defineScope(writer);
+
+
+        List<Field> fieldsWithSetters = new ArrayList<>();
+
+        for (String withSetter : withSetters) {
+            fieldsWithSetters.addAll(extractFields(withSetter));
+        }
+
+        for (Field fieldWithSetter : fieldsWithSetters) {
+            defineScope(fieldWithSetter, writer);
+        }
+
 
         for (String type : types) {
             String[] splitType = type.split(":");
@@ -133,13 +163,13 @@ public class SourceGeneratorMojo extends AbstractMojo {
     }
 
     private void defineVisitor(PrintWriter writer, String baseName, List<String> types) {
-            writer.println("  public interface Visitor<R> {");
-            for (String type : types) {
-                String typeName = type.split(":")[0].trim();
-                writer.println(String.format("    R visit%s%s (%s %s);", typeName, baseName, typeName, baseName.toLowerCase()));
-            }
-            writer.println("  }");
+        writer.println("  public interface Visitor<R> {");
+        for (String type : types) {
+            String typeName = type.split(":")[0].trim();
+            writer.println(String.format("    R visit%s%s (%s %s);", typeName, baseName, typeName, baseName.toLowerCase()));
         }
+        writer.println("  }");
+    }
 
     private void defineType(PrintWriter writer, String baseName, String className, List<Field> fieldList) {
         writer.println(String.format("  public static class %s extends %s {", className, baseName));
@@ -154,9 +184,8 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println("  }");
     }
 
-    private void defineScope(PrintWriter writer) {
-        writer.println("  private Scope scope = null;");
-        Field field = new Field("Scope", "scope");
+    private void defineScope(Field field, PrintWriter writer) {
+        writer.println(String.format("  private %s = null;", field.toString()));
         defineGetter(writer, field);
         defineSetter(writer, field);
     }
@@ -173,7 +202,7 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println(String.format("    public %s(%s) {", className, fieldList));
 
         // Store parameters in fields.
-        for (Field field : fields) { ;
+        for (Field field : fields) {
             writer.println(String.format("      this.%s = %s;", field.getName(), field.getName()));
         }
         writer.println("    }");

@@ -1,3 +1,4 @@
++Scope scope
 Program    : List<Function> functions
 Function   : DataType type; Token name; List<Pair<Token,DataType>> params; Block body
 Block      : List<Stmt> statements

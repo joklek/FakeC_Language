@@ -1,3 +1,4 @@
++Scope scope; DataType type
 Binary      : Expr left; OperationType operator; Expr right
 Grouping    : Expr expression
 Literal     : Object value
