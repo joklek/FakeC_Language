@@ -10,6 +10,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visitor<List<ScopeError>> {
 
@@ -29,8 +30,7 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
             }
         }
         for(Stmt.Function function: stmt.getFunctions()) {
-            function.setScope(scope);
-            List<ScopeError> deepErrors = function.accept(this);
+            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, function);
             errors.addAll(deepErrors);
         }
         return errors;
@@ -48,9 +48,7 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
                 errors.add(error);
             }
         }
-        stmt.getBody().setScope(scope);
-
-        List<ScopeError> deepErrors = stmt.getBody().accept(this);
+        List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, stmt.getBody());
         errors.addAll(deepErrors);
 
         return errors;
@@ -62,8 +60,7 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
 
         Scope scope = new Scope(stmt.getScope());
         for(Stmt statement: stmt.getStatements()) {
-            statement.setScope(scope);
-            List<ScopeError> deepErrors = statement.accept(this);
+            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, statement);
             errors.addAll(deepErrors);
         }
         return errors;
@@ -93,23 +90,17 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
         List<ScopeError> deepErrors;
 
         for (Pair<Expr, Stmt.Block> branch : stmt.getBranches()) {
-            Expr condition = branch.getLeft();
-            Stmt.Block statement = branch.getRight();
-
-            condition.setScope(scope);
-            deepErrors = condition.accept(this);
+            deepErrors = setScopeAndSearchForErrors(scope, branch.getLeft());
             errors.addAll(deepErrors);
 
-            statement.setScope(scope);
-            deepErrors = statement.accept(this);
+            deepErrors = setScopeAndSearchForErrors(scope, branch.getRight());
             errors.addAll(deepErrors);
         }
 
         // TODO remove duplicate code
         Stmt.Block elseBranch = stmt.getElseBranch();
         if(elseBranch != null) {
-            elseBranch.setScope(scope);
-            deepErrors = elseBranch.accept(this);
+            deepErrors = setScopeAndSearchForErrors(scope, elseBranch);
             errors.addAll(deepErrors);
         }
 
@@ -122,14 +113,10 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
         Scope scope = stmt.getScope();
         List<ScopeError> deepErrors;
 
-        Expr condition = stmt.getCondition();
-        condition.setScope(scope);
-        deepErrors = condition.accept(this);
+        deepErrors = setScopeAndSearchForErrors(scope, stmt.getCondition());
         errors.addAll(deepErrors);
 
-        Stmt.Block body = stmt.getBody();
-        body.setScope(scope);
-        deepErrors = body.accept(this);
+        deepErrors = setScopeAndSearchForErrors(scope, stmt.getBody());
         errors.addAll(deepErrors);
 
         return errors;
@@ -140,8 +127,7 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
         List<ScopeError> errors = new ArrayList<>();
         Scope scope = stmt.getScope();
         for (Expr expression : stmt.getExpressions()) {
-            expression.setScope(scope);
-            List<ScopeError> deepErrors = expression.accept(this);
+            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, expression);
             errors.addAll(deepErrors);
         }
         return errors;
@@ -152,13 +138,8 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
         List<ScopeError> errors = new ArrayList<>();
         Scope scope = stmt.getScope();
         for (Token variable : stmt.getVariables()) {
-            // TODO export try catch or think of better logic
-            try {
-                scope.resolve(variable);
-            }
-            catch (ScopeError e) {
-                errors.add(e);
-            }
+            getResolveError(scope, variable)
+                    .ifPresent(error -> errors.add(error));
         }
         return errors;
     }
@@ -171,8 +152,7 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
         Expr initializer = stmt.getInitializer();
         Scope scope = stmt.getScope();
         if(initializer != null) {
-            initializer.setScope(scope);
-            List<ScopeError> deepErrors = initializer.accept(this);
+            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, initializer);
             errors.addAll(deepErrors);
         }
 
@@ -234,12 +214,9 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
     @Override
     public List<ScopeError> visitVariableExpr(Expr.Variable expr) {
         List<ScopeError> errors = new ArrayList<>();
-        try {
-            expr.getScope().resolve(expr.getName());
-        }
-        catch (ScopeError e) {
-            errors.add(e);
-        }
+        getResolveError(expr.getScope(), expr.getName())
+                .ifPresent(error -> errors.add(error));
+
         return errors;
     }
 
@@ -248,12 +225,8 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
         List<ScopeError> errors = new ArrayList<>();
         Scope scope = expr.getScope();
 
-        try {
-            scope.resolve(expr.getName());
-        }
-        catch (ScopeError e) {
-            errors.add(e);
-        }
+        getResolveError(scope, expr.getName())
+                .ifPresent(error -> errors.add(error));
 
         expr.getValue().setScope(scope);
         errors.addAll(expr.getValue().accept(this));
@@ -266,15 +239,11 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
         List<ScopeError> errors = new ArrayList<>();
         Scope scope = expr.getScope();
 
-        try {
-            scope.resolve(expr.getIdent());
-        }
-        catch (ScopeError e) {
-            errors.add(e);
-        }
+        getResolveError(scope, expr.getIdent())
+                .ifPresent(error -> errors.add(error));
+
         for (Expr argument : expr.getArguments()) {
-            argument.setScope(scope);
-            List<ScopeError> deepErrors = argument.accept(this);
+            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, argument);
             errors.addAll(deepErrors);
         }
         return errors;
@@ -285,26 +254,20 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
         List<ScopeError> errors = new ArrayList<>();
         Scope scope = stmt.getScope();
 
-        try {
-            scope.add(stmt.getName(), stmt.getType());
+        ScopeError error = scope.add(stmt.getName(), stmt.getType());
+        if(error != null) {
+            errors.add(error);
         }
-        catch (ScopeError e) {
-            errors.add(e);
-        }
+
 
         Expr initializer = stmt.getInitializer();
         if(initializer != null) {
-            initializer.setScope(scope);
-            List<ScopeError> deepErrors = initializer.accept(this);
+            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, initializer);
             errors.addAll(deepErrors);
         }
 
-        try {
-            scope.resolve(stmt.getName());
-        }
-        catch (ScopeError e) {
-            errors.add(e);
-        }
+        getResolveError(scope, stmt.getName())
+                .ifPresent(resolveError -> errors.add(resolveError));
         return errors;
     }
 
@@ -312,17 +275,11 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
     public List<ScopeError> visitArrayAccessExpr(Expr.ArrayAccess expr) {
         Scope scope = expr.getScope();
 
-        Expr offset = expr.getOffset();
-        offset.setScope(scope);
-        List<ScopeError> deepErrors = offset.accept(this);
+        List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, expr.getOffset());
         List<ScopeError> errors = new ArrayList<>(deepErrors);
 
-        try {
-            scope.resolve(expr.getArray());
-        }
-        catch (ScopeError e) {
-            errors.add(e);
-        }
+        getResolveError(scope, expr.getArray())
+                .ifPresent(error -> errors.add(error));
         return errors;
     }
 
@@ -330,17 +287,30 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
     public List<ScopeError> visitArrayCreateExpr(Expr.ArrayCreate expr) {
         Scope scope = expr.getScope();
 
-        Expr offset = expr.getSize();
-        offset.setScope(scope);
-        List<ScopeError> deepErrors = offset.accept(this);
+        List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, expr.getSize());
         List<ScopeError> errors = new ArrayList<>(deepErrors);
 
-        try {
-            scope.resolve(expr.getArray());
-        }
-        catch (ScopeError e) {
-            errors.add(e);
-        }
+        getResolveError(scope, expr.getArray())
+                .ifPresent(error -> errors.add(error));
         return errors;
+    }
+
+    private List<ScopeError> setScopeAndSearchForErrors(Scope scope, Expr expression) {
+        expression.setScope(scope);
+        return expression.accept(this);
+    }
+
+    private List<ScopeError> setScopeAndSearchForErrors(Scope scope, Stmt statement) {
+        statement.setScope(scope);
+        return statement.accept(this);
+    }
+
+    private Optional<ScopeError> getResolveError(Scope scope, Token token) {
+        try {
+            scope.resolve(token);
+        } catch (ScopeError e) {
+            return Optional.of(e);
+        }
+        return Optional.empty();
     }
 }
