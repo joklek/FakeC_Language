@@ -9,7 +9,6 @@ import java.util.Map;
 
 public class Scope {
 
-    // TODO discern between variable and function
     private final Scope parentScope;
     private final Map<Token, DataType> members;
 
@@ -36,7 +35,8 @@ public class Scope {
      * @param node the node of provided name
      */
     public ScopeError add(Token name, DataType node) {
-        if(containsName(name)) {
+        DataType type = containsName(name);
+        if(type != null) {
             return new ScopeError("Duplicate name found in scope", name);
         }
         else {
@@ -51,8 +51,9 @@ public class Scope {
      * @return node of resolved name
      */
     public DataType resolve(Token name) {
-        if(containsName(name)) {
-            return members.get(name);
+        DataType type = containsName(name);
+        if(type != null) {
+            return type;
         }
         else if (parentScope != null) {
             return parentScope.resolve(name);
@@ -63,12 +64,12 @@ public class Scope {
     }
 
     // TODO think of better way of doing this
-    private boolean containsName(Token name) {
+    private DataType containsName(Token name) {
         for(Token key: members.keySet()) {
             if(key.getLexeme().equals(name.getLexeme())) {
-                return true;
+                return members.get(key);
             }
         }
-        return false;
+        return null;
     }
 }

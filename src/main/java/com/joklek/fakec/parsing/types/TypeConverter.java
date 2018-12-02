@@ -17,9 +17,13 @@ public class TypeConverter implements TokenConverter<DataType> {
     public TypeConverter() {
         this.typeTokenMap = new EnumMap<>(TokenType.class);
         this.typeTokenMap.put(INT_TYPE, DataType.INT);
+        this.typeTokenMap.put(INTEGER, DataType.INT);
         this.typeTokenMap.put(FLOAT_TYPE, DataType.FLOAT);
+        this.typeTokenMap.put(FLOAT, DataType.FLOAT);
         this.typeTokenMap.put(CHAR_TYPE, DataType.CHAR);
+        this.typeTokenMap.put(CHAR, DataType.CHAR);
         this.typeTokenMap.put(STRING_TYPE, DataType.STRING);
+        this.typeTokenMap.put(STRING, DataType.STRING);
         this.typeTokenMap.put(BOOL_TYPE, DataType.BOOL);
         this.typeTokenMap.put(VOID_TYPE, DataType.VOID);
     }

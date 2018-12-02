@@ -8,20 +8,21 @@ import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visitor<List<ScopeError>> {
+@SuppressWarnings({"Convert2MethodRef", "squid:S1612"})
+public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, Stmt.VisitorWithErrors<Void, ScopeError> {
 
     public List<ScopeError> resolveNames(Stmt.Program stmt, Scope scope) {
+        List<ScopeError> errors = new ArrayList<>();
         stmt.setScope(scope);
-        return stmt.accept(this);
+        stmt.accept(this, errors);
+        return errors;
     }
 
     @Override
-    public List<ScopeError> visitProgramStmt(Stmt.Program stmt) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitProgramStmt(Stmt.Program stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
         for(Stmt.Function function: stmt.getFunctions()) {
             ScopeError error = scope.add(function.getName(), function.getType());
@@ -30,15 +31,13 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
             }
         }
         for(Stmt.Function function: stmt.getFunctions()) {
-            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, function);
-            errors.addAll(deepErrors);
+            setScopeAndSearchForErrors(scope, function, errors);
         }
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitFunctionStmt(Stmt.Function stmt) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitFunctionStmt(Stmt.Function stmt, List<ScopeError> errors) {
 
         Scope parentScope = stmt.getScope();
         Scope scope = new Scope(parentScope);
@@ -48,112 +47,91 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
                 errors.add(error);
             }
         }
-        List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, stmt.getBody());
-        errors.addAll(deepErrors);
+        setScopeAndSearchForErrors(scope, stmt.getBody(), errors);
 
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitBlockStmt(Stmt.Block stmt) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitBlockStmt(Stmt.Block stmt, List<ScopeError> errors) {
 
         Scope scope = new Scope(stmt.getScope());
         for(Stmt statement: stmt.getStatements()) {
-            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, statement);
-            errors.addAll(deepErrors);
+            setScopeAndSearchForErrors(scope, statement, errors);
         }
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitReturnStmt(Stmt.Return stmt) {
+    public Void visitReturnStmt(Stmt.Return stmt, List<ScopeError> errors) {
         Expr returnValue = stmt.getValue();
         if(returnValue != null) {
             returnValue.setScope(stmt.getScope());
-            return returnValue.accept(this);
+            returnValue.accept(this, errors);
         }
-        return Collections.emptyList();
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitExpressionStmt(Stmt.Expression stmt) {
+    public Void visitExpressionStmt(Stmt.Expression stmt, List<ScopeError> errors) {
         Expr expression = stmt.getExpression();
         expression.setScope(stmt.getScope());
-        return expression.accept(this);
+        expression.accept(this, errors);
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitIfStmt(Stmt.If stmt) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitIfStmt(Stmt.If stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
-        List<ScopeError> deepErrors;
 
         for (Pair<Expr, Stmt.Block> branch : stmt.getBranches()) {
-            deepErrors = setScopeAndSearchForErrors(scope, branch.getLeft());
-            errors.addAll(deepErrors);
-
-            deepErrors = setScopeAndSearchForErrors(scope, branch.getRight());
-            errors.addAll(deepErrors);
+            setScopeAndSearchForErrors(scope, branch.getLeft(), errors);
+            setScopeAndSearchForErrors(scope, branch.getRight(), errors);
         }
 
-        // TODO remove duplicate code
         Stmt.Block elseBranch = stmt.getElseBranch();
         if(elseBranch != null) {
-            deepErrors = setScopeAndSearchForErrors(scope, elseBranch);
-            errors.addAll(deepErrors);
+            setScopeAndSearchForErrors(scope, elseBranch, errors);
         }
 
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitWhileStmt(Stmt.While stmt) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitWhileStmt(Stmt.While stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
-        List<ScopeError> deepErrors;
+        setScopeAndSearchForErrors(scope, stmt.getCondition(), errors);
+        setScopeAndSearchForErrors(scope, stmt.getBody(), errors);
 
-        deepErrors = setScopeAndSearchForErrors(scope, stmt.getCondition());
-        errors.addAll(deepErrors);
-
-        deepErrors = setScopeAndSearchForErrors(scope, stmt.getBody());
-        errors.addAll(deepErrors);
-
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitOutputStmt(Stmt.Output stmt) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitOutputStmt(Stmt.Output stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
         for (Expr expression : stmt.getExpressions()) {
-            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, expression);
-            errors.addAll(deepErrors);
+            setScopeAndSearchForErrors(scope, expression, errors);
         }
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitInputStmt(Stmt.Input stmt) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitInputStmt(Stmt.Input stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
         for (Token variable : stmt.getVariables()) {
             getResolveError(scope, variable)
                     .ifPresent(error -> errors.add(error));
         }
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitVarStmt(Stmt.Var stmt) {
-        List<ScopeError> errors = new ArrayList<>();
-
+    public Void visitVarStmt(Stmt.Var stmt, List<ScopeError> errors) {
         // Analyze initializer before variable initialization, so it could not be initialized as itself
         Expr initializer = stmt.getInitializer();
         Scope scope = stmt.getScope();
         if(initializer != null) {
-            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, initializer);
-            errors.addAll(deepErrors);
+            setScopeAndSearchForErrors(scope, initializer, errors);
         }
 
         ScopeError error = scope.add(stmt.getName(), stmt.getType());
@@ -161,22 +139,21 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
             errors.add(error);
         }
 
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitBreakStmt(Stmt.Break stmt) {
-        return Collections.emptyList();
+    public Void visitBreakStmt(Stmt.Break stmt, List<ScopeError> errors) {
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitContinueStmt(Stmt.Continue stmt) {
-        return Collections.emptyList();
+    public Void visitContinueStmt(Stmt.Continue stmt, List<ScopeError> errors) {
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitBinaryExpr(Expr.Binary expr) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitBinaryExpr(Expr.Binary expr, List<ScopeError> errors) {
 
         Scope scope = expr.getScope();
         Expr rightExpr = expr.getRight();
@@ -184,74 +161,72 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
         Expr leftExpr = expr.getLeft();
         leftExpr.setScope(scope);
 
-        errors.addAll(leftExpr.accept(this));
-        errors.addAll(rightExpr.accept(this));
+        leftExpr.accept(this, errors);
+        rightExpr.accept(this, errors);
 
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitGroupingExpr(Expr.Grouping expr) {
+    public Void visitGroupingExpr(Expr.Grouping expr, List<ScopeError> errors) {
         Scope scope = expr.getScope();
         Expr expression = expr.getExpression();
         expression.setScope(scope);
-        return expression.accept(this);
+        expression.accept(this, errors);
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitLiteralExpr(Expr.Literal expr) {
-        return Collections.emptyList();
+    public Void visitLiteralExpr(Expr.Literal expr, List<ScopeError> errors) {
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitUnaryExpr(Expr.Unary expr) {
+    public Void visitUnaryExpr(Expr.Unary expr, List<ScopeError> errors) {
         Scope scope = expr.getScope();
         Expr rightExpr = expr.getRight();
         rightExpr.setScope(scope);
-        return rightExpr.accept(this);
+        rightExpr.accept(this, errors);
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitVariableExpr(Expr.Variable expr) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitVariableExpr(Expr.Variable expr, List<ScopeError> errors) {
+
         getResolveError(expr.getScope(), expr.getName())
                 .ifPresent(error -> errors.add(error));
-
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitAssignExpr(Expr.Assign expr) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitAssignExpr(Expr.Assign expr, List<ScopeError> errors) {
         Scope scope = expr.getScope();
 
         getResolveError(scope, expr.getName())
                 .ifPresent(error -> errors.add(error));
 
         expr.getValue().setScope(scope);
-        errors.addAll(expr.getValue().accept(this));
+        expr.getValue().accept(this, errors);
 
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitCallExpr(Expr.Call expr) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitCallExpr(Expr.Call expr, List<ScopeError> errors) {
         Scope scope = expr.getScope();
 
         getResolveError(scope, expr.getIdent())
                 .ifPresent(error -> errors.add(error));
 
         for (Expr argument : expr.getArguments()) {
-            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, argument);
-            errors.addAll(deepErrors);
+            setScopeAndSearchForErrors(scope, argument, errors);
         }
-        return errors;
+
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitArrayStmt(Stmt.Array stmt) {
-        List<ScopeError> errors = new ArrayList<>();
+    public Void visitArrayStmt(Stmt.Array stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
 
         ScopeError error = scope.add(stmt.getName(), stmt.getType());
@@ -262,47 +237,42 @@ public class ScopeResolver implements Expr.Visitor<List<ScopeError>>, Stmt.Visit
 
         Expr initializer = stmt.getInitializer();
         if(initializer != null) {
-            List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, initializer);
-            errors.addAll(deepErrors);
+            setScopeAndSearchForErrors(scope, initializer, errors);
         }
 
         getResolveError(scope, stmt.getName())
                 .ifPresent(resolveError -> errors.add(resolveError));
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitArrayAccessExpr(Expr.ArrayAccess expr) {
+    public Void visitArrayAccessExpr(Expr.ArrayAccess expr, List<ScopeError> errors) {
         Scope scope = expr.getScope();
 
-        List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, expr.getOffset());
-        List<ScopeError> errors = new ArrayList<>(deepErrors);
-
+        setScopeAndSearchForErrors(scope, expr.getOffset(), errors);
         getResolveError(scope, expr.getArray())
                 .ifPresent(error -> errors.add(error));
-        return errors;
+        return null;
     }
 
     @Override
-    public List<ScopeError> visitArrayCreateExpr(Expr.ArrayCreate expr) {
+    public Void visitArrayCreateExpr(Expr.ArrayCreate expr, List<ScopeError> errors) {
         Scope scope = expr.getScope();
 
-        List<ScopeError> deepErrors = setScopeAndSearchForErrors(scope, expr.getSize());
-        List<ScopeError> errors = new ArrayList<>(deepErrors);
-
+        setScopeAndSearchForErrors(scope, expr.getSize(), errors);
         getResolveError(scope, expr.getArray())
                 .ifPresent(error -> errors.add(error));
-        return errors;
+        return null;
     }
 
-    private List<ScopeError> setScopeAndSearchForErrors(Scope scope, Expr expression) {
+    private void setScopeAndSearchForErrors(Scope scope, Expr expression, List<ScopeError> errors) {
         expression.setScope(scope);
-        return expression.accept(this);
+        expression.accept(this, errors);
     }
 
-    private List<ScopeError> setScopeAndSearchForErrors(Scope scope, Stmt statement) {
+    private void setScopeAndSearchForErrors(Scope scope, Stmt statement, List<ScopeError> errors) {
         statement.setScope(scope);
-        return statement.accept(this);
+        statement.accept(this, errors);
     }
 
     private Optional<ScopeError> getResolveError(Scope scope, Token token) {

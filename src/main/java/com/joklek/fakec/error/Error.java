@@ -1,7 +1,7 @@
 package com.joklek.fakec.error;
 
-public interface Error {
+public abstract class Error extends RuntimeException{
 
-    String getErrorMessage();
-    int getLine();
+    public abstract String getErrorMessage();
+    public abstract int getLine();
 }

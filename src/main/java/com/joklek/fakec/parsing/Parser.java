@@ -42,6 +42,7 @@ public class Parser {
                 functions.add(parseFunction());
             }
             catch (ParserError e) {
+                errors.add(e);
                 synchronize();
             }
         }
@@ -105,6 +106,7 @@ public class Parser {
                 statements.add(parseStatement());
             }
             catch (ParserError e) {
+                errors.add(e);
                 synchronize();
             }
         }
@@ -131,9 +133,9 @@ public class Parser {
             case WHILE:
                 return parseWhile();
             case FOR:
-                return parseForStatement();
+                return parseForStmt();
             case IF:
-                return ifStatement();
+                return parseIfStmt();
             case INPUT:
                 return parseInput();
             case OUTPUT:
@@ -229,7 +231,7 @@ public class Parser {
         return new Stmt.Return(keyword, value);
     }
 
-    protected Stmt parseForStatement() {
+    protected Stmt parseForStmt() {
         consume(FOR);
         consume(LEFT_PAREN, "Expect '(' after 'for'.");
 
@@ -265,6 +267,7 @@ public class Parser {
         // if condition
         if (condition == null) {
             condition = new Expr.Literal(true);
+            condition.setType(DataType.BOOL);
         }
         Stmt.While whileLoop = new Stmt.While(condition, body);
 
@@ -286,7 +289,7 @@ public class Parser {
         return new Stmt.While(condition, body);
     }
 
-    protected Stmt ifStatement() {
+    protected Stmt parseIfStmt() {
         consume(IF);
         List<Pair<Expr, Stmt.Block>> branches = new ArrayList<>();
 
@@ -494,11 +497,11 @@ public class Parser {
         if (expr != null) {
             return expr;
         }
-        return unary();
+        return parseUnary();
     }
 
     //<termUnary>  ::=  <sign_op> <element> | <element>
-    protected Expr unary() {
+    protected Expr parseUnary() {
         if (match(NOT, MINUS, PLUS)) {
             OperationType operator = operationConverter.convertToken(previous());
             //Expr right = unary();
@@ -512,13 +515,19 @@ public class Parser {
     // <element> ::= "(" <expression> ")" | <identifier> | <type_value> | <function_call> | <array_access>
     protected Expr parseElement() {
         if (match(FALSE)) {
-            return new Expr.Literal(false);
+            Expr.Literal literal = new Expr.Literal(false);
+            literal.setType(DataType.BOOL);
+            return literal;
         }
         if (match(TRUE)) {
-            return new Expr.Literal(true);
+            Expr.Literal literal = new Expr.Literal(true);
+            literal.setType(DataType.BOOL);
+            return literal;
         }
         if (match(NULL)) {
-            return new Expr.Literal(null);
+            Expr.Literal literal = new Expr.Literal(null);
+            literal.setType(DataType.NULL);
+            return literal;
         }
         if (match(IDENTIFIER)) {
             Token identifier = previous();
@@ -535,7 +544,10 @@ public class Parser {
         }
 
         if (match(VARIABLES_OF_TYPE)) {
-            return new Expr.Literal(previous().getLiteral());
+            DataType type = typeConverter.convertToken(previous());
+            Expr.Literal literal = new Expr.Literal(previous().getLiteral());
+            literal.setType(type);
+            return literal;
         }
 
         if (match(LEFT_PAREN)) {
@@ -598,7 +610,7 @@ public class Parser {
 
     private ParserError error(Token token, String message) {
         ParserError error = new ParserError(message, token);
-        errors.add(error);
+        //errors.add(error);
         return error;
     }
 

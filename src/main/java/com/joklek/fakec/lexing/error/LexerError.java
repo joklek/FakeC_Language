@@ -2,7 +2,7 @@ package com.joklek.fakec.lexing.error;
 
 import com.joklek.fakec.error.Error;
 
-public class LexerError implements Error {
+public class LexerError extends Error {
 
     private String errorMessage;
     private int line;

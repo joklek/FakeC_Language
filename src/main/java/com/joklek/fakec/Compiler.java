@@ -5,11 +5,13 @@ import com.joklek.fakec.parsing.*;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ParserError;
 import com.joklek.fakec.parsing.error.ScopeError;
+import com.joklek.fakec.parsing.error.TypeError;
 import com.joklek.fakec.parsing.types.OperationConverter;
 import com.joklek.fakec.parsing.types.TypeConverter;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,11 +35,20 @@ public class Compiler {
             error(error, filename);
         }
 
+        // TODO methods vs variables
         ScopeResolver scopeResolver = new ScopeResolver();
         List<ScopeError> scopeErrors = scopeResolver.resolveNames(program, new Scope());
 
         for(ScopeError error: scopeErrors) {
             error(error, filename);
+        }
+
+        TypeChecker typeChecker = new TypeChecker();
+        List<TypeError> typeErrors = new ArrayList<>();
+        typeChecker.visitProgramStmt(program, typeErrors);
+
+        for (TypeError typeError : typeErrors) {
+            error(typeError, filename);
         }
     }
 
@@ -45,6 +56,12 @@ public class Compiler {
         Token token = error.getErroneousName();
         String message = error.getErrorMessage();
         report(token.getLine(), filename," at '" + token.getLexeme() + "'", message); // + " : " + error.getErroneousName().getLexeme());
+    }
+
+    private static void error(TypeError error, String filename) {
+        //Token token = error.getErroneousName();
+        String message = error.getErrorMessage();
+        report(-1, filename," at '" + "ERROR" + "'", message); // + " : " + error.getErroneousName().getLexeme());
     }
 
     private static void error(ParserError error, String filename) {

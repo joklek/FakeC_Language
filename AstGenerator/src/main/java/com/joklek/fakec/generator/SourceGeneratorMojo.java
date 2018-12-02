@@ -93,6 +93,7 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println("import java.util.List;");
         writer.println("import java.util.Map;");
         writer.println("import org.apache.commons.lang3.tuple.Pair;");
+        writer.println("import com.joklek.fakec.error.Error;");
         writer.println("import com.joklek.fakec.tokens.Token;");
         writer.println("import com.joklek.fakec.parsing.types.DataType;");
         writer.println("import com.joklek.fakec.parsing.types.OperationType;");
@@ -121,7 +122,7 @@ public class SourceGeneratorMojo extends AbstractMojo {
         }
 
         defineVisitor(writer, baseName, types);
-
+        defineVisitorWithError(writer, baseName, types);
 
         List<Field> fieldsWithSetters = new ArrayList<>();
 
@@ -148,6 +149,9 @@ public class SourceGeneratorMojo extends AbstractMojo {
         // The base accept() method.
         writer.println();
         writer.println("  public abstract <R> R accept(Visitor<R> visitor);");
+        // accept() with error propagation
+        writer.println();
+        writer.println("  public abstract <R, E extends Error> R accept(VisitorWithErrors<R, E> visitor, List<E> errors);");
 
         writer.println("}");
         writer.close();
@@ -171,6 +175,15 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println("  }");
     }
 
+    private void defineVisitorWithError(PrintWriter writer, String baseName, List<String> types) {
+        writer.println("  public interface VisitorWithErrors<R, E extends Error> {");
+        for (String type : types) {
+            String typeName = type.split(":")[0].trim();
+            writer.println(String.format("    R visit%s%s (%s %s, List<E> errors);", typeName, baseName, typeName, baseName.toLowerCase()));
+        }
+        writer.println("  }");
+    }
+
     private void defineType(PrintWriter writer, String baseName, String className, List<Field> fieldList) {
         writer.println(String.format("  public static class %s extends %s {", className, baseName));
         writer.println();
@@ -180,6 +193,7 @@ public class SourceGeneratorMojo extends AbstractMojo {
         defineGetters(writer, fieldList);
 
         defineAccept(writer, baseName, className);
+        defineAcceptWithError(writer, baseName, className);
 
         writer.println("  }");
     }
@@ -232,6 +246,12 @@ public class SourceGeneratorMojo extends AbstractMojo {
     private void defineAccept(PrintWriter writer, String baseName, String className) {
         writer.println("    public <R> R accept(Visitor<R> visitor) {");
         writer.println(String.format("      return visitor.visit%s%s(this);", className, baseName));
+        writer.println("    }");
+    }
+
+    private void defineAcceptWithError(PrintWriter writer, String baseName, String className) {
+        writer.println("    public <R, E extends Error> R accept(VisitorWithErrors<R, E> visitor, List<E> errors) {");
+        writer.println(String.format("      return visitor.visit%s%s(this, errors);", className, baseName));
         writer.println("    }");
     }
 
