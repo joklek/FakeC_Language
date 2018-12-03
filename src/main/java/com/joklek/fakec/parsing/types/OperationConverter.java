@@ -34,6 +34,9 @@ public class OperationConverter implements TokenConverter<OperationType> {
         this.operationTokenMap.put(MUL_EQUAL, OperationType.MUL_EQUAL);
         this.operationTokenMap.put(DIV_EQUAL, OperationType.DIV_EQUAL);
         this.operationTokenMap.put(MOD_EQUAL, OperationType.MOD_EQUAL);
+
+        this.operationTokenMap.put(AND, OperationType.AND);
+        this.operationTokenMap.put(OR, OperationType.AND);
     }
 
     @Override
