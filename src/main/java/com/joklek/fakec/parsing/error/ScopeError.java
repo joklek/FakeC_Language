@@ -19,7 +19,7 @@ public class ScopeError extends Error {
 
     @Override
     public int getLine() {
-        return -1;
+        return erroneousName.getLine();
     }
 
     public Token getErroneousName() {

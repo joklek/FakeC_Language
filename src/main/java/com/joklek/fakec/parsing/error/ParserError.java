@@ -1,8 +1,6 @@
 package com.joklek.fakec.parsing.error;
 
-import com.joklek.fakec.error.Error;
 import com.joklek.fakec.tokens.Token;
-import com.joklek.fakec.tokens.TokenType;
 
 public class ParserError extends RuntimeException {
 

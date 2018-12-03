@@ -7,8 +7,6 @@ import com.joklek.fakec.tokens.TokenType;
 import java.util.EnumMap;
 
 import static com.joklek.fakec.tokens.TokenType.*;
-import static com.joklek.fakec.tokens.TokenType.BOOL_TYPE;
-import static com.joklek.fakec.tokens.TokenType.VOID_TYPE;
 
 public class TypeConverter implements TokenConverter<DataType> {
 
@@ -34,6 +32,7 @@ public class TypeConverter implements TokenConverter<DataType> {
         if(dataType == null) {
             throw new ParserError(String.format("Data type %s is not supported", token.getType()), token);
         }
+        dataType.setLine(token.getLine());
         return dataType;
     }
 }

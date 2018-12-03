@@ -1,28 +1,38 @@
 package com.joklek.fakec.parsing.error;
 
 import com.joklek.fakec.error.Error;
-import com.joklek.fakec.tokens.Token;
+import com.joklek.fakec.parsing.types.DataType;
 
 public class TypeError extends Error {
 
     private String errorMessage;
-    private Token erroneousName;
+    private DataType expectedType;
+    private DataType actualType;
 
-    public TypeError(String errorMessage, Token erroneousName) {
+    /**
+     * Used when there is a concrete expected type
+     * @param errorMessage error message to be given
+     * @param expectedType expected type
+     * @param actualType actual type
+     */
+    public TypeError(String errorMessage, DataType expectedType, DataType actualType) {
         this.errorMessage = errorMessage;
-        this.erroneousName = erroneousName;
+        this.expectedType = expectedType;
+        this.actualType = actualType;
+    }
+
+    public TypeError(String errorMessage, DataType actualType) {
+        this.errorMessage = errorMessage;
+        this.expectedType = null;
+        this.actualType = actualType;
     }
 
     public String getErrorMessage() {
-        return errorMessage;
+        return errorMessage + String.format(". Expected '%s', but got '%s'", expectedType, actualType);
     }
 
     @Override
     public int getLine() {
-        return erroneousName.getLine();
-    }
-
-    public Token getErroneousName() {
-        return erroneousName;
+        return actualType.getLine();
     }
 }

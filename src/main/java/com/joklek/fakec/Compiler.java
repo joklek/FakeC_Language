@@ -55,26 +55,25 @@ public class Compiler {
     private static void error(ScopeError error, String filename) {
         Token token = error.getErroneousName();
         String message = error.getErrorMessage();
-        report(token.getLine(), filename," at '" + token.getLexeme() + "'", message); // + " : " + error.getErroneousName().getLexeme());
+        report(token.getLine(), filename,"Error at '" + token.getLexeme() + "': " + message);
     }
 
     private static void error(TypeError error, String filename) {
-        //Token token = error.getErroneousName();
         String message = error.getErrorMessage();
-        report(-1, filename," at '" + "ERROR" + "'", message); // + " : " + error.getErroneousName().getLexeme());
+        report(error.getLine(), filename,  message);
     }
 
     private static void error(ParserError error, String filename) {
         Token token = error.getToken();
         String message = error.getErrorMessage();
         if (token.getType() == TokenType.EOF) {
-            report(token.getLine(), filename," at end", message);
+            report(token.getLine(), filename,"Error at end: " + message);
         } else {
-            report(token.getLine(), filename," at '" + token.getLexeme() + "'", message);
+            report(token.getLine(), filename,"Error at '" + token.getLexeme() + "': " + message);
         }
     }
 
-    private static void report(int line, String filename, String where, String message) {
-        System.err.printf("%s:%d:error:%s%n", filename, line, "Error" + where + ": " + message);
+    private static void report(int line, String filename, String message) {
+        System.err.printf("%s:%d: error: %s%n", filename, line, message);
     }
 }
