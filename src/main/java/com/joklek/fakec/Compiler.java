@@ -34,7 +34,7 @@ public class Compiler {
         for(ParserError error: errors) {
             error(error, filename);
         }
-        
+
         ScopeResolver scopeResolver = new ScopeResolver();
         List<ScopeError> scopeErrors = scopeResolver.resolveNames(program, new Scope());
 

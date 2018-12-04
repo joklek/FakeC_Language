@@ -33,6 +33,9 @@ public class TypeError extends Error {
 
     @Override
     public int getLine() {
-        return actualType.getLine();
+        if(actualType != null) {
+            return actualType.getLine();
+        }
+        return expectedType.getLine();
     }
 }

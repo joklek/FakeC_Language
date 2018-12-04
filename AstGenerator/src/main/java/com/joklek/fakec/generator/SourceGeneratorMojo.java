@@ -94,9 +94,9 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println("import org.apache.commons.lang3.tuple.Pair;");
         writer.println("import com.joklek.fakec.error.Error;");
         writer.println("import com.joklek.fakec.tokens.Token;");
-        writer.println("import com.joklek.fakec.parsing.types.DataType;");
-        writer.println("import com.joklek.fakec.parsing.types.OperationType;");
-        writer.println("import com.joklek.fakec.parsing.types.VarType;");
+        writer.println("import com.joklek.fakec.parsing.types.data.DataType;");
+        writer.println("import com.joklek.fakec.parsing.types.operation.OperationType;");
+        writer.println("import com.joklek.fakec.parsing.types.data.VarType;");
         writer.println("import com.joklek.fakec.parsing.types.Node;");
         writer.println("import com.joklek.fakec.parsing.Scope;");
         writer.println();

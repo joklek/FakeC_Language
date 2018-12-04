@@ -45,7 +45,8 @@ public class Scope {
             members.put(name, new DataHolder(elementType, node));
             return null;
         }
-        return new ScopeError("Duplicate name found in scope", name);
+        String elementTypeString = elementType.toString().toLowerCase();
+        return new ScopeError(String.format("Duplicate %s name found in scope", elementTypeString), name);
     }
 
     /**
@@ -63,7 +64,8 @@ public class Scope {
             return parentScope.resolve(name, elementType);
         }
         else {
-            throw new ScopeError("Variable or function not found in current scope", name);
+            String elementTypeString = elementType.toString().substring(0,1).toUpperCase() + elementType.toString().substring(1).toLowerCase();
+            throw new ScopeError(String.format("%s not found in current scope", elementTypeString), name);
         }
     }
 

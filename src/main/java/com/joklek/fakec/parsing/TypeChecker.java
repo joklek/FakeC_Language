@@ -14,6 +14,7 @@ import static com.joklek.fakec.parsing.types.element.ElementType.FUNCTION;
 import static com.joklek.fakec.parsing.types.element.ElementType.VARIABLE;
 import static com.joklek.fakec.parsing.types.operation.OperationType.*;
 
+@SuppressWarnings("squid:S3516")
 public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stmt.VisitorWithErrors<Void, TypeError> {
 
     @Override
@@ -97,23 +98,25 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     @Override
     public Void visitVarStmt(Stmt.Var stmt, List<TypeError> errors) {
         Expr initializer = stmt.getInitializer();
+        if (initializer == null) {
+            return null;
+        }
 
-        if(initializer != null) {
-            initializer.accept(this, errors);
-
-            if(stmt.getType() != initializer.getType()) {
-                errors.add(new TypeError(String.format("Can't assign to variable %s",  stmt.getName().getLexeme()), initializer.getType(), stmt.getType()));
-            }
+        initializer.accept(this, errors);
+        if(stmt.getType() != initializer.getType()) {
+            errors.add(new TypeError(String.format("Can't assign to variable %s",  stmt.getName().getLexeme()), stmt.getType(), initializer.getType()));
         }
 
         return null;
     }
 
+    // TODO
     @Override
     public Void visitBreakStmt(Stmt.Break stmt, List<TypeError> errors) {
         return null;
     }
 
+    // TODO
     @Override
     public Void visitContinueStmt(Stmt.Continue stmt, List<TypeError> errors) {
         return null;
@@ -230,13 +233,12 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     public Void visitCallExpr(Expr.Call expr, List<TypeError> errors) {
 
         try {
-            // TODO should not get Type, but whole node which will have type and etc.
-            expr.getScope().resolve(expr.getIdent(), FUNCTION);
+            DataType functionType = expr.getScope().resolve(expr.getIdent(), FUNCTION);
+            expr.setType(functionType);
         }
         catch (ScopeError e) {
             return null;
         }
-
         return null;
     }
 
