@@ -2,7 +2,7 @@ package com.joklek.fakec.parsing;
 
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
-import com.joklek.fakec.parsing.types.DataType;
+import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 

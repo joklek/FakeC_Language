@@ -1,17 +1,18 @@
 package com.joklek.fakec.parsing;
 
-import com.joklek.fakec.error.Error;
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ScopeError;
 import com.joklek.fakec.parsing.error.TypeError;
-import com.joklek.fakec.parsing.types.DataType;
-import com.joklek.fakec.parsing.types.OperationType;
+import com.joklek.fakec.parsing.types.data.DataType;
+import com.joklek.fakec.parsing.types.operation.OperationType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 
-import static com.joklek.fakec.parsing.types.OperationType.*;
+import static com.joklek.fakec.parsing.types.element.ElementType.FUNCTION;
+import static com.joklek.fakec.parsing.types.element.ElementType.VARIABLE;
+import static com.joklek.fakec.parsing.types.operation.OperationType.*;
 
 public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stmt.VisitorWithErrors<Void, TypeError> {
 
@@ -191,7 +192,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     public Void visitVariableExpr(Expr.Variable expr, List<TypeError> errors) {
         DataType type;
         try {
-            type = expr.getScope().resolve(expr.getName());
+            type = expr.getScope().resolve(expr.getName(), VARIABLE);
         }
         catch (ScopeError e) {
             return null;
@@ -205,7 +206,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
         DataType type;
         try {
-            type = expr.getScope().resolve(expr.getName());
+            type = expr.getScope().resolve(expr.getName(), VARIABLE);
         }
         catch (ScopeError e) {
             return null;
@@ -230,7 +231,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
         try {
             // TODO should not get Type, but whole node which will have type and etc.
-            expr.getScope().resolve(expr.getIdent());
+            expr.getScope().resolve(expr.getIdent(), FUNCTION);
         }
         catch (ScopeError e) {
             return null;

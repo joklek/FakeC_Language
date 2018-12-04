@@ -1,7 +1,7 @@
 package com.joklek.fakec.parsing.error;
 
 import com.joklek.fakec.error.Error;
-import com.joklek.fakec.parsing.types.DataType;
+import com.joklek.fakec.parsing.types.data.DataType;
 
 public class TypeError extends Error {
 

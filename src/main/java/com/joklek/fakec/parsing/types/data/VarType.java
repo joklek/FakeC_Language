@@ -1,4 +1,4 @@
-package com.joklek.fakec.parsing.types;
+package com.joklek.fakec.parsing.types.data;
 
 public enum VarType {
     INT, CHAR, STRING, BOOL, FLOAT;

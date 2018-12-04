@@ -6,8 +6,8 @@ import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ParserError;
 import com.joklek.fakec.parsing.error.ScopeError;
 import com.joklek.fakec.parsing.error.TypeError;
-import com.joklek.fakec.parsing.types.OperationConverter;
-import com.joklek.fakec.parsing.types.TypeConverter;
+import com.joklek.fakec.parsing.types.operation.OperationConverter;
+import com.joklek.fakec.parsing.types.data.TypeConverter;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 
@@ -34,8 +34,7 @@ public class Compiler {
         for(ParserError error: errors) {
             error(error, filename);
         }
-
-        // TODO methods vs variables
+        
         ScopeResolver scopeResolver = new ScopeResolver();
         List<ScopeError> scopeErrors = scopeResolver.resolveNames(program, new Scope());
 

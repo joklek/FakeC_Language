@@ -1,6 +1,7 @@
-package com.joklek.fakec.parsing.types;
+package com.joklek.fakec.parsing.types.operation;
 
 import com.joklek.fakec.parsing.error.ParserError;
+import com.joklek.fakec.parsing.types.TokenConverter;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 
@@ -36,7 +37,7 @@ public class OperationConverter implements TokenConverter<OperationType> {
         this.operationTokenMap.put(MOD_EQUAL, OperationType.MOD_EQUAL);
 
         this.operationTokenMap.put(AND, OperationType.AND);
-        this.operationTokenMap.put(OR, OperationType.AND);
+        this.operationTokenMap.put(OR, OperationType.OR);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.joklek.fakec.parsing.types;
+package com.joklek.fakec.parsing.types.operation;
 
 public enum OperationType {
     MULT, DIV, ADD, SUB, MOD, NOT,
