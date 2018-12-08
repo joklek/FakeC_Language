@@ -9,22 +9,36 @@ import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.parsing.types.operation.OperationType;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.joklek.fakec.parsing.types.element.ElementType.FUNCTION;
 import static com.joklek.fakec.parsing.types.element.ElementType.VARIABLE;
 import static com.joklek.fakec.parsing.types.operation.OperationType.*;
 
-@SuppressWarnings("squid:S3516")
 // 4.2
+/**
+ * Checks the types of operations
+ */
+@SuppressWarnings("squid:S3516")
 public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stmt.VisitorWithErrors<Void, TypeError> {
+
+    /**
+     * Checks the given program and returns all type errors like incompatible types,
+     * @param stmt root program
+     * @return type errors for given program
+     */
+    public List<TypeError> checkForTypeErrors(Stmt.Program stmt) {
+        List<TypeError> errors = new ArrayList<>();
+        visitProgramStmt(stmt, errors);
+        return errors;
+    }
 
     @Override
     public Void visitProgramStmt(Stmt.Program stmt, List<TypeError> errors) {
         for (Stmt.Function function : stmt.getFunctions()) {
             function.getBody().accept(this, errors);
         }
-
         return null;
     }
 
@@ -129,6 +143,14 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         Expr right = expr.getRight();
         left.accept(this, errors);
         right.accept(this, errors);
+
+        // TODO REFACTOR
+        if(left.getType() == DataType.VOID) {
+            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) left).getIdent().getLexeme()), ((Expr.Call) left).getIdent().getLine()));
+        }
+        if(right.getType() == DataType.VOID) {
+            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) right).getIdent().getLexeme()), ((Expr.Call) right).getIdent().getLine()));
+        }
 
         OperatorToken operator = expr.getOperator();
         OperationType operatorType = operator.getType();

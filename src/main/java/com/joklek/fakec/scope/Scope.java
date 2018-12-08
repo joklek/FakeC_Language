@@ -8,6 +8,9 @@ import com.joklek.fakec.tokens.Token;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Class that checks holds scope information
+ */
 public class Scope {
 
     private final Scope parentScope;

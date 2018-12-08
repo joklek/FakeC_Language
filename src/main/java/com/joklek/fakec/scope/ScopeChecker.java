@@ -7,77 +7,37 @@ import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 
 // 4.3
-public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stmt.VisitorWithErrors<Void, TypeError> {
-    @Override
-    public Void visitBinaryExpr(Expr.Binary expr, List<TypeError> errors) {
-        Expr left = expr.getLeft();
-        Expr right = expr.getRight();
+/**
+ * Scope checker checks the program scope for correct usage of return, continue, break
+ */
+public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
 
-        // TODO Refactor
-        if(left.getType() == DataType.VOID) {
-            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) left).getIdent().getLexeme()), ((Expr.Call) left).getIdent().getLine()));
-        }
-        if(right.getType() == DataType.VOID) {
-            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) right).getIdent().getLexeme()), ((Expr.Call) right).getIdent().getLine()));
-        }
-        return null;
-    }
-
-    @Override
-    public Void visitGroupingExpr(Expr.Grouping expr, List<TypeError> errors) {
-        expr.getExpression().accept(this, errors);
-        return null;
-    }
-
-    @Override
-    public Void visitLiteralExpr(Expr.Literal expr, List<TypeError> errors) {
-        return null;
-    }
-
-    @Override
-    public Void visitUnaryExpr(Expr.Unary expr, List<TypeError> errors) {
-        expr.getRight().accept(this, errors);
-        return null;
-    }
-
-    @Override
-    public Void visitVariableExpr(Expr.Variable expr, List<TypeError> errors) {
-        return null;
-    }
-
-    @Override
-    public Void visitAssignExpr(Expr.Assign expr, List<TypeError> errors) {
-        expr.getValue().accept(this, errors);
-        return null;
-    }
-
-    @Override
-    public Void visitCallExpr(Expr.Call expr, List<TypeError> errors) {
-        for (Expr argument : expr.getArguments()) {
-            argument.accept(this, errors);
-        }
-
-        return null;
-    }
-
-    @Override
-    public Void visitArrayAccessExpr(Expr.ArrayAccess expr, List<TypeError> errors) {
-        expr.getOffset().accept(this, errors);
-        return null;
-    }
-
-    @Override
-    public Void visitArrayCreateExpr(Expr.ArrayCreate expr, List<TypeError> errors) {
-        expr.getSize().accept(this, errors);
-        return null;
+    /**
+     * Checks scope for incorrect loop or function usage
+     * @param stmt root program
+     * @return list of collected errors
+     */
+    public List<TypeError> checkScope(Stmt.Program stmt) {
+        List<TypeError> errors = new ArrayList<>();
+        visitProgramStmt(stmt, errors);
+        return errors;
     }
 
     @Override
     public Void visitProgramStmt(Stmt.Program stmt, List<TypeError> errors) {
-        for (Stmt.Function function : stmt.getFunctions()) {
+        List<Stmt.Function> functions = stmt.getFunctions();
+        boolean hasMain = functions.stream().anyMatch(function -> function.getType() == DataType.INT
+                                                   && function.getName().getLexeme().equals("main"));
+        // TODO this will not work with multiple files, fix later
+        if(!hasMain) {
+            errors.add(new TypeError("Program must contain a function 'int main()' ", 0));
+        }
+
+        for (Stmt.Function function : functions) {
             function.accept(this, errors);
         }
 
@@ -137,14 +97,12 @@ public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, St
 
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt, List<TypeError> errors) {
-        stmt.getExpression().accept(this, errors);
         return null;
     }
 
     @Override
     public Void visitIfStmt(Stmt.If stmt, List<TypeError> errors) {
         for (Pair<Expr, Stmt.Block> branch : stmt.getBranches()) {
-            branch.getLeft().accept(this, errors);
             branch.getRight().accept(this, errors);
         }
         if(stmt.getElseBranch() != null) {
@@ -155,17 +113,12 @@ public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, St
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt, List<TypeError> errors) {
-        stmt.getCondition().accept(this, errors);
         stmt.getBody().accept(this, errors);
         return null;
     }
 
     @Override
     public Void visitOutputStmt(Stmt.Output stmt, List<TypeError> errors) {
-        for (Expr expression : stmt.getExpressions()) {
-            expression.accept(this, errors);
-        }
-
         return null;
     }
 
@@ -176,15 +129,11 @@ public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, St
 
     @Override
     public Void visitVarStmt(Stmt.Var stmt, List<TypeError> errors) {
-        if(stmt.getInitializer() != null) {
-            stmt.getInitializer().accept(this, errors);
-        }
         return null;
     }
 
     @Override
     public Void visitArrayStmt(Stmt.Array stmt, List<TypeError> errors) {
-        stmt.getInitializer().accept(this, errors);
         return null;
     }
 

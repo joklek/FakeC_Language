@@ -49,8 +49,7 @@ public class Compiler {
 
         // 4.2
         TypeChecker typeChecker = new TypeChecker();
-        List<TypeError> typeErrors = new ArrayList<>();
-        typeChecker.visitProgramStmt(program, typeErrors);
+        List<TypeError> typeErrors = typeChecker.checkForTypeErrors(program);
 
         for (TypeError typeError : typeErrors) {
             error(typeError, filename);
@@ -58,8 +57,7 @@ public class Compiler {
 
         // 4.3
         ScopeChecker scopeChecker = new ScopeChecker();
-        List<TypeError> scopeCheckerErrors = new ArrayList<>();
-        scopeChecker.visitProgramStmt(program, scopeCheckerErrors);
+        List<TypeError> scopeCheckerErrors = scopeChecker.checkScope(program);
         for (TypeError typeError : scopeCheckerErrors) {
             error(typeError, filename);
         }

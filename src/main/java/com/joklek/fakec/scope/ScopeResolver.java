@@ -15,10 +15,19 @@ import java.util.Optional;
 import static com.joklek.fakec.parsing.types.element.ElementType.FUNCTION;
 import static com.joklek.fakec.parsing.types.element.ElementType.VARIABLE;
 
-@SuppressWarnings({"Convert2MethodRef", "squid:S1612"})
 // 4.1
+/**
+ * Scope resolver builds the scope for a given AST and gets all scope related errors like name clashing or absence of names
+ */
+@SuppressWarnings({"Convert2MethodRef", "squid:S1612"})
 public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, Stmt.VisitorWithErrors<Void, ScopeError> {
 
+    /**
+     * Resolves name scopes and gets errors
+     * @param stmt root program statement
+     * @param scope parent scope
+     * @return list of collected scope errors
+     */
     public List<ScopeError> resolveNames(Stmt.Program stmt, Scope scope) {
         List<ScopeError> errors = new ArrayList<>();
         stmt.setScope(scope);
