@@ -3,6 +3,7 @@ package com.joklek.fakec.parsing;
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ScopeError;
+import com.joklek.fakec.parsing.types.Node;
 import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.parsing.types.element.ElementType;
 import com.joklek.fakec.tokens.Token;
@@ -33,6 +34,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
             if(error != null) {
                 errors.add(error);
             }
+            function.setParent(stmt);
         }
         for(Stmt.Function function: stmt.getFunctions()) {
             setScopeAndSearchForErrors(scope, function, errors);
@@ -52,6 +54,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
             }
         }
         setScopeAndSearchForErrors(scope, stmt.getBody(), errors);
+        stmt.getBody().setParent(stmt);
 
         return null;
     }
@@ -62,6 +65,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         Scope scope = new Scope(stmt.getScope());
         for(Stmt statement: stmt.getStatements()) {
             setScopeAndSearchForErrors(scope, statement, errors);
+            statement.setParent(stmt);
         }
         return null;
     }
@@ -91,13 +95,14 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         for (Pair<Expr, Stmt.Block> branch : stmt.getBranches()) {
             setScopeAndSearchForErrors(scope, branch.getLeft(), errors);
             setScopeAndSearchForErrors(scope, branch.getRight(), errors);
+            branch.getRight().setParent(stmt);
         }
 
         Stmt.Block elseBranch = stmt.getElseBranch();
         if(elseBranch != null) {
             setScopeAndSearchForErrors(scope, elseBranch, errors);
+            elseBranch.setParent(stmt);
         }
-
         return null;
     }
 
@@ -107,6 +112,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         setScopeAndSearchForErrors(scope, stmt.getCondition(), errors);
         setScopeAndSearchForErrors(scope, stmt.getBody(), errors);
 
+        stmt.getBody().setParent(stmt);
         return null;
     }
 
@@ -142,7 +148,6 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         if(error != null) {
             errors.add(error);
         }
-
         return null;
     }
 

@@ -8,6 +8,7 @@ public class TypeError extends Error {
     private String errorMessage;
     private DataType expectedType;
     private DataType actualType;
+    private int line;
 
     /**
      * Used when there is a concrete expected type
@@ -19,23 +20,41 @@ public class TypeError extends Error {
         this.errorMessage = errorMessage;
         this.expectedType = expectedType;
         this.actualType = actualType;
+
+        if(actualType != null) {
+            this.line = actualType.getLine();
+        }
+        else {
+            this.line = expectedType.getLine();
+        }
     }
 
     public TypeError(String errorMessage, DataType actualType) {
         this.errorMessage = errorMessage;
         this.expectedType = null;
         this.actualType = actualType;
+        this.line = actualType.getLine();
+    }
+
+    public TypeError(String errorMessage, int line) {
+        this.errorMessage = errorMessage;
+        this.line = line;
     }
 
     public String getErrorMessage() {
-        return errorMessage + String.format(". Expected '%s', but got '%s'", expectedType, actualType);
+        if(expectedType == null && actualType == null) {
+            return errorMessage;
+        }
+        else if (expectedType == null && actualType != null) {
+            return errorMessage + ". " + actualType;
+        }
+        else {
+            return errorMessage + String.format(". Expected '%s', but got '%s'", expectedType, actualType);
+        }
     }
 
     @Override
     public int getLine() {
-        if(actualType != null) {
-            return actualType.getLine();
-        }
-        return expectedType.getLine();
+        return line;
     }
 }

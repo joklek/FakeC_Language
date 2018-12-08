@@ -6,6 +6,7 @@ import com.joklek.fakec.parsing.error.ScopeError;
 import com.joklek.fakec.parsing.error.TypeError;
 import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.parsing.types.operation.OperationType;
+import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -86,7 +87,6 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         for (Expr expression : stmt.getExpressions()) {
             expression.accept(this, errors);
         }
-
         return null;
     }
 
@@ -110,17 +110,16 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         return null;
     }
 
-    // TODO
     @Override
     public Void visitBreakStmt(Stmt.Break stmt, List<TypeError> errors) {
         return null;
     }
 
-    // TODO
     @Override
     public Void visitContinueStmt(Stmt.Continue stmt, List<TypeError> errors) {
         return null;
     }
+
 
     @Override
     public Void visitBinaryExpr(Expr.Binary expr, List<TypeError> errors) {
@@ -139,6 +138,8 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
         DataType leftType = left.getType();
         DataType rightType = right.getType();
+
+        // TODO Revise logic
         if(operator == ADD || operator == SUB || operator == MULT || operator == DIV) {
             if(leftType == DataType.FLOAT && rightType == DataType.FLOAT ||
                leftType == DataType.INT && rightType == DataType.FLOAT ||

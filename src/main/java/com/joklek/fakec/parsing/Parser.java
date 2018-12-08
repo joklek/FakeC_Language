@@ -120,7 +120,8 @@ public class Parser {
 
     // <statement>  ::= <expression> ";" | <exit_keyword> ";"| "return" <expression> ";"| <assigment_statement> ";"| <var_declaration> ";"| <io_statement> ";" | <while_statement> | <for_statement> | <if_statements>
     protected Stmt parseStatement() {
-        TokenType type = current().getType();
+        Token previous = current();
+        TokenType type = previous.getType();
 
         switch (type) {
             case RETURN:
@@ -128,11 +129,11 @@ public class Parser {
             case BREAK:
                 advance();
                 consume(SEMICOLON, "Unclosed continue statement, semicolon is missing");
-                return new Stmt.Break(previous());
+                return new Stmt.Break(previous);
             case CONTINUE:
                 advance();
                 consume(SEMICOLON, "Unclosed continue statement, semicolon is missing");
-                return new Stmt.Continue(previous());
+                return new Stmt.Continue(previous);
             case WHILE:
                 return parseWhile();
             case FOR:
