@@ -16,6 +16,7 @@ import static com.joklek.fakec.parsing.types.element.ElementType.FUNCTION;
 import static com.joklek.fakec.parsing.types.element.ElementType.VARIABLE;
 
 @SuppressWarnings({"Convert2MethodRef", "squid:S1612"})
+// 4.1
 public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, Stmt.VisitorWithErrors<Void, ScopeError> {
 
     public List<ScopeError> resolveNames(Stmt.Program stmt, Scope scope) {

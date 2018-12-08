@@ -9,6 +9,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 
+// 4.3
 public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stmt.VisitorWithErrors<Void, TypeError> {
     @Override
     public Void visitBinaryExpr(Expr.Binary expr, List<TypeError> errors) {
@@ -17,14 +18,10 @@ public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, St
 
         // TODO Refactor
         if(left.getType() == DataType.VOID) {
-            DataType voidType = left.getType();
             errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) left).getIdent().getLexeme()), ((Expr.Call) left).getIdent().getLine()));
-            return null;
         }
         if(right.getType() == DataType.VOID) {
-            DataType voidType = right.getType();
             errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) right).getIdent().getLexeme()), ((Expr.Call) right).getIdent().getLine()));
-            return null;
         }
         return null;
     }

@@ -39,6 +39,7 @@ public class Compiler {
             error(error, filename);
         }
 
+        // 4.1
         ScopeResolver scopeResolver = new ScopeResolver();
         List<ScopeError> scopeErrors = scopeResolver.resolveNames(program, new Scope());
 
@@ -46,6 +47,7 @@ public class Compiler {
             error(error, filename);
         }
 
+        // 4.2
         TypeChecker typeChecker = new TypeChecker();
         List<TypeError> typeErrors = new ArrayList<>();
         typeChecker.visitProgramStmt(program, typeErrors);
@@ -54,6 +56,7 @@ public class Compiler {
             error(typeError, filename);
         }
 
+        // 4.3
         ScopeChecker scopeChecker = new ScopeChecker();
         List<TypeError> scopeCheckerErrors = new ArrayList<>();
         scopeChecker.visitProgramStmt(program, scopeCheckerErrors);

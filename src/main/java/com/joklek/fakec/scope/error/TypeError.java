@@ -5,10 +5,10 @@ import com.joklek.fakec.parsing.types.data.DataType;
 
 public class TypeError extends Error {
 
-    private String errorMessage;
-    private DataType expectedType;
-    private DataType actualType;
-    private int line;
+    private final String errorMessage;
+    private final DataType expectedType;
+    private final DataType actualType;
+    private final int line;
 
     /**
      * Used when there is a concrete expected type
@@ -33,13 +33,15 @@ public class TypeError extends Error {
     public TypeError(String errorMessage, int line) {
         this.errorMessage = errorMessage;
         this.line = line;
+        this.expectedType = null;
+        this.actualType = null;
     }
 
     public String getErrorMessage() {
         if(expectedType == null && actualType == null) {
             return errorMessage;
         }
-        else if (expectedType == null && actualType != null) {
+        else if (expectedType == null) {
             return errorMessage + ". " + actualType;
         }
         else {

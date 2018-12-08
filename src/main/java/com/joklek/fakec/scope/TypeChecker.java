@@ -16,6 +16,7 @@ import static com.joklek.fakec.parsing.types.element.ElementType.VARIABLE;
 import static com.joklek.fakec.parsing.types.operation.OperationType.*;
 
 @SuppressWarnings("squid:S3516")
+// 4.2
 public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stmt.VisitorWithErrors<Void, TypeError> {
 
     @Override
