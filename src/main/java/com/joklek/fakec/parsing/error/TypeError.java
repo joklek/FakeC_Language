@@ -16,24 +16,18 @@ public class TypeError extends Error {
      * @param expectedType expected type
      * @param actualType actual type
      */
-    public TypeError(String errorMessage, DataType expectedType, DataType actualType) {
+    public TypeError(String errorMessage, DataType expectedType, DataType actualType, int line) {
         this.errorMessage = errorMessage;
         this.expectedType = expectedType;
         this.actualType = actualType;
-
-        if(actualType != null) {
-            this.line = actualType.getLine();
-        }
-        else {
-            this.line = expectedType.getLine();
-        }
+        this.line = line;
     }
 
-    public TypeError(String errorMessage, DataType actualType) {
+    public TypeError(String errorMessage, DataType actualType, int line) {
         this.errorMessage = errorMessage;
         this.expectedType = null;
         this.actualType = actualType;
-        this.line = actualType.getLine();
+        this.line = line;
     }
 
     public TypeError(String errorMessage, int line) {

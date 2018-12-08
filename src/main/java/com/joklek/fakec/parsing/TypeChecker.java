@@ -4,9 +4,9 @@ import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ScopeError;
 import com.joklek.fakec.parsing.error.TypeError;
+import com.joklek.fakec.parsing.types.operation.OperatorToken;
 import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.parsing.types.operation.OperationType;
-import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -59,7 +59,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
             DataType type = branch.getLeft().getType();
             if(type != DataType.BOOL) {
-                errors.add(new TypeError("Condition should be of boolean type", DataType.BOOL, type));
+                errors.add(new TypeError("Condition should be of boolean type", DataType.BOOL, type, -1)); // TODO
             }
         }
         if(stmt.getElseBranch() != null) {
@@ -76,7 +76,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         stmt.getCondition().accept(this, errors);
 
         if (stmt.getCondition().getType() != DataType.BOOL) {
-            errors.add(new TypeError("Condition should be of boolean type", DataType.BOOL, stmt.getCondition().getType()));
+            errors.add(new TypeError("Condition should be of boolean type", DataType.BOOL, stmt.getCondition().getType(), -1)); // TODO
         }
 
         return null;
@@ -104,7 +104,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
         initializer.accept(this, errors);
         if(stmt.getType() != initializer.getType()) {
-            errors.add(new TypeError(String.format("Can't assign to variable %s",  stmt.getName().getLexeme()), stmt.getType(), initializer.getType()));
+            errors.add(new TypeError(String.format("Can't assign to variable %s",  stmt.getName().getLexeme()), stmt.getType(), initializer.getType(), stmt.getName().getLine()));
         }
 
         return null;
@@ -129,9 +129,10 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         left.accept(this, errors);
         right.accept(this, errors);
 
-        OperationType operator = expr.getOperator();
-        if(operator == LESS || operator == GREATER || operator == LESS_EQUAL || operator == GREATER_EQUAL ||
-                operator == EQUAL_EQUAL || operator == NOT_EQUAL) {
+        OperatorToken operator = expr.getOperator();
+        OperationType operatorType = operator.getType();
+        if(operatorType == LESS || operatorType == GREATER || operatorType == LESS_EQUAL || operatorType == GREATER_EQUAL ||
+                operatorType == EQUAL_EQUAL || operatorType == NOT_EQUAL) {
             expr.setType(DataType.BOOL);
             return null;
         }
@@ -140,7 +141,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         DataType rightType = right.getType();
 
         // TODO Revise logic
-        if(operator == ADD || operator == SUB || operator == MULT || operator == DIV) {
+        if(operatorType == ADD || operatorType == SUB || operatorType == MULT || operatorType == DIV) {
             if(leftType == DataType.FLOAT && rightType == DataType.FLOAT ||
                leftType == DataType.INT && rightType == DataType.FLOAT ||
                leftType == DataType.FLOAT && rightType == DataType.INT) {
@@ -150,15 +151,15 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
                 expr.setType(DataType.INT);
             }
             else {
-                errors.add(new TypeError("Arithmetic operations is only possible on integers or floats", leftType, rightType));
+                errors.add(new TypeError("Arithmetic operations is only possible on integers or floats", leftType, rightType, operator.getLine()));
             }
         }
-        else if(operator == MOD) {
+        else if(operatorType == MOD) {
             if(leftType == DataType.INT && rightType == DataType.INT) {
                 expr.setType(DataType.INT);
             }
             else {
-                errors.add(new TypeError("Modulus operations is only possible on integers", leftType, rightType));
+                errors.add(new TypeError("Modulus operations is only possible on integers", leftType, rightType, operator.getLine()));
             }
         }
 
@@ -182,13 +183,14 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     public Void visitUnaryExpr(Expr.Unary expr, List<TypeError> errors) {
         expr.getRight().accept(this, errors);
         DataType type = expr.getRight().getType();
-        OperationType operator = expr.getOperator();
+        OperatorToken operator = expr.getOperator();
+        OperationType operatorType = operator.getType();
         expr.setType(type);
-        if(((type == DataType.FLOAT || type == DataType.INT) && (operator == ADD || operator == SUB))
-                || type == DataType.BOOL && operator == NOT) {
+        if(((type == DataType.FLOAT || type == DataType.INT) && (operatorType == ADD || operatorType == SUB))
+                || type == DataType.BOOL && operatorType == NOT) {
             return null;
         }
-        errors.add(new TypeError(String.format("Unary operation %s cannot be used on type %s", operator, type), type));
+        errors.add(new TypeError(String.format("Unary operation %s cannot be used on type %s", operatorType, type), type, operator.getLine()));
         return null;
     }
 
@@ -223,7 +225,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
                 expr.setType(DataType.INT);
             }
             else {
-                errors.add(new TypeError(String.format("Can't assign variable %s", expr.getName().getLexeme()), valueType, type));
+                errors.add(new TypeError(String.format("Can't assign variable %s", expr.getName().getLexeme()), valueType, type, expr.getName().getLine()));
             }
         }
 

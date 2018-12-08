@@ -39,7 +39,7 @@
                         <parameter>com.joklek.fakec.error.Error</parameter>
                         <parameter>com.joklek.fakec.tokens.Token</parameter>
                         <parameter>com.joklek.fakec.parsing.types.data.DataType</parameter>
-                        <parameter>com.joklek.fakec.parsing.types.operation.OperationType</parameter>
+                        <parameter>com.joklek.fakec.parsing.types.operation.OperatorToken</parameter>
                         <parameter>com.joklek.fakec.parsing.types.data.VarType</parameter>
                         <parameter>com.joklek.fakec.parsing.types.Node</parameter>
                         <parameter>com.joklek.fakec.parsing.Scope</parameter>

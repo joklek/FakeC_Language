@@ -7,6 +7,7 @@ import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.parsing.types.data.TypeConverter;
 import com.joklek.fakec.parsing.types.operation.OperationConverter;
 import com.joklek.fakec.parsing.types.operation.OperationType;
+import com.joklek.fakec.parsing.types.operation.OperatorToken;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 import org.apache.commons.lang3.tuple.Pair;
@@ -391,9 +392,10 @@ public class Parser {
         Expr expr = parseAnd();
 
         while (match(OR)) {
-            OperationType operator = operationConverter.convertToken(previous());
+            Token lexerToken = previous();
+            OperationType operator = operationConverter.convertToken(lexerToken);
             Expr right = parseAnd();
-            expr = new Expr.Binary(expr, operator, right);
+            expr = new Expr.Binary(expr, new OperatorToken(operator, lexerToken.getLine()), right);
         }
 
         return expr;
@@ -404,9 +406,10 @@ public class Parser {
         Expr expr = parseEquality();
 
         while (match(AND)) {
-            OperationType operator = operationConverter.convertToken(previous());
+            Token lexerToken = previous();
+            OperationType operator = operationConverter.convertToken(lexerToken);
             Expr right = parseEquality();
-            expr = new Expr.Binary(expr, operator, right);
+            expr = new Expr.Binary(expr, new OperatorToken(operator, lexerToken.getLine()), right);
         }
 
         return expr;
@@ -417,9 +420,10 @@ public class Parser {
         Expr expr = parseComparison();
 
         while (match(NOT_EQUAL, EQUAL_EQUAL)) {
-            OperationType operator = operationConverter.convertToken(previous());
+            Token lexerToken = previous();
+            OperationType operator = operationConverter.convertToken(lexerToken);
             Expr right = parseComparison();
-            expr = new Expr.Binary(expr, operator, right);
+            expr = new Expr.Binary(expr, new OperatorToken(operator, lexerToken.getLine()), right);
         }
 
         return expr;
@@ -430,9 +434,10 @@ public class Parser {
         Expr expr = parseAddition();
 
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
-            OperationType operator = operationConverter.convertToken(previous());
+            Token lexerToken = previous();
+            OperationType operator = operationConverter.convertToken(lexerToken);
             Expr right = parseAddition();
-            expr = new Expr.Binary(expr, operator, right);
+            expr = new Expr.Binary(expr, new OperatorToken(operator, lexerToken.getLine()), right);
         }
 
         return expr;
@@ -443,9 +448,10 @@ public class Parser {
         Expr expr = parseMultiplication();
 
         while (match(MINUS, PLUS)) {
-            OperationType operator = operationConverter.convertToken(previous());
+            Token lexerToken = previous();
+            OperationType operator = operationConverter.convertToken(lexerToken);
             Expr right = parseMultiplication();
-            expr = new Expr.Binary(expr, operator, right);
+            expr = new Expr.Binary(expr, new OperatorToken(operator, lexerToken.getLine()), right);
         }
 
         return expr;
@@ -457,10 +463,10 @@ public class Parser {
         Expr expr = parsePostfixExpr();
 
         while (match(SLASH, STAR, MOD)) {
-            OperationType operator = operationConverter.convertToken(previous());
-            //Expr right = parsePostfixExpr();
+            Token lexerToken = previous();
+            OperationType operator = operationConverter.convertToken(lexerToken);
             Expr right = parsePostfixExpr();
-            expr = new Expr.Binary(expr, operator, right);
+            expr = new Expr.Binary(expr, new OperatorToken(operator, lexerToken.getLine()), right);
         }
 
         return expr;
@@ -470,16 +476,19 @@ public class Parser {
     //<term_postfix> ::= <expression> <inc_dec_op> | <prefix_term>
     protected Expr parsePostfixExpr() {
         Expr expression = parsePrefixExpr();
+        Token lexerToken = previous();
         if(expression instanceof Expr.Unary) {
-            OperationType operator = ((Expr.Unary) expression).getOperator();
+            OperationType operator = ((Expr.Unary) expression).getOperator().getType();
+
             if(operator != OperationType.INC_PRE && operator != OperationType.DEC_PRE && match(INC, DEC)) {
-                OperationType type = previous().getType() == INC ? OperationType.INC_POST : OperationType.DEC_POST;
-                return new Expr.Unary(type, expression);
+                OperationType type = lexerToken.getType() == INC ? OperationType.INC_POST : OperationType.DEC_POST;
+
+                return new Expr.Unary(new OperatorToken(type, lexerToken.getLine()), expression);
             }
         }
         if(match(INC, DEC)) {
-            OperationType type = previous().getType() == INC ? OperationType.INC_POST : OperationType.DEC_POST;
-            return new Expr.Unary(type, expression);
+            OperationType type = lexerToken.getType() == INC ? OperationType.INC_POST : OperationType.DEC_POST;
+            return new Expr.Unary(new OperatorToken(type, lexerToken.getLine()), expression);
         }
         return expression;
     }
@@ -487,8 +496,9 @@ public class Parser {
     // ++i ::=
     private Expr parsePrefixExpr() {
         if(match(INC, DEC)) {
-            OperationType type = previous().getType() == INC ? OperationType.INC_PRE : OperationType.DEC_PRE;
-            return new Expr.Unary(type, parseElement());
+            Token lexerToken = previous();
+            OperationType type = lexerToken.getType() == INC ? OperationType.INC_PRE : OperationType.DEC_PRE;
+            return new Expr.Unary(new OperatorToken(type, lexerToken.getLine()), parseElement());
         }
         return parseNotExpr();
     }
@@ -496,8 +506,9 @@ public class Parser {
     private Expr parseNotExpr() {
         Expr expr = null;
         while(match(NOT)) {
-            OperationType operator = operationConverter.convertToken(previous());
-            expr = new Expr.Unary(operator, parseNotExpr());
+            Token lexerToken = previous();
+            OperationType operator = operationConverter.convertToken(lexerToken);
+            expr = new Expr.Unary(new OperatorToken(operator, lexerToken.getLine()), parseNotExpr());
         }
         if (expr != null) {
             return expr;
@@ -508,10 +519,10 @@ public class Parser {
     //<termUnary>  ::=  <sign_op> <element> | <element>
     protected Expr parseUnary() {
         if (match(NOT, MINUS, PLUS)) {
-            OperationType operator = operationConverter.convertToken(previous());
-            //Expr right = unary();
+            Token lexerToken = previous();
+            OperationType operator = operationConverter.convertToken(lexerToken);
             Expr right = parseElement();
-            return new Expr.Unary(operator, right);
+            return new Expr.Unary(new OperatorToken(operator, lexerToken.getLine()), right);
         }
 
         return parseElement();

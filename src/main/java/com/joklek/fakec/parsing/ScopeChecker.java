@@ -18,12 +18,12 @@ public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, St
         // TODO Refactor
         if(left.getType() == DataType.VOID) {
             DataType voidType = left.getType();
-            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) left).getIdent().getLexeme()), voidType.getLine()));
+            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) left).getIdent().getLexeme()), ((Expr.Call) left).getIdent().getLine()));
             return null;
         }
         if(right.getType() == DataType.VOID) {
             DataType voidType = right.getType();
-            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) right).getIdent().getLexeme()), voidType.getLine()));
+            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) right).getIdent().getLexeme()), ((Expr.Call) right).getIdent().getLine()));
             return null;
         }
         return null;
@@ -94,22 +94,6 @@ public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, St
         if(stmt.getReturnStmts().isEmpty() && !isVoid) {
             errors.add(new TypeError(String.format("Function '%s' has no return statements", stmt.getName().getLexeme()), stmt.getName().getLine()));
         }
-        for (Stmt.Return returnStmt : stmt.getReturnStmts()) {
-            if(!returnStmt.getHasValue() && !isVoid) {
-                errors.add(new TypeError(String.format("Return in function '%s' must have a value", stmt.getName().getLexeme()), stmt.getType()));
-            }
-            else {
-                // TODO null should not be null, but some kind of special token
-                Expr returnValue = returnStmt.getValue();
-                if(returnValue == null) {
-                    // TODO decide when null can be returned
-                }
-                else if (returnValue.getType() != stmt.getType()) {
-                    errors.add(new TypeError(String.format("Incorrect return value in function '%s'", stmt.getName().getLexeme()), stmt.getType(), returnValue.getType()));
-                }
-            }
-        }
-
         return null;
     }
 
@@ -133,28 +117,24 @@ public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, St
         }
         if(parent == null) {
             DataType dataType = DataType.NULL;
-            dataType.setLine(stmt.getKeyword().getLine());
-            errors.add(new TypeError("Return statement has to be in a function", dataType));
+            errors.add(new TypeError("Return statement has to be in a function", dataType, stmt.getKeyword().getLine()));
             return null;
         }
 
         Stmt.Function parentFunction = (Stmt.Function) parent;
         DataType functionType = parentFunction.getType();
 
-        if (!stmt.getHasValue()) {
-            if(functionType != DataType.VOID) {
-                errors.add(new TypeError("Must return a value with the type of the function", functionType, DataType.VOID));
-            }
-            parentFunction.getReturnStmts().add(stmt);
-            return null;
+        if (!stmt.getHasValue() && functionType != DataType.VOID) {
+            errors.add(new TypeError("Must return a value with the type of the function", functionType, stmt.getKeyword().getLine()));
+        }
+        else if(functionType == DataType.VOID) {
+            errors.add(new TypeError("Return must not have a value with void function", stmt.getKeyword().getLine()));
+        }
+        else if (functionType != returnValue.getType()) {
+            errors.add(new TypeError("Return statement returns a value not with the type of the function", functionType, returnValue.getType(), stmt.getKeyword().getLine()));
         }
 
-        if (functionType != returnValue.getType()) {
-            errors.add(new TypeError("Return statement returns a value not with the type of the function", functionType, returnValue.getType()));
-        }
-        else {
-            parentFunction.getReturnStmts().add(stmt);
-        }
+        parentFunction.getReturnStmts().add(stmt);
         return null;
     }
 
@@ -170,8 +150,9 @@ public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, St
             branch.getLeft().accept(this, errors);
             branch.getRight().accept(this, errors);
         }
-        stmt.getElseBranch().accept(this, errors);
-
+        if(stmt.getElseBranch() != null) {
+            stmt.getElseBranch().accept(this, errors);
+        }
         return null;
     }
 
@@ -198,7 +179,9 @@ public class ScopeChecker implements Expr.VisitorWithErrors<Void, TypeError>, St
 
     @Override
     public Void visitVarStmt(Stmt.Var stmt, List<TypeError> errors) {
-        stmt.getInitializer().accept(this, errors);
+        if(stmt.getInitializer() != null) {
+            stmt.getInitializer().accept(this, errors);
+        }
         return null;
     }
 

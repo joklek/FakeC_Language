@@ -24,7 +24,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         String right = buildBranch("Right: ", expr.getRight());
         return String.format("BinaryExpr(%s):%n" +
                                "%s" +
-                               "%s", expr.getOperator(), left, right);
+                               "%s", expr.getOperator().getType(), left, right);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
         String output = String.format("UnaryExpr(%s):%n" +
-                                      "Right: ", expr.getOperator());
+                                      "Right: ", expr.getOperator().getType());
         return buildBranch(output, expr.getRight());
     }
 

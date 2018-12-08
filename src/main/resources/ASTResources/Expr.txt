@@ -1,8 +1,8 @@
 +Scope scope; DataType type
-Binary      : Expr left; OperationType operator; Expr right
+Binary      : Expr left; OperatorToken operator; Expr right
 Grouping    : Expr expression
 Literal     : Object value
-Unary       : OperationType operator; Expr right
+Unary       : OperatorToken operator; Expr right
 Variable    : Token name
 Assign      : Token name; Expr value
 Call        : Token ident; List<Expr> arguments

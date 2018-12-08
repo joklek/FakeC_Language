@@ -3,8 +3,6 @@ int main() {
     true;
     1.2;
     output << "\\ Welcome to \"my program\" \n\t  \\\\\\ye ";
-    break;
-    continue;
     return 0;
 }
 

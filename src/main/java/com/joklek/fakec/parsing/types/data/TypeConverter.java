@@ -34,7 +34,6 @@ public class TypeConverter implements TokenConverter<DataType> {
         if(dataType == null) {
             throw new ParserError(String.format("Data type %s is not supported", token.getType()), token);
         }
-        dataType.setLine(token.getLine());
         return dataType;
     }
 }
