@@ -74,7 +74,7 @@ public class Parser {
         }
 
         Stmt.Block body = parseBlock();
-        return new Stmt.Function(type, name, parameters, body);
+        return new Stmt.Function(type, name, parameters, body, new ArrayList<>());
     }
 
     // <fn_params> ::= "(" [<parameter> {"," <parameter>}] ")"

@@ -49,6 +49,13 @@ public class Compiler {
         for (TypeError typeError : typeErrors) {
             error(typeError, filename);
         }
+
+        ScopeChecker scopeChecker = new ScopeChecker();
+        List<TypeError> scopeCheckerErrors = new ArrayList<>();
+        scopeChecker.visitProgramStmt(program, scopeCheckerErrors);
+        for (TypeError typeError : scopeCheckerErrors) {
+            error(typeError, filename);
+        }
     }
 
     private static void error(ScopeError error, String filename) {
