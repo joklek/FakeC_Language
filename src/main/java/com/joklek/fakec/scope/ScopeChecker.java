@@ -81,14 +81,18 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
         Stmt.Function parentFunction = (Stmt.Function) parent;
         DataType functionType = parentFunction.getType();
 
-        if (!stmt.getHasValue() && functionType != DataType.VOID) {
-            errors.add(new TypeError("Must return a value with the type of the function", functionType, stmt.getKeyword().getLine()));
+        if(functionType == DataType.VOID) {
+            if(stmt.getHasValue()) {
+                errors.add(new TypeError("Return must not have a value with void function", stmt.getKeyword().getLine()));
+            }
         }
-        else if(functionType == DataType.VOID) {
-            errors.add(new TypeError("Return must not have a value with void function", stmt.getKeyword().getLine()));
-        }
-        else if (functionType != returnValue.getType()) {
-            errors.add(new TypeError("Return statement returns a value not with the type of the function", functionType, returnValue.getType(), stmt.getKeyword().getLine()));
+        else {
+            if (!stmt.getHasValue()) {
+                errors.add(new TypeError("Must return a value with the type of the function", functionType, stmt.getKeyword().getLine()));
+            }
+            else if (functionType != returnValue.getType()) {
+                errors.add(new TypeError("Return statement returns a value not with the type of the function", functionType, returnValue.getType(), stmt.getKeyword().getLine()));
+            }
         }
 
         parentFunction.getReturnStmts().add(stmt);
