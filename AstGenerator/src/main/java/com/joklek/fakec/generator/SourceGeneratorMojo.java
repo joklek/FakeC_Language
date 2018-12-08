@@ -30,6 +30,9 @@ public class SourceGeneratorMojo extends AbstractMojo {
     @Parameter
     private List<String> resourceFiles;
 
+    @Parameter
+    private List<String> imports;
+
     @Parameter(defaultValue = "${project}")
     private MavenProject project;
 
@@ -92,13 +95,11 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println("import java.util.List;");
         writer.println("import java.util.Map;");
         writer.println("import org.apache.commons.lang3.tuple.Pair;");
-        writer.println("import com.joklek.fakec.error.Error;");
-        writer.println("import com.joklek.fakec.tokens.Token;");
-        writer.println("import com.joklek.fakec.parsing.types.data.DataType;");
-        writer.println("import com.joklek.fakec.parsing.types.operation.OperationType;");
-        writer.println("import com.joklek.fakec.parsing.types.data.VarType;");
         writer.println("import com.joklek.fakec.parsing.types.Node;");
-        writer.println("import com.joklek.fakec.parsing.Scope;");
+
+        for (String anImport : imports) {
+            writer.println(String.format("import %s;", anImport));
+        }
         writer.println();
         writer.println(String.format("public abstract class %s implements Node {", baseName));
 
