@@ -227,12 +227,13 @@ public class Parser {
         Token keyword = consume(RETURN);
 
         Expr value = null;
-        if (!check(SEMICOLON)) {
+        boolean hasValue = !check(SEMICOLON);
+        if (hasValue) {
             value = parseExpression();
         }
 
-        consume(SEMICOLON, "Expect ';' after return value.");
-        return new Stmt.Return(keyword, value);
+        consume(SEMICOLON, "Expect ';' after return statement.");
+        return new Stmt.Return(keyword, value, hasValue);
     }
 
     protected Stmt parseForStmt() {

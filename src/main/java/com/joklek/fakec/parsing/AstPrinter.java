@@ -119,7 +119,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     // TODO Fix megaindent
     @Override
     public String visitReturnStmt(Stmt.Return stmt) {
-        return stmt.getValue() == null
+        return stmt.getHasValue()
                 ? "RETURN" + System.lineSeparator()
                 : buildBranch("RETURN: " + System.lineSeparator(), stmt.getValue());
     }
@@ -243,7 +243,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         StringBuilder builder = new StringBuilder(name);
 
         for (Expr expr : exprs) {
-            String part = expr.accept(this);
+            String part = expr != null ? expr.accept(this) : "null" + System.lineSeparator();
             builder.append(indentAllButFirst(part));
         }
         return builder.toString();

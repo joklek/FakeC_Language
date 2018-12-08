@@ -1,8 +1,8 @@
-+Scope scope
++Scope scope; Stmt parent
 Program    : List<Function> functions
 Function   : DataType type; Token name; List<Pair<Token,DataType>> params; Block body
 Block      : List<Stmt> statements
-Return     : Token keyword; Expr value
+Return     : Token keyword; Expr value; boolean hasValue
 Expression : Expr expression
 If         : List<Pair<Expr,Block>> branches; Block elseBranch
 While      : Expr condition; Block body
