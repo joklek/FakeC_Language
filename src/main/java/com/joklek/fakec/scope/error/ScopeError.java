@@ -1,4 +1,4 @@
-package com.joklek.fakec.parsing.error;
+package com.joklek.fakec.scope.error;
 
 import com.joklek.fakec.error.Error;
 import com.joklek.fakec.tokens.Token;

@@ -4,10 +4,14 @@ import com.joklek.fakec.lexing.Lexer;
 import com.joklek.fakec.parsing.*;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ParserError;
-import com.joklek.fakec.parsing.error.ScopeError;
-import com.joklek.fakec.parsing.error.TypeError;
+import com.joklek.fakec.scope.error.ScopeError;
+import com.joklek.fakec.scope.error.TypeError;
 import com.joklek.fakec.parsing.types.operation.OperationConverter;
 import com.joklek.fakec.parsing.types.data.TypeConverter;
+import com.joklek.fakec.scope.Scope;
+import com.joklek.fakec.scope.ScopeChecker;
+import com.joklek.fakec.scope.ScopeResolver;
+import com.joklek.fakec.scope.TypeChecker;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 

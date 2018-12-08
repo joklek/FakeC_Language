@@ -1,6 +1,6 @@
-package com.joklek.fakec.parsing;
+package com.joklek.fakec.scope;
 
-import com.joklek.fakec.parsing.error.ScopeError;
+import com.joklek.fakec.scope.error.ScopeError;
 import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.parsing.types.element.ElementType;
 import com.joklek.fakec.tokens.Token;

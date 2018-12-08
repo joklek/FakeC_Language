@@ -42,7 +42,7 @@
                         <parameter>com.joklek.fakec.parsing.types.operation.OperatorToken</parameter>
                         <parameter>com.joklek.fakec.parsing.types.data.VarType</parameter>
                         <parameter>com.joklek.fakec.parsing.types.Node</parameter>
-                        <parameter>com.joklek.fakec.parsing.Scope</parameter>
+                        <parameter>com.joklek.fakec.scope.Scope</parameter>
                     </imports>
                 </configuration>
             </plugin>

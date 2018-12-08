@@ -1,9 +1,9 @@
-package com.joklek.fakec.parsing;
+package com.joklek.fakec.scope;
 
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
-import com.joklek.fakec.parsing.error.ScopeError;
-import com.joklek.fakec.parsing.error.TypeError;
+import com.joklek.fakec.scope.error.ScopeError;
+import com.joklek.fakec.scope.error.TypeError;
 import com.joklek.fakec.parsing.types.operation.OperatorToken;
 import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.parsing.types.operation.OperationType;
