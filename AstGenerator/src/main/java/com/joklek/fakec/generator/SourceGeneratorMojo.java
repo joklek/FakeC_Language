@@ -170,7 +170,7 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println("  public interface Visitor<R> {");
         for (String type : types) {
             String typeName = type.split(":")[0].trim();
-            writer.println(String.format("    R visit%s%s (%s %s);", typeName, baseName, typeName, baseName.toLowerCase()));
+            writer.println(String.format("    R visit%s%s (%s %s);", typeName, baseName, typeName, typeName.substring(0, 1).toLowerCase() + typeName.substring(1) + baseName));
         }
         writer.println("  }");
     }
@@ -179,7 +179,7 @@ public class SourceGeneratorMojo extends AbstractMojo {
         writer.println("  public interface VisitorWithErrors<R, E extends Error> {");
         for (String type : types) {
             String typeName = type.split(":")[0].trim();
-            writer.println(String.format("    R visit%s%s (%s %s, List<E> errors);", typeName, baseName, typeName, baseName.toLowerCase()));
+            writer.println(String.format("    R visit%s%s (%s %s, List<E> errors);", typeName, baseName, typeName, typeName.substring(0, 1).toLowerCase() + typeName.substring(1) + baseName));
         }
         writer.println("  }");
     }
