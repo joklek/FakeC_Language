@@ -120,8 +120,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitReturnStmt(Stmt.Return returnStmt) {
         return returnStmt.getHasValue()
-                ? "RETURN" + System.lineSeparator()
-                : buildBranch("RETURN: " + System.lineSeparator(), returnStmt.getValue());
+                ? buildBranch("RETURN: ", returnStmt.getValue())
+                : "RETURN" + System.lineSeparator();
     }
 
     @Override
