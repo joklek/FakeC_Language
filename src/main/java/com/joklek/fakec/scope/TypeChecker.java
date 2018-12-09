@@ -7,6 +7,7 @@ import com.joklek.fakec.scope.error.TypeError;
 import com.joklek.fakec.parsing.types.operation.OperatorToken;
 import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.parsing.types.operation.OperationType;
+import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -147,10 +148,12 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
         // TODO REFACTOR
         if(left.getType() == DataType.VOID) {
-            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) left).getIdent().getLexeme()), ((Expr.Call) left).getIdent().getLine()));
+            Token fnCall = ((Expr.Call) left).getIdent();
+            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", fnCall.getLexeme()), fnCall.getLine()));
         }
         if(right.getType() == DataType.VOID) {
-            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", ((Expr.Call) right).getIdent().getLexeme()), ((Expr.Call) right).getIdent().getLine()));
+            Token fnCall = ((Expr.Call) right).getIdent();
+            errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", fnCall.getLexeme()), fnCall.getLine()));
         }
 
         OperatorToken operator = expr.getOperator();
@@ -186,8 +189,6 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
                 errors.add(new TypeError("Modulus operations is only possible on integers", leftType, rightType, operator.getLine()));
             }
         }
-
-
         return null;
     }
 

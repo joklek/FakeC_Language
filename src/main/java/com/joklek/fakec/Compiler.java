@@ -1,5 +1,9 @@
 package com.joklek.fakec;
 
+import com.joklek.fakec.codegen.CodeGenerator;
+import com.joklek.fakec.codegen.InstructionResolver;
+import com.joklek.fakec.codegen.InstructionType;
+import com.joklek.fakec.codegen.IntermediateRepresentation;
 import com.joklek.fakec.lexing.Lexer;
 import com.joklek.fakec.parsing.*;
 import com.joklek.fakec.parsing.ast.Stmt;
@@ -18,6 +22,7 @@ import com.joklek.fakec.tokens.TokenType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Compiler {
 
@@ -61,6 +66,34 @@ public class Compiler {
         for (TypeError typeError : scopeCheckerErrors) {
             error(typeError, filename);
         }
+
+        // 4.4
+        InstructionResolver resolver = new InstructionResolver();
+        CodeGenerator generator = new CodeGenerator(resolver);
+        IntermediateRepresentation intermediateRepresentation = generator.generate(program);
+        List<Integer> bytes = intermediateRepresentation.getInstructionBytes();
+        String bytesInString = bytes.stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(", "));
+
+        System.out.print("[");
+        System.out.print(bytesInString);
+        System.out.printf("]%n");
+
+        for(int offset = 0; offset < bytes.size(); offset++) {
+            int opcode = bytes.get(offset);
+            InstructionType instruction = resolver.resolveInstruction(opcode);
+
+            StringBuilder ops = new StringBuilder();
+            for(int j = 1; j <= instruction.getOps(); j++) {
+                ops.append(bytes.get(offset+j));
+            }
+            System.out.printf("%04d: %-10s %s%n", offset, instruction, ops.toString());
+            offset += instruction.getOps();
+        }
+
+        // 5
+        // RUN THIS
     }
 
     private static void error(ScopeError error, String filename) {

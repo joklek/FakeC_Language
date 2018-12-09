@@ -1,5 +1,6 @@
 package com.joklek.fakec.parsing;
 
+import com.joklek.fakec.codegen.Label;
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.error.ParserError;
@@ -75,7 +76,7 @@ public class Parser {
         }
 
         Stmt.Block body = parseBlock();
-        return new Stmt.Function(type, name, parameters, body, new ArrayList<>());
+        return new Stmt.Function(type, name, parameters, body, new ArrayList<>(), new Label());
     }
 
     // <fn_params> ::= "(" [<parameter> {"," <parameter>}] ")"

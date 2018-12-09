@@ -43,6 +43,7 @@
                         <parameter>com.joklek.fakec.parsing.types.data.VarType</parameter>
                         <parameter>com.joklek.fakec.parsing.types.Node</parameter>
                         <parameter>com.joklek.fakec.scope.Scope</parameter>
+                        <parameter>com.joklek.fakec.codegen.Label</parameter>
                     </imports>
                 </configuration>
             </plugin>
