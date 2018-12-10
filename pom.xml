@@ -18,35 +18,6 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>com.joklek</groupId>
-                <artifactId>FakeC-maven-ast-generator</artifactId>
-                <version>1.0-SNAPSHOT</version>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generateAST</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <resourceFiles>
-                        <parameter>Expr</parameter>
-                        <parameter>Stmt</parameter>
-                    </resourceFiles>
-                    <imports>
-                        <parameter>com.joklek.fakec.error.Error</parameter>
-                        <parameter>com.joklek.fakec.tokens.Token</parameter>
-                        <parameter>com.joklek.fakec.parsing.types.data.DataType</parameter>
-                        <parameter>com.joklek.fakec.parsing.types.operation.OperatorToken</parameter>
-                        <parameter>com.joklek.fakec.parsing.types.data.VarType</parameter>
-                        <parameter>com.joklek.fakec.parsing.types.Node</parameter>
-                        <parameter>com.joklek.fakec.scope.Scope</parameter>
-                        <parameter>com.joklek.fakec.codegen.Label</parameter>
-                    </imports>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
     <properties>

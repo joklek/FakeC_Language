@@ -67,4 +67,8 @@ public class IntermediateRepresentation {
     public void replace(int offset, int value) {
         instructionBytes.set(offset, value);
     }
+
+    public Label newLabelAtCurrent() {
+        return new Label(instructions.size());
+    }
 }

@@ -1,6 +1,8 @@
 package com.joklek.fakec.scope;
 
 import com.joklek.fakec.parsing.ast.Expr;
+import com.joklek.fakec.parsing.ast.IExpr;
+import com.joklek.fakec.parsing.ast.IStmt;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.scope.error.ScopeError;
 import com.joklek.fakec.scope.error.TypeError;
@@ -50,7 +52,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
     @Override
     public Void visitBlockStmt(Stmt.Block stmt, List<TypeError> errors) {
-        for (Stmt statement : stmt.getStatements()) {
+        for (IStmt statement : stmt.getStatements()) {
             statement.accept(this, errors);
         }
         return null;
@@ -70,7 +72,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     @Override
     public Void visitIfStmt(Stmt.If stmt, List<TypeError> errors) {
 
-        for (Pair<Expr, Stmt.Block> branch : stmt.getBranches()) {
+        for (Pair<IExpr, Stmt.Block> branch : stmt.getBranches()) {
             branch.getLeft().accept(this, errors);
             branch.getRight().accept(this, errors);
 
@@ -101,7 +103,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
     @Override
     public Void visitOutputStmt(Stmt.Output stmt, List<TypeError> errors) {
-        for (Expr expression : stmt.getExpressions()) {
+        for (IExpr expression : stmt.getExpressions()) {
             expression.accept(this, errors);
         }
         return null;
@@ -114,7 +116,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
     @Override
     public Void visitVarStmt(Stmt.Var stmt, List<TypeError> errors) {
-        Expr initializer = stmt.getInitializer();
+        IExpr initializer = stmt.getInitializer();
         if (initializer == null) {
             return null;
         }
@@ -223,7 +225,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     public Void visitVariableExpr(Expr.Variable expr, List<TypeError> errors) {
         DataType type;
         try {
-            type = expr.getScope().resolve(expr.getName(), VARIABLE);
+            type = expr.getScope().resolve(expr.getName(), VARIABLE).getType();
         }
         catch (ScopeError e) {
             return null;
@@ -237,7 +239,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
         DataType type;
         try {
-            type = expr.getScope().resolve(expr.getName(), VARIABLE);
+            type = expr.getScope().resolve(expr.getName(), VARIABLE).getType();
         }
         catch (ScopeError e) {
             return null;
@@ -261,7 +263,8 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     public Void visitCallExpr(Expr.Call expr, List<TypeError> errors) {
 
         try {
-            DataType functionType = expr.getScope().resolve(expr.getIdent(), FUNCTION);
+            Stmt.Function function = (Stmt.Function) expr.getScope().resolve(expr.getIdent(), FUNCTION);
+            DataType functionType = function.getType();
             expr.setType(functionType);
         }
         catch (ScopeError e) {

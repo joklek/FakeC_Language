@@ -1,6 +1,8 @@
 package com.joklek.fakec.parsing;
 
 import com.joklek.fakec.parsing.ast.Expr;
+import com.joklek.fakec.parsing.ast.IExpr;
+import com.joklek.fakec.parsing.ast.IStmt;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.tokens.Token;
@@ -119,7 +121,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     // TODO Fix megaindent
     @Override
     public String visitReturnStmt(Stmt.Return returnStmt) {
-        return returnStmt.getHasValue()
+        return returnStmt.hasValue()
                 ? buildBranch("RETURN: ", returnStmt.getValue())
                 : "RETURN" + System.lineSeparator();
     }
@@ -131,11 +133,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitIfStmt(Stmt.If ifStmt) {
-        List<Pair<Expr, Stmt.Block>> branches = ifStmt.getBranches();
+        List<Pair<IExpr, Stmt.Block>> branches = ifStmt.getBranches();
 
         StringBuilder builder = new StringBuilder(String.format("IF:%n"));
         int position = 0;
-        for (Pair<Expr, Stmt.Block> conditionAndBody : branches) {
+        for (Pair<IExpr, Stmt.Block> conditionAndBody : branches) {
             String condition = buildBranch("Condition: ", conditionAndBody.getKey());
             String body = conditionAndBody.getValue().getStatements().isEmpty() ? "Body:" + System.lineSeparator() : buildBranch("Body: ", conditionAndBody.getValue());
             String branchInfo = String.format("Branch[%d]: %n" +
@@ -165,10 +167,10 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitOutputStmt(Stmt.Output outputStmt) {
         StringBuilder builder = new StringBuilder(String.format("OUTPUT: %n"));
-        List<Expr> expressions = outputStmt.getExpressions();
+        List<IExpr> expressions = outputStmt.getExpressions();
 
         for (int i = 0; i < expressions.size(); i++) {
-            Expr expr = expressions.get(i);
+            IExpr expr = expressions.get(i);
             builder.append(indent(buildBranch(String.format("PrintedExpr[%d]: ", i), expr)));
         }
         return builder.toString();
@@ -221,7 +223,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitBlockStmt(Stmt.Block blockStmt) {
         StringBuilder statementsInfo = new StringBuilder();
-        List<Stmt> body = blockStmt.getStatements();
+        List<IStmt> body = blockStmt.getStatements();
         for(int i = 0; i < body.size(); i++) {
             String stmtInfo = buildBranch(String.format("STMT[%d]: ", i), body.get(i));
             statementsInfo.append(stmtInfo);
@@ -239,20 +241,20 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return "CONTINUE" + System.lineSeparator();
     }
 
-    private String buildBranch(String name, Expr... exprs) {
+    private String buildBranch(String name, IExpr... exprs) {
         StringBuilder builder = new StringBuilder(name);
 
-        for (Expr expr : exprs) {
+        for (IExpr expr : exprs) {
             String part = expr != null ? expr.accept(this) : "null" + System.lineSeparator();
             builder.append(indentAllButFirst(part));
         }
         return builder.toString();
     }
 
-    private String buildBranch(String name, Stmt... stmts) {
+    private String buildBranch(String name, IStmt... stmts) {
         StringBuilder builder = new StringBuilder(name);
 
-        for (Stmt stmt : stmts) {
+        for (IStmt stmt : stmts) {
             String part = stmt.accept(this);
             builder.append(indentAllButFirst(part));
         }

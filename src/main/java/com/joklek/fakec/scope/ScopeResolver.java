@@ -1,6 +1,8 @@
 package com.joklek.fakec.scope;
 
 import com.joklek.fakec.parsing.ast.Expr;
+import com.joklek.fakec.parsing.ast.IExpr;
+import com.joklek.fakec.parsing.ast.IStmt;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.scope.error.ScopeError;
 import com.joklek.fakec.parsing.types.data.DataType;
@@ -39,7 +41,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
     public Void visitProgramStmt(Stmt.Program stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
         for(Stmt.Function function: stmt.getFunctions()) {
-            ScopeError error = scope.add(function.getName(), function.getType(), FUNCTION);
+            ScopeError error = scope.add(function.getName(), function, FUNCTION);
             if(error != null) {
                 errors.add(error);
             }
@@ -57,7 +59,8 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         Scope parentScope = stmt.getScope();
         Scope scope = new Scope(parentScope);
         for(Pair<Token, DataType> pair: stmt.getParams()) {
-            ScopeError error = scope.add(pair.getLeft(), pair.getRight(), VARIABLE);
+            // Will treat parameter as a variable, probably not the best idea, but I'm running out of time. I'd rather write witty comments than fix mistakes of my own design
+            ScopeError error = scope.add(pair.getLeft(), new Stmt.Var(pair.getRight(), pair.getLeft(), null), VARIABLE);
             if(error != null) {
                 errors.add(error);
             }
@@ -72,7 +75,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
     public Void visitBlockStmt(Stmt.Block stmt, List<ScopeError> errors) {
 
         Scope scope = new Scope(stmt.getScope());
-        for(Stmt statement: stmt.getStatements()) {
+        for(IStmt statement: stmt.getStatements()) {
             setScopeAndSearchForErrors(scope, statement, errors);
             statement.setParent(stmt);
         }
@@ -81,7 +84,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt, List<ScopeError> errors) {
-        Expr returnValue = stmt.getValue();
+        IExpr returnValue = stmt.getValue();
         if(returnValue != null) {
             returnValue.setScope(stmt.getScope());
             returnValue.accept(this, errors);
@@ -91,7 +94,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
 
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt, List<ScopeError> errors) {
-        Expr expression = stmt.getExpression();
+        IExpr expression = stmt.getExpression();
         expression.setScope(stmt.getScope());
         expression.accept(this, errors);
         return null;
@@ -101,7 +104,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
     public Void visitIfStmt(Stmt.If stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
 
-        for (Pair<Expr, Stmt.Block> branch : stmt.getBranches()) {
+        for (Pair<IExpr, Stmt.Block> branch : stmt.getBranches()) {
             setScopeAndSearchForErrors(scope, branch.getLeft(), errors);
             setScopeAndSearchForErrors(scope, branch.getRight(), errors);
             branch.getRight().setParent(stmt);
@@ -128,7 +131,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
     @Override
     public Void visitOutputStmt(Stmt.Output stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
-        for (Expr expression : stmt.getExpressions()) {
+        for (IExpr expression : stmt.getExpressions()) {
             setScopeAndSearchForErrors(scope, expression, errors);
         }
         return null;
@@ -147,13 +150,13 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
     @Override
     public Void visitVarStmt(Stmt.Var stmt, List<ScopeError> errors) {
         // Analyze initializer before variable initialization, so it could not be initialized as itself
-        Expr initializer = stmt.getInitializer();
+        IExpr initializer = stmt.getInitializer();
         Scope scope = stmt.getScope();
         if(initializer != null) {
             setScopeAndSearchForErrors(scope, initializer, errors);
         }
 
-        ScopeError error = scope.add(stmt.getName(), stmt.getType(), VARIABLE);
+        ScopeError error = scope.add(stmt.getName(), stmt, VARIABLE);
         if(error != null) {
             errors.add(error);
         }
@@ -247,13 +250,13 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
     public Void visitArrayStmt(Stmt.Array stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
 
-        ScopeError error = scope.add(stmt.getName(), stmt.getType(), VARIABLE);
+        ScopeError error = scope.add(stmt.getName(), stmt, VARIABLE);
         if(error != null) {
             errors.add(error);
         }
 
 
-        Expr initializer = stmt.getInitializer();
+        IExpr initializer = stmt.getInitializer();
         if(initializer != null) {
             setScopeAndSearchForErrors(scope, initializer, errors);
         }
@@ -283,12 +286,12 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         return null;
     }
 
-    private void setScopeAndSearchForErrors(Scope scope, Expr expression, List<ScopeError> errors) {
+    private void setScopeAndSearchForErrors(Scope scope, IExpr expression, List<ScopeError> errors) {
         expression.setScope(scope);
         expression.accept(this, errors);
     }
 
-    private void setScopeAndSearchForErrors(Scope scope, Stmt statement, List<ScopeError> errors) {
+    private void setScopeAndSearchForErrors(Scope scope, IStmt statement, List<ScopeError> errors) {
         statement.setScope(scope);
         statement.accept(this, errors);
     }

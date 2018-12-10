@@ -1,6 +1,8 @@
 package com.joklek.fakec.scope;
 
 import com.joklek.fakec.parsing.ast.Expr;
+import com.joklek.fakec.parsing.ast.IExpr;
+import com.joklek.fakec.parsing.ast.IStmt;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.scope.error.TypeError;
 import com.joklek.fakec.parsing.types.data.DataType;
@@ -56,7 +58,7 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
 
     @Override
     public Void visitBlockStmt(Stmt.Block stmt, List<TypeError> errors) {
-        for (Stmt statement : stmt.getStatements()) {
+        for (IStmt statement : stmt.getStatements()) {
             statement.accept(this, errors);
         }
 
@@ -65,8 +67,8 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt, List<TypeError> errors) {
-        Expr returnValue = stmt.getValue();
-        Stmt parent = stmt.getParent();
+        IExpr returnValue = stmt.getValue();
+        IStmt parent = stmt.getParent();
 
 
         while(parent != null && !(parent instanceof Stmt.Function)) {
@@ -82,12 +84,12 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
         DataType functionType = parentFunction.getType();
 
         if(functionType == DataType.VOID) {
-            if(stmt.getHasValue()) {
+            if(stmt.hasValue()) {
                 errors.add(new TypeError("Return must not have a value with void function", stmt.getKeyword().getLine()));
             }
         }
         else {
-            if (!stmt.getHasValue()) {
+            if (!stmt.hasValue()) {
                 errors.add(new TypeError("Must return a value with the type of the function", functionType, stmt.getKeyword().getLine()));
             }
             else if (functionType != returnValue.getType()) {
@@ -95,6 +97,7 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
             }
         }
 
+        stmt.setTarget(parentFunction);
         parentFunction.getReturnStmts().add(stmt);
         return null;
     }
@@ -106,7 +109,7 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
 
     @Override
     public Void visitIfStmt(Stmt.If stmt, List<TypeError> errors) {
-        for (Pair<Expr, Stmt.Block> branch : stmt.getBranches()) {
+        for (Pair<IExpr, Stmt.Block> branch : stmt.getBranches()) {
             branch.getRight().accept(this, errors);
         }
         if(stmt.getElseBranch() != null) {
@@ -144,18 +147,18 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
     // TODO
     @Override
     public Void visitBreakStmt(Stmt.Break stmt, List<TypeError> errors) {
-        Stmt parent = stmt.getParent();
+        IStmt parent = stmt.getParent();
         return resolveParentWhile(parent, errors, stmt.getToken());
     }
 
     // TODO
     @Override
     public Void visitContinueStmt(Stmt.Continue stmt, List<TypeError> errors) {
-        Stmt parent = stmt.getParent();
+        IStmt parent = stmt.getParent();
         return resolveParentWhile(parent, errors, stmt.getToken());
     }
 
-    private Void resolveParentWhile(Stmt parent, List<TypeError> errors, Token token) {
+    private Void resolveParentWhile(IStmt parent, List<TypeError> errors, Token token) {
         while (parent != null && !(parent instanceof Stmt.While)) {
             parent = parent.getParent();
         }

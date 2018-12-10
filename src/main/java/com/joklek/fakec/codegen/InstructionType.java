@@ -4,7 +4,8 @@ public enum InstructionType {
     ADD(1, 0), SUB(2, 0), MUL(3, 0), DIV(4, 0),
     CALL(5, 1), RET(6, 0), RET_V(7, 0),
     POP(8, 0), PUSH(9, 1), PEEK(10, 1), POKE(12, 1),
-    ERROR(11, 0), BR(13, 1);
+    ERROR(11, 0), BR(13, 1), BZ(16, 1),
+    OUT(14, 0), IN(15, 1);
 
     private final int value;
     private final int ops;

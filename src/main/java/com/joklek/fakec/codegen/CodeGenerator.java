@@ -1,8 +1,11 @@
 package com.joklek.fakec.codegen;
 
 import com.joklek.fakec.parsing.ast.Expr;
+import com.joklek.fakec.parsing.ast.IExpr;
+import com.joklek.fakec.parsing.ast.IStmt;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.types.operation.OperationType;
+import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -52,7 +55,7 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitBlockStmt(Stmt.Block blockStmt) {
-        for (Stmt statement : blockStmt.getStatements()) {
+        for (IStmt statement : blockStmt.getStatements()) {
             statement.accept(this);
         }
         return null;
@@ -60,7 +63,7 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitReturnStmt(Stmt.Return returnStmt) {
-        if(returnStmt.getHasValue()) {
+        if(returnStmt.hasValue()) {
             returnStmt.getValue().accept(this);
             interRepresentation.write(RET_V);
         }
@@ -73,7 +76,7 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     @Override
     public Void visitExpressionStmt(Stmt.Expression expressionStmt) {
         // TODO: Optimisation to skip literal expression statements?
-        Expr expression = expressionStmt.getExpression();
+        IExpr expression = expressionStmt.getExpression();
         expression.accept(this);
         interRepresentation.write(POP);
 
@@ -84,7 +87,7 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     public Void visitIfStmt(Stmt.If ifStmt) {
 
         // TODO optimisation idea: If condition is true or false, should skip thingies
-        for (Pair<Expr, Stmt.Block> branch : ifStmt.getBranches()) {
+        for (Pair<IExpr, Stmt.Block> branch : ifStmt.getBranches()) {
             branch.getLeft().accept(this);
             Label label = interRepresentation.newLabel();
 
@@ -101,38 +104,59 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitWhileStmt(Stmt.While whileStmt) {
+        Label startLabel = interRepresentation.newLabelAtCurrent();
+        //whileStmt.setStartLabel(startLabel);
+        whileStmt.getCondition().accept(this);
+        Label endLabel = interRepresentation.newLabel();
+        //whileStmt.setEndLabel(endLabel);
+        interRepresentation.write(BZ, endLabel.getValue());
+        whileStmt.getBody().accept(this);
+        interRepresentation.write(BR, startLabel.getValue());
+        interRepresentation.placeLabel(endLabel);
         return null;
     }
 
     @Override
     public Void visitOutputStmt(Stmt.Output outputStmt) {
+        for (IExpr expression : outputStmt.getExpressions()) {
+            expression.accept(this);
+            interRepresentation.write(OUT);
+        }
         return null;
     }
 
     @Override
     public Void visitInputStmt(Stmt.Input inputStmt) {
+        for (Token variable : inputStmt.getVariables()) {
+            //interRepresentation.write(IN, variable);
+            // TODO
+        }
         return null;
     }
 
     @Override
     public Void visitVarStmt(Stmt.Var varStmt) {
+        // TODO
         return null;
     }
 
     @Override
     public Void visitArrayStmt(Stmt.Array arrayStmt) {
+        // TODO
         return null;
     }
 
     @Override
     public Void visitBreakStmt(Stmt.Break breakStmt) {
-        Label label = breakStmt.getLabel();
+        Label label = breakStmt.getTarget().getEndLabel();
         interRepresentation.write(BR, label.getValue());
         return null;
     }
 
     @Override
     public Void visitContinueStmt(Stmt.Continue continueStmt) {
+        Label label = continueStmt.getTarget().getStartLabel();
+        interRepresentation.write(BR, label.getValue());
         return null;
     }
 
@@ -216,26 +240,27 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitUnaryExpr(Expr.Unary unaryExpr) {
+        // TODO
         return null;
     }
 
     @Override
     public Void visitVariableExpr(Expr.Variable variableExpr) {
-        Label label = variableExpr.getTarget().getLabel();
+       /* Label label = variableExpr.getTarget().getLabel();
         if(label != null) {
             interRepresentation.write(PEEK, label.getValue());
         }
         else {
             interRepresentation.write(PEEK, ERROR.getValue());
-        }
+        }*/
         return null;
     }
 
     @Override
     public Void visitAssignExpr(Expr.Assign assignExpr) {
-        assignExpr.getValue().accept(this);
+        /*assignExpr.getValue().accept(this);
         Label label = assignExpr.getTarget().getLabel();
-        interRepresentation.write(POKE, label.getValue());
+        interRepresentation.write(POKE, label.getValue());*/
         return null;
     }
 
@@ -252,11 +277,13 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitArrayAccessExpr(Expr.ArrayAccess arrayAccessExpr) {
+        // TODO
         return null;
     }
 
     @Override
     public Void visitArrayCreateExpr(Expr.ArrayCreate arrayCreateExpr) {
+        // TODO
         return null;
     }
 }

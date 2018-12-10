@@ -1,8 +1,9 @@
 package com.joklek.fakec.scope;
 
-import com.joklek.fakec.scope.error.ScopeError;
-import com.joklek.fakec.parsing.types.data.DataType;
+import com.joklek.fakec.parsing.ast.NodeWithType;
+import com.joklek.fakec.parsing.types.Node;
 import com.joklek.fakec.parsing.types.element.ElementType;
+import com.joklek.fakec.scope.error.ScopeError;
 import com.joklek.fakec.tokens.Token;
 
 import java.util.HashMap;
@@ -39,7 +40,7 @@ public class Scope {
      * @param node the node of provided name
      * @param elementType clarifies if it's variable, function, or etc.
      */
-    public ScopeError add(Token name, DataType node, ElementType elementType) {
+    public ScopeError add(Token name, NodeWithType node, ElementType elementType) {
         try {
             // If name can't be resolved, then we can add it
             resolve(name, elementType);
@@ -58,10 +59,19 @@ public class Scope {
      * @param elementType clarifies if it's variable, function, or etc.
      * @return node of resolved name
      */
-    public DataType resolve(Token name, ElementType elementType) {
-        DataType type = containsName(name, elementType);
-        if(type != null) {
-            return type;
+    public NodeWithType resolve(Token name, ElementType elementType) {
+        DataHolder dataHolder = members.get(name);
+
+        if(dataHolder == null) {
+            String elementTypeString = elementType.toString().substring(0,1).toUpperCase() + elementType.toString().substring(1).toLowerCase();
+            throw new ScopeError(String.format("%s not found in current scope", elementTypeString), name);
+        }
+
+        NodeWithType node = dataHolder.getNode();
+        ElementType realType = dataHolder.getElementType();
+
+        if(realType.equals(elementType)) {
+            return node;
         }
         else if (parentScope != null) {
             return parentScope.resolve(name, elementType);
@@ -72,32 +82,21 @@ public class Scope {
         }
     }
 
-    // TODO think of better way of doing this
-    private DataType containsName(Token name, ElementType elementType) {
-        for(Map.Entry<Token, DataHolder> entry: members.entrySet()) {
-            if(entry.getKey().getLexeme().equals(name.getLexeme())
-                    && entry.getValue().getElementType().equals(elementType)) {
-                return entry.getValue().getType();
-            }
-        }
-        return null;
-    }
-
     class DataHolder {
         private final ElementType elementType;
-        private final DataType type;
+        private final NodeWithType node;
 
-        DataHolder(ElementType elementType, DataType type) {
+        DataHolder(ElementType elementType, NodeWithType node) {
             this.elementType = elementType;
-            this.type = type;
+            this.node = node;
         }
 
         public ElementType getElementType() {
             return elementType;
         }
 
-        public DataType getType() {
-            return type;
+        public NodeWithType getNode() {
+            return node;
         }
     }
 }
