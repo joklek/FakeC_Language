@@ -1,0 +1,24 @@
+int main() {
+    int count = 0;
+    int guess = 0;
+    int number = 500;
+
+    while(true) {
+        output << "Enter number: ";
+        input >> guess;
+
+        if(guess > number) {
+            output << "Guess is greater than number";
+        }
+        else if(guess < number) {
+            output << "Guess is less than number";
+        }
+        else if(guess == number) {
+            break;
+        }
+        guess++;
+    }
+
+    output << "congrats, you've won in ", count, "tries. The number was ", number, "\n";
+    return 0;
+}
