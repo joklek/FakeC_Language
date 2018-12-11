@@ -13,7 +13,7 @@ public class LexerError extends Error {
     }
 
     @Override
-    public String getErrorMessage() {
+    public String getMessage() {
         return errorMessage;
     }
 

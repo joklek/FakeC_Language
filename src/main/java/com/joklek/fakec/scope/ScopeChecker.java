@@ -32,7 +32,8 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
     public Void visitProgramStmt(Stmt.Program stmt, List<TypeError> errors) {
         List<Stmt.Function> functions = stmt.getFunctions();
         boolean hasMain = functions.stream().anyMatch(function -> function.getType() == DataType.INT
-                                                   && function.getName().getLexeme().equals("main"));
+                                                   && function.getName().getLexeme().equals("main")
+                                                   && function.getParams().isEmpty());
         // TODO this will not work with multiple files, fix later
         if(!hasMain) {
             errors.add(new TypeError("Program must contain a function 'int main()' ", 0));
@@ -48,10 +49,6 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt, List<TypeError> errors) {
         stmt.getBody().accept(this, errors);
-        boolean isVoid = stmt.getType() == DataType.VOID;
-        if(stmt.getReturnStmts().isEmpty() && !isVoid) {
-            errors.add(new TypeError(String.format("Function '%s' has no return statements", stmt.getName().getLexeme()), stmt.getName().getLine()));
-        }
         return null;
     }
 

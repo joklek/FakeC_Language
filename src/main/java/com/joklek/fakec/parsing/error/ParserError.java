@@ -13,7 +13,7 @@ public class ParserError extends Error {
         this.token = token;
     }
 
-    public String getErrorMessage() {
+    public String getMessage() {
         return errorMessage;
     }
 

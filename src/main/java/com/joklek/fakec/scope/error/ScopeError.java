@@ -13,7 +13,7 @@ public class ScopeError extends Error {
         this.erroneousName = erroneousName;
     }
 
-    public String getErrorMessage() {
+    public String getMessage() {
         return errorMessage;
     }
 

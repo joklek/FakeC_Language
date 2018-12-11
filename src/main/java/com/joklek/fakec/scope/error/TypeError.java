@@ -37,7 +37,7 @@ public class TypeError extends Error {
         this.actualType = null;
     }
 
-    public String getErrorMessage() {
+    public String getMessage() {
         if(expectedType == null && actualType == null) {
             return errorMessage;
         }
