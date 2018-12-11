@@ -60,7 +60,9 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt, List<TypeError> errors) {
-        stmt.getValue().accept(this, errors);
+        if (stmt.getValue() != null) {
+            stmt.getValue().accept(this, errors);
+        }
         return null;
     }
 

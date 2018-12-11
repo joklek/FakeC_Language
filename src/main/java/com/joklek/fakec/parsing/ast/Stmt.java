@@ -5,9 +5,9 @@ import com.joklek.fakec.error.Error;
 import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.scope.Scope;
 import com.joklek.fakec.tokens.Token;
-import com.sun.istack.internal.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +51,7 @@ public abstract class Stmt implements IStmt {
         }
     }
 
-    public static class Function implements IStmt, NodeWithType {
+    public static class Function implements IStmt, NodeWithType, NodeWithLabel {
 
         private final DataType type;
         private final Token name;
@@ -235,8 +235,8 @@ public abstract class Stmt implements IStmt {
 
         private final IExpr condition;
         private final Block body;
-        private final Label startLabel;
-        private final Label endLabel;
+        private Label startLabel;
+        private Label endLabel;
 
         public While(IExpr condition, Block body) {
             this.condition = condition;
@@ -257,8 +257,16 @@ public abstract class Stmt implements IStmt {
             return startLabel;
         }
 
+        public void setStartLabel(Label label) {
+            this.startLabel = label;
+        }
+
         public Label getEndLabel() {
             return endLabel;
+        }
+
+        public void setEndLabel(Label label) {
+            this.endLabel = label;
         }
 
         public <R> R accept(Visitor<R> visitor) {
@@ -312,18 +320,20 @@ public abstract class Stmt implements IStmt {
         }
     }
 
-    public static class Var implements IStmt, NodeWithType {
+    public static class Var implements IStmt, NodeWithType, NodeWithLabel {
 
         private final DataType type;
         private final Token name;
         private final IExpr initializer;
         private Scope scope = null;
         private IStmt parent = null;
+        private Label label;
 
         public Var(DataType type, Token name, IExpr initializer) {
             this.type = type;
             this.name = name;
             this.initializer = initializer;
+            this.label = new Label();
         }
 
         public DataType getType() {
@@ -351,6 +361,11 @@ public abstract class Stmt implements IStmt {
         }
         public void setParent(IStmt parent) {
             this.parent = parent;
+        }
+
+        @Override
+        public Label getLabel() {
+            return label;
         }
 
         public <R> R accept(Visitor<R> visitor) {
