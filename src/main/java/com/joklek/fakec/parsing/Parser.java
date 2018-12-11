@@ -490,7 +490,7 @@ public class Parser {
             }
         }
         if(match(INC, DEC)) {
-            OperationType type = lexerToken.getType() == INC ? OperationType.INC_POST : OperationType.DEC_POST;
+            OperationType type = previous().getType() == INC ? OperationType.INC_POST : OperationType.DEC_POST;
             return new Expr.Unary(new OperatorToken(type, lexerToken.getLine()), expression);
         }
         return expression;

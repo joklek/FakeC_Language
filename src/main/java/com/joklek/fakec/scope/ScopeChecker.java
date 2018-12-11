@@ -1,11 +1,10 @@
 package com.joklek.fakec.scope;
 
-import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.IExpr;
 import com.joklek.fakec.parsing.ast.IStmt;
 import com.joklek.fakec.parsing.ast.Stmt;
-import com.joklek.fakec.scope.error.TypeError;
 import com.joklek.fakec.parsing.types.data.DataType;
+import com.joklek.fakec.scope.error.TypeError;
 import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -144,27 +143,34 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
         return null;
     }
 
-    // TODO
     @Override
     public Void visitBreakStmt(Stmt.Break stmt, List<TypeError> errors) {
         IStmt parent = stmt.getParent();
-        return resolveParentWhile(parent, errors, stmt.getToken());
+        Stmt.While aWhile = resolveParentWhile(parent, errors, stmt.getToken());
+        stmt.setTarget(aWhile);
+
+        return null;
     }
 
-    // TODO
     @Override
     public Void visitContinueStmt(Stmt.Continue stmt, List<TypeError> errors) {
         IStmt parent = stmt.getParent();
-        return resolveParentWhile(parent, errors, stmt.getToken());
+        Stmt.While aWhile = resolveParentWhile(parent, errors, stmt.getToken());
+        stmt.setTarget(aWhile);
+
+        return null;
     }
 
-    private Void resolveParentWhile(IStmt parent, List<TypeError> errors, Token token) {
+    private Stmt.While resolveParentWhile(IStmt parent, List<TypeError> errors, Token token) {
         while (parent != null && !(parent instanceof Stmt.While)) {
             parent = parent.getParent();
         }
         if (parent == null) {
             errors.add(new TypeError(String.format("%s should be inside of while or for", token.getType()), token.getLine()));
+            return null;
         }
-        return null;
+        else {
+            return (Stmt.While) parent;
+        }
     }
 }
