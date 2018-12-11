@@ -215,8 +215,9 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         OperatorToken operator = expr.getOperator();
         OperationType operatorType = operator.getType();
         expr.setType(type);
-        if(((type == DataType.FLOAT || type == DataType.INT) && (operatorType == ADD || operatorType == SUB))
-                || type == DataType.BOOL && operatorType == NOT) {
+        if( ((type == DataType.FLOAT || type == DataType.INT) && (operatorType == ADD || operatorType == SUB)) // Float or int for + or -
+                || ((operatorType == INC_POST || operatorType == INC_PRE || operatorType == DEC_POST || operatorType == DEC_PRE) && type == DataType.INT) // int for --/++ pre and post
+                || (type == DataType.BOOL && operatorType == NOT)) {  // !bool
             return null;
         }
         errors.add(new TypeError(String.format("Unary operation %s cannot be used on type %s", operatorType, type), type, operator.getLine()));
