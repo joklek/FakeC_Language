@@ -1,7 +1,6 @@
 package com.joklek.fakec.scope;
 
 import com.joklek.fakec.parsing.ast.NodeWithType;
-import com.joklek.fakec.parsing.types.Node;
 import com.joklek.fakec.parsing.types.element.ElementType;
 import com.joklek.fakec.scope.error.ScopeError;
 import com.joklek.fakec.tokens.Token;
@@ -60,26 +59,35 @@ public class Scope {
      * @return node of resolved name
      */
     public NodeWithType resolve(Token name, ElementType elementType) {
-        DataHolder dataHolder = members.get(name);
+        DataHolder dataHolder = getToken(name, elementType);
 
-        if(dataHolder == null) {
-            String elementTypeString = elementType.toString().substring(0,1).toUpperCase() + elementType.toString().substring(1).toLowerCase();
-            throw new ScopeError(String.format("%s not found in current scope", elementTypeString), name);
+        if(dataHolder != null) {
+            NodeWithType node = dataHolder.getNode();
+            ElementType realType = dataHolder.getElementType();
+            if(realType.equals(elementType)) {
+                return node;
+            }
         }
 
-        NodeWithType node = dataHolder.getNode();
-        ElementType realType = dataHolder.getElementType();
-
-        if(realType.equals(elementType)) {
-            return node;
-        }
-        else if (parentScope != null) {
+        if (parentScope != null) {
             return parentScope.resolve(name, elementType);
         }
         else {
             String elementTypeString = elementType.toString().substring(0,1).toUpperCase() + elementType.toString().substring(1).toLowerCase();
             throw new ScopeError(String.format("%s not found in current scope", elementTypeString), name);
         }
+    }
+
+    private DataHolder getToken(Token name, ElementType type) {
+        DataHolder data = null;
+        for (Map.Entry<Token, DataHolder> entry : members.entrySet()) {
+            if(entry.getKey().getLexeme().equals(name.getLexeme())
+                    && entry.getValue().elementType.equals(type)) {
+                data = entry.getValue();
+                break;
+            }
+        }
+        return data;
     }
 
     class DataHolder {
