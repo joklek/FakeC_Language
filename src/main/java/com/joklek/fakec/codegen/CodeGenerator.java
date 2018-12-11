@@ -1,13 +1,14 @@
 package com.joklek.fakec.codegen;
 
-import com.joklek.fakec.parsing.ast.Expr;
-import com.joklek.fakec.parsing.ast.IExpr;
-import com.joklek.fakec.parsing.ast.IStmt;
-import com.joklek.fakec.parsing.ast.Stmt;
+import com.joklek.fakec.parsing.ast.*;
+import com.joklek.fakec.parsing.types.data.DataType;
+import com.joklek.fakec.parsing.types.element.ElementType;
 import com.joklek.fakec.parsing.types.operation.OperationType;
 import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.joklek.fakec.codegen.InstructionType.*;
@@ -24,11 +25,15 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     public CodeGenerator(InstructionResolver resolver) {
         this.resolver = resolver;
-        this.interRepresentation = new IntermediateRepresentation();
+        this.interRepresentation = new IntermediateRepresentation(resolver);
     }
 
     public IntermediateRepresentation generate(Stmt.Program program) {
         visitProgramStmt(program);
+        /*for (Label label : interRepresentation.getLabels()) {
+            interRepresentation.placeLabel(label);
+        }*/
+
         return interRepresentation;
     }
 
@@ -42,13 +47,17 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitFunctionStmt(Stmt.Function functionStmt) {
-        functionStmt.getBody().accept(this);
-        Label fnLabel = functionStmt.getLabel();
+        // TODO place main entry label here pls
 
+        Label fnLabel = functionStmt.getLabel();
         interRepresentation.placeLabel(fnLabel);
-        for (Integer offset : fnLabel.getOffsets()) {
-            interRepresentation.replace(offset, fnLabel.getValue());
+
+        for (Pair<Token, DataType> param : functionStmt.getParams()) {
+            int pointer = ((StackDeclaredNode) functionStmt.getBody().getScope().resolve(param.getLeft(), ElementType.VARIABLE)).getStackSlot();
+            interRepresentation.write(PEEK, pointer);
         }
+
+        functionStmt.getBody().accept(this);
         interRepresentation.write(RET); // always does return even if one was before
         return null;
     }
@@ -64,7 +73,12 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     @Override
     public Void visitReturnStmt(Stmt.Return returnStmt) {
         if(returnStmt.hasValue()) {
-            returnStmt.getValue().accept(this);
+            if (returnStmt.getValue() != null) {
+                returnStmt.getValue().accept(this);
+            }
+            else {
+                throw new IllegalStateException("Return says that it has value, but it doesn't"); // TODO this should hit when returning null, must fix
+            }
             interRepresentation.write(RET_V);
         }
         else {
@@ -86,32 +100,35 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     @Override
     public Void visitIfStmt(Stmt.If ifStmt) {
 
+        Label endLabel = interRepresentation.newLabel();
         // TODO optimisation idea: If condition is true or false, should skip thingies
         for (Pair<IExpr, Stmt.Block> branch : ifStmt.getBranches()) {
-            branch.getLeft().accept(this);
             Label label = interRepresentation.newLabel();
+            branch.getLeft().accept(this);
 
-            interRepresentation.write(label.getValue());
+            interRepresentation.write(BZ, label);
             branch.getRight().accept(this);
+            interRepresentation.write(BR, endLabel); // TODO is it really BR not JMP
+
             interRepresentation.placeLabel(label);
         }
         if(ifStmt.getElseBranch() != null) {
             ifStmt.getElseBranch().accept(this);
         }
-
+        interRepresentation.placeLabel(endLabel);
         return null;
     }
 
     @Override
     public Void visitWhileStmt(Stmt.While whileStmt) {
         Label startLabel = interRepresentation.newLabelAtCurrent();
-        //whileStmt.setStartLabel(startLabel);
+        whileStmt.setStartLabel(startLabel);
         whileStmt.getCondition().accept(this);
         Label endLabel = interRepresentation.newLabel();
-        //whileStmt.setEndLabel(endLabel);
-        interRepresentation.write(BZ, endLabel.getValue());
+        whileStmt.setEndLabel(endLabel);
+        interRepresentation.write(BZ, endLabel);
         whileStmt.getBody().accept(this);
-        interRepresentation.write(BR, startLabel.getValue());
+        interRepresentation.write(BR, startLabel);
         interRepresentation.placeLabel(endLabel);
         return null;
     }
@@ -128,15 +145,19 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     @Override
     public Void visitInputStmt(Stmt.Input inputStmt) {
         for (Token variable : inputStmt.getVariables()) {
-            //interRepresentation.write(IN, variable);
-            // TODO
+            StackDeclaredNode variableNode = (StackDeclaredNode) inputStmt.getScope().resolve(variable, ElementType.VARIABLE);
+            interRepresentation.write(IN, ((NodeWithLabel)variableNode).getLabel());
+            interRepresentation.write(POKE, variableNode.getStackSlot());
         }
         return null;
     }
 
     @Override
     public Void visitVarStmt(Stmt.Var varStmt) {
-        // TODO
+        if (varStmt.getInitializer() != null) {
+            varStmt.getInitializer().accept(this);
+            interRepresentation.write(POKE, varStmt.getStackSlot());
+        }
         return null;
     }
 
@@ -149,14 +170,14 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     @Override
     public Void visitBreakStmt(Stmt.Break breakStmt) {
         Label label = breakStmt.getTarget().getEndLabel();
-        interRepresentation.write(BR, label.getValue());
+        interRepresentation.write(BR, label);
         return null;
     }
 
     @Override
     public Void visitContinueStmt(Stmt.Continue continueStmt) {
         Label label = continueStmt.getTarget().getStartLabel();
-        interRepresentation.write(BR, label.getValue());
+        interRepresentation.write(BR, label);
         return null;
     }
 
@@ -185,14 +206,17 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
             case NOT:
                 break;
             case LESS:
+                interRepresentation.write(LT);
                 break;
             case LESS_EQUAL:
                 break;
             case GREATER:
+                interRepresentation.write(GT);
                 break;
             case GREATER_EQUAL:
                 break;
             case EQUAL:
+                interRepresentation.write(EQ);
                 break;
             case EQUAL_EQUAL:
                 break;
@@ -217,11 +241,13 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
             case DEC_POST:
                 break;
             case AND:
+                interRepresentation.write(AND);
                 break;
             case OR:
+                interRepresentation.write(OR);
                 break;
             default:
-                break;
+                throw new UnsupportedOperationException("Incorrect operator type for operation" + operatorType);
         }
         return null;
     }
@@ -234,7 +260,34 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitLiteralExpr(Expr.Literal literalExpr) {
-        interRepresentation.write(PUSH, (int) literalExpr.getValue());
+        List<Integer> bytes = new ArrayList<>();
+
+        Object value = literalExpr.getValue();
+        if(value instanceof Integer) {
+            bytes.add((Integer) value);
+        }
+        else if(value instanceof String) {
+            for (char c : ((String) value).toCharArray()) {
+                bytes.add((int) c);
+            }
+        }
+        else if(value instanceof Character) {
+            bytes.add((int) (Character) value);
+        }
+        else if(value instanceof Double) {
+            byte[] doubleBytes = new byte[8];
+            ByteBuffer.wrap(doubleBytes).putDouble((Double) value);
+            for (byte doubleByte : doubleBytes) {
+                bytes.add((int) doubleByte);
+            }
+        }
+        else if(value instanceof Boolean) {
+            bytes.add(((boolean) value) ? 1 : 0);
+        }
+        for (Integer aByte : bytes) {
+            interRepresentation.write(PUSH, aByte);
+        }
+
         return null;
     }
 
@@ -246,27 +299,27 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitVariableExpr(Expr.Variable variableExpr) {
-       /* Label label = variableExpr.getTarget().getLabel();
-        if(label != null) {
-            interRepresentation.write(PEEK, label.getValue());
-        }
-        else {
-            interRepresentation.write(PEEK, ERROR.getValue());
-        }*/
+        // TODO
+        int pointer = ((StackDeclaredNode) variableExpr.getScope().resolve(variableExpr.getName(), ElementType.VARIABLE)).getStackSlot();
+        interRepresentation.write(PEEK, pointer);
+
+        /*interRepresentation.write(PEEK, ERROR.getValue());*/
+
         return null;
     }
 
     @Override
     public Void visitAssignExpr(Expr.Assign assignExpr) {
-        /*assignExpr.getValue().accept(this);
-        Label label = assignExpr.getTarget().getLabel();
-        interRepresentation.write(POKE, label.getValue());*/
+        assignExpr.getValue().accept(this);
+        int pointer = ((StackDeclaredNode)assignExpr.getScope().resolve(assignExpr.getName(), ElementType.VARIABLE)).getStackSlot();
+        interRepresentation.write(POKE, pointer);
         return null;
     }
 
     @Override
     public Void visitCallExpr(Expr.Call callExpr) {
-        interRepresentation.write(PUSH, callExpr.getTarget().getLabel().getValue());
+        Label label = ((NodeWithLabel)callExpr.getScope().resolve(callExpr.getIdent(), ElementType.FUNCTION)).getLabel();
+        interRepresentation.write(PUSH, label);
         List<Expr> arguments = callExpr.getArguments();
         for (Expr argument : arguments) {
             argument.accept(this);

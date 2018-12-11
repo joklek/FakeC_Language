@@ -58,6 +58,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
 
         Scope parentScope = stmt.getScope();
         Scope scope = new Scope(parentScope);
+        scope.getPointer().resetCurrentStackSlot();
         for(Pair<Token, DataType> pair: stmt.getParams()) {
             // Will treat parameter as a variable, probably not the best idea, but I'm running out of time. I'd rather write witty comments than fix mistakes of my own design
             ScopeError error = scope.add(pair.getLeft(), new Stmt.Var(pair.getRight(), pair.getLeft(), null), VARIABLE);

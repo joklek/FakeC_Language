@@ -149,27 +149,38 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         Expr right = expr.getRight();
         left.accept(this, errors);
         right.accept(this, errors);
+        DataType leftType = left.getType();
+        DataType rightType = right.getType();
 
         // TODO REFACTOR
-        if(left.getType() == DataType.VOID) {
+        if(leftType == DataType.VOID) {
             Token fnCall = ((Expr.Call) left).getIdent();
             errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", fnCall.getLexeme()), fnCall.getLine()));
         }
-        if(right.getType() == DataType.VOID) {
+        if(rightType == DataType.VOID) {
             Token fnCall = ((Expr.Call) right).getIdent();
             errors.add(new TypeError(String.format("No operations are possible with void type function '%s'(...)", fnCall.getLexeme()), fnCall.getLine()));
         }
 
         OperatorToken operator = expr.getOperator();
         OperationType operatorType = operator.getType();
-        if(operatorType == LESS || operatorType == GREATER || operatorType == LESS_EQUAL || operatorType == GREATER_EQUAL ||
-                operatorType == EQUAL_EQUAL || operatorType == NOT_EQUAL) {
+
+        if(operatorType == EQUAL_EQUAL || operatorType == NOT_EQUAL) {
             expr.setType(DataType.BOOL);
             return null;
         }
 
-        DataType leftType = left.getType();
-        DataType rightType = right.getType();
+        // TODO refactor this clusterduck
+        if(operatorType == LESS || operatorType == GREATER || operatorType == LESS_EQUAL || operatorType == GREATER_EQUAL ||
+                operatorType == OR || operatorType == AND) {
+            if ((leftType != DataType.INT && leftType != DataType.FLOAT)
+                    || (rightType != DataType.INT && rightType != DataType.FLOAT)) {
+                DataType badType = leftType == DataType.INT ? rightType : leftType == DataType.FLOAT ? rightType : leftType;
+                errors.add(new TypeError(String.format("Operation %s only possible with Integers and float", operatorType), badType, operator.getLine()));
+            }
+            expr.setType(DataType.BOOL);
+            return null;
+        }
 
         // TODO Revise logic
         if(operatorType == ADD || operatorType == SUB || operatorType == MULT || operatorType == DIV) {
@@ -182,7 +193,9 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
                 expr.setType(DataType.INT);
             }
             else {
-                errors.add(new TypeError("Arithmetic operations is only possible on integers or floats", leftType, rightType, operator.getLine()));
+                DataType badType = leftType == DataType.INT ? rightType : leftType == DataType.FLOAT ? rightType : leftType;
+                errors.add(new TypeError("Arithmetic operations is only possible on integers or floats", badType, operator.getLine()));
+                expr.setType(leftType); // Not sure if this is correct, but want to avoid errors
             }
         }
         else if(operatorType == MOD) {

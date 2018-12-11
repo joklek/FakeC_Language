@@ -5,7 +5,6 @@ import java.util.List;
 
 public class IntermediateRepresentation {
     private final List<Label> labels;
-    private final List<Instruction> instructions;
     private final List<Integer> instructionBytes;
     private final InstructionResolver resolver;
 
@@ -14,7 +13,6 @@ public class IntermediateRepresentation {
     }
 
     public IntermediateRepresentation(InstructionResolver resolver) {
-        this.instructions = new ArrayList<>();
         this.instructionBytes = new ArrayList<>();
         this.labels = new ArrayList<>();
         this.resolver = resolver;
@@ -30,21 +28,21 @@ public class IntermediateRepresentation {
         return label;
     }
 
-    public void addInstruction(Instruction instruction) {
-        instructions.add(instruction);
-    }
-
-    public List<Instruction> getInstructions() {
-        return instructions;
-    }
-
     public List<Integer> getInstructionBytes() {
         return instructionBytes;
     }
 
     public void placeLabel(Label label) {
-        label.setValue(instructions.size());
+        label.setValue(instructionBytes.size());
+        for (Integer offset : label.getOffsets()) {
+            instructionBytes.set(offset, label.getValue());
+        }
+    }
+
+    public void write(InstructionType instruction, Label label) {
         labels.add(label);
+        write(instruction.getValue(), label.getValue());
+        label.addOffset(instructionBytes.size() - 1);
     }
 
     public void write(InstructionType instruction, int... params) {
@@ -64,11 +62,7 @@ public class IntermediateRepresentation {
         }
     }
 
-    public void replace(int offset, int value) {
-        instructionBytes.set(offset, value);
-    }
-
     public Label newLabelAtCurrent() {
-        return new Label(instructions.size());
+        return new Label(instructionBytes.size());
     }
 }

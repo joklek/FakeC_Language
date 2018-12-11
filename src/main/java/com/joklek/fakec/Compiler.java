@@ -29,6 +29,7 @@ import com.joklek.fakec.tokens.TokenType;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("squid:S106")
 public class Compiler {
 
     public static void main(String[] args) {
@@ -117,6 +118,11 @@ public class Compiler {
             int opcode = bytes.get(offset);
             InstructionType instruction = resolver.resolveInstruction(opcode);
 
+            if(instruction == null) {
+                System.err.printf("Instruction with code %d is not found%n", opcode);
+                continue;
+            }
+
             StringBuilder ops = new StringBuilder();
             for(int j = 1; j <= instruction.getOps(); j++) {
                 ops.append(bytes.get(offset+j));
@@ -142,23 +148,23 @@ public class Compiler {
     }
 
     private static void error(LexerError error, String fileName) {
-        report(error.getLine(), fileName, error.getErrorMessage());
+        report(error.getLine(), fileName, error.getMessage());
     }
 
     private static void error(ScopeError error, String filename) {
         Token token = error.getErroneousName();
-        String message = error.getErrorMessage();
+        String message = error.getMessage();
         report(token.getLine(), filename,"Error at '" + token.getLexeme() + "': " + message);
     }
 
     private static void error(TypeError error, String filename) {
-        String message = error.getErrorMessage();
+        String message = error.getMessage();
         report(error.getLine(), filename,  message);
     }
 
     private static void error(ParserError error, String filename) {
         Token token = error.getToken();
-        String message = error.getErrorMessage();
+        String message = error.getMessage();
         if (token.getType() == TokenType.EOF) {
             report(token.getLine(), filename,"Error at end: " + message);
         } else {

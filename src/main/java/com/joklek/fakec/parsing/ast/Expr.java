@@ -159,6 +159,7 @@ public abstract class Expr implements IExpr {
 
         private final Token name;
         private final Expr value;
+        private Stmt.Var target;
 
         public Assign(Token name, Expr value) {
             this.name = name;
@@ -171,6 +172,14 @@ public abstract class Expr implements IExpr {
 
         public Expr getValue() {
             return value;
+        }
+
+        public Stmt.Var getTarget() {
+            return target;
+        }
+
+        public void setTarget(Stmt.Var target) {
+            this.target = target;
         }
 
         public <R> R accept(Visitor<R> visitor) {
@@ -186,12 +195,10 @@ public abstract class Expr implements IExpr {
 
         private final Token ident;
         private final List<Expr> arguments;
-        private Function target;
 
         public Call(Token ident, List<Expr> arguments) {
             this.ident = ident;
             this.arguments = arguments;
-            this.target = null;
         }
 
         public Token getIdent() {
@@ -200,14 +207,6 @@ public abstract class Expr implements IExpr {
 
         public List<Expr> getArguments() {
             return arguments;
-        }
-
-        public Function getTarget() {
-            return target;
-        }
-
-        public void setTarget(Function target) {
-            this.target = target;
         }
 
         public <R> R accept(Visitor<R> visitor) {

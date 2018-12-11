@@ -51,7 +51,7 @@ public abstract class Stmt implements IStmt {
         }
     }
 
-    public static class Function implements IStmt, NodeWithType, NodeWithLabel {
+    public static class Function implements IStmt, StackDeclaredNode, NodeWithLabel {
 
         private final DataType type;
         private final Token name;
@@ -59,6 +59,7 @@ public abstract class Stmt implements IStmt {
         private final Block body;
         private final List<Return> returnStmts;
         private final Label label;
+        private int stackSlot;
         private Scope scope = null;
         private IStmt parent = null;
 
@@ -107,6 +108,16 @@ public abstract class Stmt implements IStmt {
         }
         public void setParent(IStmt parent) {
             this.parent = parent;
+        }
+
+        @Override
+        public int getStackSlot() {
+            return stackSlot;
+        }
+
+        @Override
+        public void setStackSlot(int stackSlot) {
+            this.stackSlot = stackSlot;
         }
 
         public <R> R accept(Visitor<R> visitor) {
@@ -320,7 +331,7 @@ public abstract class Stmt implements IStmt {
         }
     }
 
-    public static class Var implements IStmt, NodeWithType, NodeWithLabel {
+    public static class Var implements IStmt, StackDeclaredNode, NodeWithLabel {
 
         private final DataType type;
         private final Token name;
@@ -328,6 +339,7 @@ public abstract class Stmt implements IStmt {
         private Scope scope = null;
         private IStmt parent = null;
         private Label label;
+        private int stackSlot;
 
         public Var(DataType type, Token name, IExpr initializer) {
             this.type = type;
@@ -368,6 +380,16 @@ public abstract class Stmt implements IStmt {
             return label;
         }
 
+        @Override
+        public int getStackSlot() {
+            return stackSlot;
+        }
+
+        @Override
+        public void setStackSlot(int stackSlot) {
+            this.stackSlot = stackSlot;
+        }
+
         public <R> R accept(Visitor<R> visitor) {
             return visitor.visitVarStmt(this);
         }
@@ -377,13 +399,14 @@ public abstract class Stmt implements IStmt {
         }
     }
 
-    public static class Array implements IStmt, NodeWithType {
+    public static class Array implements IStmt, StackDeclaredNode {
 
         private final DataType type;
         private final Token name;
         private final IExpr initializer;
         private Scope scope = null;
         private IStmt parent = null;
+        private int stackSlot;
 
         public Array(DataType type, Token name, IExpr initializer) {
             this.type = type;
@@ -416,6 +439,16 @@ public abstract class Stmt implements IStmt {
         }
         public void setParent(IStmt parent) {
             this.parent = parent;
+        }
+
+        @Override
+        public int getStackSlot() {
+            return stackSlot;
+        }
+
+        @Override
+        public void setStackSlot(int stackSlot) {
+            this.stackSlot = stackSlot;
         }
 
         public <R> R accept(Visitor<R> visitor) {

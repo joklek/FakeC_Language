@@ -1,6 +1,7 @@
 package com.joklek.fakec.scope;
 
 import com.joklek.fakec.parsing.ast.NodeWithType;
+import com.joklek.fakec.parsing.ast.StackDeclaredNode;
 import com.joklek.fakec.parsing.types.element.ElementType;
 import com.joklek.fakec.scope.error.ScopeError;
 import com.joklek.fakec.tokens.Token;
@@ -15,6 +16,7 @@ public class Scope {
 
     private final Scope parentScope;
     private final Map<Token, DataHolder> members;
+    private final StackSlotPointer pointer;
 
     /**
      * Creates a scope with a provided parent scope
@@ -23,6 +25,7 @@ public class Scope {
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;
         this.members = new HashMap<>();
+        this.pointer = parentScope.getPointer();
     }
 
     /**
@@ -31,6 +34,7 @@ public class Scope {
     public Scope() {
         this.parentScope = null;
         this.members = new HashMap<>();
+        this.pointer = new StackSlotPointer();
     }
 
     /**
@@ -39,13 +43,15 @@ public class Scope {
      * @param node the node of provided name
      * @param elementType clarifies if it's variable, function, or etc.
      */
-    public ScopeError add(Token name, NodeWithType node, ElementType elementType) {
+    public ScopeError add(Token name, StackDeclaredNode node, ElementType elementType) {
         try {
             // If name can't be resolved, then we can add it
             resolve(name, elementType);
         }
         catch (ScopeError e) {
             members.put(name, new DataHolder(elementType, node));
+            node.setStackSlot(pointer.getCurrentStackSlot());
+            pointer.incCurrentStackSlot();
             return null;
         }
         String elementTypeString = elementType.toString().toLowerCase();
@@ -88,6 +94,10 @@ public class Scope {
             }
         }
         return data;
+    }
+
+    public StackSlotPointer getPointer() {
+        return pointer;
     }
 
     class DataHolder {

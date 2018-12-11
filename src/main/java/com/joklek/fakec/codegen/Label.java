@@ -28,4 +28,8 @@ public class Label {
     public List<Integer> getOffsets() {
         return offsets;
     }
+
+    public void addOffset(int offset) {
+        offsets.add(offset);
+    }
 }
