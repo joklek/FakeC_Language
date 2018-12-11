@@ -110,7 +110,7 @@ public class Parser {
 
         while (!check(CURLY_RIGHT) && !isAtEnd()) {
             try {
-                statements.add(parseStatement());
+                statements.addAll(parseStatement());
             }
             catch (ParserError e) {
                 errors.add(e);
@@ -123,46 +123,46 @@ public class Parser {
     }
 
     // <statement>  ::= <expression> ";" | <exit_keyword> ";"| "return" <expression> ";"| <assigment_statement> ";"| <var_declaration> ";"| <io_statement> ";" | <while_statement> | <for_statement> | <if_statements>
-    protected IStmt parseStatement() {
+    protected List<IStmt> parseStatement() {
         Token previous = current();
         TokenType type = previous.getType();
 
         switch (type) {
             case RETURN:
-                return parseReturnStmt();
+                return Arrays.asList(parseReturnStmt());
             case BREAK:
                 advance();
                 consume(SEMICOLON, "Unclosed continue statement, semicolon is missing");
-                return new Stmt.Break(previous);
+                return Arrays.asList(new Stmt.Break(previous));
             case CONTINUE:
                 advance();
                 consume(SEMICOLON, "Unclosed continue statement, semicolon is missing");
-                return new Stmt.Continue(previous);
+                return Arrays.asList(new Stmt.Continue(previous));
             case WHILE:
-                return parseWhile();
+                return Arrays.asList(parseWhile());
             case FOR:
-                return parseForStmt();
+                return Arrays.asList(parseForStmt());
             case IF:
-                return parseIfStmt();
+                return Arrays.asList(parseIfStmt());
             case INPUT:
-                return parseInput();
+                return Arrays.asList(parseInput());
             case OUTPUT:
-                return parseOutput();
+                return Arrays.asList(parseOutput());
             default:
                 if(Arrays.asList(VARIABLE_TYPES).contains(type)) {
                     return parseVarDecStmt();
                 }
-                return parseExprStatement();
+                return Arrays.asList(parseExprStatement());
         }
     }
 
     // <atomic_declaration> ::= <type_atomic_specifier> <identifier> ["=" <expression>] {, <identifier> ["=" <expression>]}
-    protected IStmt parseVarDecStmt() {
+    protected List<IStmt> parseVarDecStmt() {
         Token tokenType = consume(VARIABLE_TYPES, "Expect variable type.");
         DataType type = typeConverter.convertToken(tokenType);
         if(check(LEFT_BRACE)) {
             // should use new parseType method, and if return value is an array, then should parse array
-            return parseArrayDecStmt(type);
+            return Arrays.asList(parseArrayDecStmt(type));
         }
 
         Token name = consume(IDENTIFIER, "Expect variable name.");
@@ -171,24 +171,22 @@ public class Parser {
         if (match(EQUAL)) {
             initializer = parseExpression();
         }
-        IStmt declaration = new Stmt.Var(type, name, initializer);
 
-        if(check(COMMA)) {
-            List<IStmt> declarations = new ArrayList<>();
-            declarations.add(declaration);
-            while(match(COMMA)) {
-                name = consume(IDENTIFIER, "Expect variable name.");
-                initializer = null;
-                if (match(EQUAL)) {
-                    initializer = parseExpression();
-                }
-                declarations.add(new Stmt.Var(type, name, initializer));
+        List<IStmt> declarations = new ArrayList<>();
+        IStmt declaration = new Stmt.Var(type, name, initializer);
+        declarations.add(declaration);
+
+        while(match(COMMA)) {
+            name = consume(IDENTIFIER, "Expect variable name.");
+            initializer = null;
+            if (match(EQUAL)) {
+                initializer = parseExpression();
             }
-            declaration = new Stmt.Block(declarations);
+            declarations.add(new Stmt.Var(type, name, initializer));
         }
 
         consume(SEMICOLON, "Expect ';' after variable declaration.");
-        return declaration;
+        return declarations;
     }
 
     // <array_declaration>  ::= <type_atomic_specifier> "[" "]" <identifier> ("["<expression>"]" | "=" <expression>)
@@ -244,13 +242,13 @@ public class Parser {
         consume(FOR);
         consume(LEFT_PAREN, "Expect '(' after 'for'.");
 
-        IStmt initializer;
+        List<IStmt> initializer;
         if (match(SEMICOLON)) {
             initializer = null;
         } else if (Arrays.asList(VARIABLE_TYPES).contains(current().getType())) {
             initializer = parseVarDecStmt();
         } else {
-            initializer = parseExprStatement();
+            initializer = Arrays.asList(parseExprStatement());
         }
 
         Expr condition = null;
@@ -282,7 +280,9 @@ public class Parser {
 
         // Adds initializer before while loop
         if (initializer != null) {
-            body = new Stmt.Block(Arrays.asList(initializer, whileLoop));
+            List<IStmt> initStatements = new ArrayList<>(initializer);
+            initStatements.add(whileLoop);
+            body = new Stmt.Block(initStatements);
         }
 
         return body;
