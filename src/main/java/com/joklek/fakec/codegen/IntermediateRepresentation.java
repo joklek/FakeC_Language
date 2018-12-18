@@ -7,15 +7,17 @@ public class IntermediateRepresentation {
     private final List<Label> labels;
     private final List<Integer> instructionBytes;
     private final InstructionResolver resolver;
+    private final StringTable table;
 
     public IntermediateRepresentation() {
-        this(new InstructionResolver());
+        this(new InstructionResolver(), new StringTable());
     }
 
-    public IntermediateRepresentation(InstructionResolver resolver) {
+    public IntermediateRepresentation(InstructionResolver resolver, StringTable table) {
         this.instructionBytes = new ArrayList<>();
         this.labels = new ArrayList<>();
         this.resolver = resolver;
+        this.table = table;
     }
 
     public List<Label> getLabels() {
@@ -64,5 +66,13 @@ public class IntermediateRepresentation {
 
     public Label newLabelAtCurrent() {
         return new Label(instructionBytes.size());
+    }
+
+    public int addString(String value) {
+        return table.add(value);
+    }
+
+    public StringTable getStringTable() {
+        return table;
     }
 }

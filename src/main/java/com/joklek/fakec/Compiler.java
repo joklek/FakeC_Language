@@ -1,9 +1,6 @@
 package com.joklek.fakec;
 
-import com.joklek.fakec.codegen.CodeGenerator;
-import com.joklek.fakec.codegen.InstructionResolver;
-import com.joklek.fakec.codegen.InstructionType;
-import com.joklek.fakec.codegen.IntermediateRepresentation;
+import com.joklek.fakec.codegen.*;
 import com.joklek.fakec.error.Error;
 import com.joklek.fakec.lexing.Scanner;
 import com.joklek.fakec.lexing.ScannerResults;
@@ -133,6 +130,8 @@ public class Compiler {
 
         // 5
         // RUN THIS
+        Interpreter vm = new Interpreter(bytes, intermediateRepresentation.getStringTable());
+        vm.execute();
     }
 
     private static void printLexemas(List<Token> tokens, String fileName) {

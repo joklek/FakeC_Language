@@ -34,12 +34,22 @@ public abstract class Stmt implements IStmt {
 
         private final List<Function> functions;
 
+        private Label entryLabel;
+
         public Program(List<Function> functions) {
             this.functions = functions;
         }
 
         public List<Function> getFunctions() {
             return functions;
+        }
+
+        public Label getEntryLabel() {
+            return entryLabel;
+        }
+
+        public void setEntryLabel(Label entryLabel) {
+            this.entryLabel = entryLabel;
         }
 
         public <R> R accept(Visitor<R> visitor) {
