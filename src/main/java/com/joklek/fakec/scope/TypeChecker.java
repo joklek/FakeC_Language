@@ -40,7 +40,7 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     @Override
     public Void visitProgramStmt(Stmt.Program stmt, List<TypeError> errors) {
         for (Stmt.Function function : stmt.getFunctions()) {
-            function.getBody().accept(this, errors);
+            function.accept(this, errors);
         }
         return null;
     }
@@ -68,7 +68,8 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt, List<TypeError> errors) {
-        return stmt.getExpression().accept(this, errors);
+        stmt.getExpression().accept(this, errors);
+        return null;
     }
 
     @Override
@@ -171,13 +172,15 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         }
 
         // TODO refactor this clusterduck
-        if(operatorType == LESS || operatorType == GREATER || operatorType == LESS_EQUAL || operatorType == GREATER_EQUAL ||
-                operatorType == OR || operatorType == AND) {
-            if ((leftType != DataType.INT && leftType != DataType.FLOAT)
-                    || (rightType != DataType.INT && rightType != DataType.FLOAT)) {
+        if(operatorType == LESS || operatorType == GREATER || operatorType == LESS_EQUAL || operatorType == GREATER_EQUAL) {
+            if ((leftType != DataType.INT && leftType != DataType.FLOAT) || (rightType != DataType.INT && rightType != DataType.FLOAT)) {
                 DataType badType = leftType == DataType.INT ? rightType : leftType == DataType.FLOAT ? rightType : leftType;
                 errors.add(new TypeError(String.format("Operation %s only possible with Integers and float", operatorType), badType, operator.getLine()));
             }
+            expr.setType(DataType.BOOL);
+            return null;
+        }
+        if(operatorType == OR || operatorType == AND ) {
             expr.setType(DataType.BOOL);
             return null;
         }
@@ -271,7 +274,9 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
                 errors.add(new TypeError(String.format("Can't assign variable %s", expr.getName().getLexeme()), valueType, type, expr.getName().getLine()));
             }
         }
-
+        else {
+            expr.setType(expr.getValue().getType());
+        }
         return null;
     }
 
@@ -282,6 +287,10 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
             Stmt.Function function = (Stmt.Function) expr.getScope().resolve(expr.getIdent(), FUNCTION);
             DataType functionType = function.getType();
             expr.setType(functionType);
+
+            for (Expr argument : expr.getArguments()) {
+                argument.accept(this, errors);
+            }
         }
         catch (ScopeError e) {
             return null;

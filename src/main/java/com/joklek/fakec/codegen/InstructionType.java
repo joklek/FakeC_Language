@@ -14,12 +14,13 @@ public enum InstructionType {
     GEI(0x28, 0), GEF(0x29, 0),
 
     AND(0x30, 0),
-    OR(0x32, 0),
-    NOT(0x33, 0),
+    OR(0x31, 0),
+    NOT(0x32, 0),
 
 
-    POPI(0x40, 0), POPF(0x41, 0), POPS(0x42, 0), POPC(0x43,0), POPB(0x44, 0),
-    PUSHI(0x45, 1),PUSHF(0x46, 1), PUSHS(0x47, 1), PUSHC(0x48, 1), PUSHB(0x49, 1),
+    // popas vienas, pushas tik int ir float
+    POP(0x40, 0), POPF(0x41, 0),
+    PUSHI(0x45, 1),PUSHF(0x46, 1),
 
     PEEK(0x50, 1), POKE(0x51, 1), ALLOC(0x52, 1),
 

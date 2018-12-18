@@ -80,7 +80,7 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
         DataType functionType = parentFunction.getType();
 
         if(functionType == DataType.VOID) {
-            if(stmt.hasValue()) {
+            if(stmt.hasValue() && stmt.getValue().getType() != DataType.VOID) {
                 errors.add(new TypeError("Return must not have a value with void function", stmt.getKeyword().getLine()));
             }
         }

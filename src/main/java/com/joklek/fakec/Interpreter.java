@@ -12,19 +12,22 @@ public class Interpreter {
     private boolean running;
     private final int codeBase;
     private int[] memory;
-    private int ip;
-    private int sp;
-    private int fp;
+    private int ip; // instruction
+    private int sp; // stack
+    private int bp; // base
+
+    Scanner scanner;
 
     public Interpreter(List<Integer> code, StringTable strings) {
         this.strings = strings;
         this.running = true;
+        this.scanner = new Scanner(System.in);
 
         this.codeBase = 512;
         this.memory = new int[4096];
         this.ip = codeBase;
         this.sp = 2048;
-        this.fp = sp;
+        this.bp = sp;
 
         for (int i = 0; i < code.size(); i++){
             memory[codeBase + i] = code.get(i);
@@ -34,15 +37,20 @@ public class Interpreter {
     public void execute(){
         while (running) {
             executeStep();
+            /*System.out.println();
+            System.out.println("STACK");
+            for (int i = 2048; i < 2055; i++){
+                System.out.println(i-2048 + ":" + i + ": " + memory[i]);
+            }*/
         }
-        /*System.out.println();
-        for (int i = 2040; i < 4096; i++){
-            System.out.println(i + ": " + memory[i]);
-        }*/
+        //System.out.println("Program terminanted with " + memory[2048]);
     }
 
     private void executeStep() {
         int opcode = readCode();
+
+        //InstructionResolver instructionResolver = new InstructionResolver();
+        //System.out.println(instructionResolver.resolveInstruction(opcode));
 
         switch (opcode) {
             case 0x10: addInteger(); break;
@@ -66,28 +74,22 @@ public class Interpreter {
             case 0x28: greaterOrEqualInteger(); break;
             case 0x29: greaterOrEqualFloat(); break;
 
-            //case 0x30: and(); break;
-            //case 0x32: or(); break;
-            //case 0x33: not(); break;
+            case 0x30: and(); break;
+            case 0x31: or(); break;
+            case 0x32: not(); break;
 
-            //case 0x40: popInteger(); break;
-            //case 0x41: popFloat(); break;
-            //case 0x42: popString(); break;
-            //case 0x43: popChar(); break;
-            //case 0x44: popBool(); break;
+            case 0x40: pop(); break;
+            //case 0x41: popf(); break;
             case 0x45: instrPush(); break;
-            //case 0x46: pushFloat(); break;
-            case 0x47: instrPush(); break;
-            //case 0x48: pushChar(); break;
-            case 0x49: instrPush(); break;
+            case 0x46: instrPush(); break;
 
             case 0x50: peek(); break;
             case 0x51: poke(); break;
-            //case 0x52: alloc(); break;
+            case 0x52: alloc(); break;
 
             case 0x60: call(readCode()); break;
-            case 0x61: ret(); break;
-            case 0x62: ret(); push(pop());
+            case 0x61: ret(0); break;
+            case 0x62: ret(pop()); break;
             case 0x63: exit(); break;
             case 0x64: jmp(); break;
             case 0x65: jmpz(); break;
@@ -102,6 +104,38 @@ public class Interpreter {
             default:
                 throw new UnsupportedOperationException(String.format("Unsupported instruction with code %03X %d", opcode, opcode));
         }
+    }
+
+    private void pushFloat() {
+
+    }
+
+    private void and() {
+        int b = pop();
+        int a = pop();
+        boolean bb = b == 1;
+        boolean aa = a == 1;
+
+        push( aa && bb ? 1 : 0);
+    }
+
+    private void or() {
+        int b = pop();
+        int a = pop();
+        boolean bb = b == 1;
+        boolean aa = a == 1;
+
+        push( aa || bb ? 1 : 0);
+    }
+
+    public void not(){
+        int a = pop() == 1 ? 0 : 1;
+        push(a);
+    }
+
+    public void alloc(){
+        int num = readCode();
+        sp += num;
     }
 
     public void jmp(){
@@ -124,34 +158,35 @@ public class Interpreter {
         int target = memory[sp - 3];
 
         memory[sp - 3] = ip;
-        memory[sp - 2] = fp;
+        memory[sp - 2] = bp;
         memory[sp - 1] = sp - 3;
 
         goTo(target);
-        fp = sp;
+        bp = sp;
     }
 
-    private void ret() {
-        int oldIp = memory[fp-3];
-        int oldFp = memory[fp-2];
-        int oldSp = memory[fp-1];
+    private void ret(int value) {
+        int oldIp = memory[bp -3];
+        int oldFp = memory[bp -2];
+        int oldSp = memory[bp -1];
 
         ip = oldIp;
-        fp = oldFp;
+        bp = oldFp;
         sp = oldSp;
+        push(value);
     }
 
     private void peek() {
         int index = readCode();
-        int a = memory[fp+index];
+        int a = memory[bp +index];
         //System.out.println("peek at " + index + " with = " + a);
         push(a);
     }
 
     private void poke() {
         int index = readCode();
-        memory[fp+index] = pop();
-        //System.out.println("poke at " + index + " = " + memory[fp+index]);
+        memory[bp +index] = pop();
+        //System.out.println("poke at " + index + " = " + memory[bp+index]);
     }
 
     public void instrPush(){
@@ -164,7 +199,8 @@ public class Interpreter {
     }
 
     private void stdOutFloat() {
-        // todo
+        float a = Float.intBitsToFloat(pop());
+        System.out.println(a);
     }
 
     private void stdOutString() {
@@ -184,9 +220,8 @@ public class Interpreter {
     }
 
     private void stdin() {
-        Scanner reader = new Scanner(System.in);
-        int n = reader.nextInt();
-        reader.close();
+        int n = 0;
+        scanner.nextInt();
         push(n);
     }
 

@@ -11,7 +11,6 @@ import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.commons.collections.map.MultiKeyMap;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.joklek.fakec.codegen.InstructionType.*;
@@ -21,6 +20,7 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     private IntermediateRepresentation interRepresentation;
     private Label mainLabel;
+    private final MultiKeyMap operationAndTypeMapForInstruction;
 
     public CodeGenerator() {
         this(new InstructionResolver());
@@ -28,6 +28,29 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     public CodeGenerator(InstructionResolver resolver) {
         this.interRepresentation = new IntermediateRepresentation(resolver, new StringTable());
+        this.operationAndTypeMapForInstruction = new MultiKeyMap();
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.MULT, DataType.INT), MULI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.MULT, DataType.FLOAT), MULF);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.DIV, DataType.INT), DIVI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.DIV, DataType.FLOAT), DIVF);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.ADD, DataType.INT), ADDI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.ADD, DataType.FLOAT), ADDF);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.SUB, DataType.INT), SUBI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.SUB, DataType.FLOAT), SUBF);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.LESS, DataType.INT), LTI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.LESS, DataType.FLOAT), LTF);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.LESS_EQUAL, DataType.INT), LEI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.LESS_EQUAL, DataType.FLOAT), LEF);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER, DataType.INT), GTI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER, DataType.FLOAT), GTF);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER_EQUAL, DataType.INT), GEI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER_EQUAL, DataType.FLOAT), GEF);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.EQUAL_EQUAL, DataType.INT), EQI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.EQUAL_EQUAL, DataType.BOOL), EQI); // TODO
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.EQUAL_EQUAL, DataType.FLOAT), EQF);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.MOD, DataType.INT), MOD);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.OR, DataType.BOOL), OR);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.AND, DataType.BOOL), AND);
     }
 
     public IntermediateRepresentation generate(Stmt.Program program) {
@@ -58,10 +81,15 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
         Label fnLabel = functionStmt.getLabel();
         interRepresentation.placeLabel(fnLabel);
 
-        for (Pair<Token, DataType> param : functionStmt.getParams()) {
+        if(!functionStmt.getParams().isEmpty()) {
+            interRepresentation.write(ALLOC, functionStmt.getParams().size());
+        }
+
+        /*for (Pair<Token, DataType> param : functionStmt.getParams()) {
             int pointer = ((StackDeclaredNode) functionStmt.getBody().getScope().resolve(param.getLeft(), ElementType.VARIABLE)).getStackSlot();
             interRepresentation.write(PEEK, pointer);
-        }
+        }*/
+        // TODO fix this
 
         functionStmt.getBody().accept(this);
         interRepresentation.write(RET); // always does return even if one was before
@@ -100,22 +128,16 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
         expression.accept(this);
         switch (expression.getType()) {
             case INT:
-                interRepresentation.write(POPI);
-                break;
             case CHAR:
-                interRepresentation.write(POPC);
-                break;
             case STRING:
-                interRepresentation.write(POPS);
-                break;
             case BOOL:
-                interRepresentation.write(POPB);
+                interRepresentation.write(POP);
                 break;
             case FLOAT:
                 interRepresentation.write(POPF);
                 break;
             case NULL:
-                interRepresentation.write(POPB); // ODO null should be revised when pointers are implemented
+                interRepresentation.write(POP); // TODO null should be revised when pointers are implemented
                 break;
             case VOID:
                 break;
@@ -130,7 +152,8 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
         Label endLabel = interRepresentation.newLabel();
         // TODO optimisation idea: If condition is true or false, should skip thingies
-        for (Pair<IExpr, Stmt.Block> branch : ifStmt.getBranches()) {
+        List<Pair<IExpr, Stmt.Block>> branches = ifStmt.getBranches();
+        for (Pair<IExpr, Stmt.Block> branch : branches) {
             IExpr condition = branch.getLeft();
             Stmt.Block block = branch.getRight();
 
@@ -139,9 +162,12 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
             interRepresentation.write(JMPZ, label);
             block.accept(this);
-            interRepresentation.write(JMP, endLabel);
 
-            interRepresentation.placeLabel(label);
+            // Optimisation to remove last jump from an if it it's pointing to the following instruction
+            if(branches.lastIndexOf(branch) != branches.size() - 1 || ifStmt.getElseBranch() != null) {
+                interRepresentation.write(JMP, endLabel);
+                interRepresentation.placeLabel(label);
+            }
         }
         if(ifStmt.getElseBranch() != null) {
             ifStmt.getElseBranch().accept(this);
@@ -201,7 +227,7 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     public Void visitInputStmt(Stmt.Input inputStmt) {
         for (Token variable : inputStmt.getVariables()) {
             StackDeclaredNode variableNode = (StackDeclaredNode) inputStmt.getScope().resolve(variable, ElementType.VARIABLE);
-            interRepresentation.write(STDIN, ((NodeWithLabel)variableNode).getLabel());
+            interRepresentation.write(STDIN);
             interRepresentation.write(POKE, variableNode.getStackSlot());
         }
         return null;
@@ -211,7 +237,8 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     public Void visitVarStmt(Stmt.Var varStmt) {
         if (varStmt.getInitializer() != null) {
             varStmt.getInitializer().accept(this);
-            interRepresentation.write(POKE, varStmt.getStackSlot());
+            interRepresentation.write(POKE, varStmt.getStackSlot()); // TODO this might be a problematic place
+            //interRepresentation.write(POP);
         }
         return null;
     }
@@ -233,33 +260,10 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     @Override
     public Void visitBinaryExpr(Expr.Binary binaryExpr) {
 
-        // TODO: Fix bitwise operations
         binaryExpr.getLeft().accept(this);
         binaryExpr.getRight().accept(this);
-        DataType type = binaryExpr.getType();
+        DataType type = binaryExpr.getLeft().getType();
         OperationType operationType = binaryExpr.getOperator().getType();
-
-        MultiKeyMap operationAndTypeMapForInstruction = new MultiKeyMap();
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.MULT, DataType.INT), MULI);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.MULT, DataType.FLOAT), MULF);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.DIV, DataType.INT), DIVI);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.DIV, DataType.FLOAT), DIVF);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.ADD, DataType.INT), ADDI);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.ADD, DataType.FLOAT), ADDF);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.SUB, DataType.INT), SUBI);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.SUB, DataType.FLOAT), SUBF);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.LESS, DataType.INT), LTI);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.LESS, DataType.FLOAT), LTF);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.LESS_EQUAL, DataType.INT), LEI);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.LESS_EQUAL, DataType.FLOAT), LEF);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER, DataType.INT), GTI);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER, DataType.FLOAT), GTF);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER_EQUAL, DataType.INT), GEI);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER_EQUAL, DataType.FLOAT), GEF);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.EQUAL_EQUAL, DataType.INT), EQI);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.EQUAL_EQUAL, DataType.BOOL), EQI); // TODO
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.EQUAL_EQUAL, DataType.FLOAT), EQF);
-        operationAndTypeMapForInstruction.put(new MultiKey(OperationType.MOD, DataType.INT), MOD);
 
         InstructionType resolvedInstruction = (InstructionType) operationAndTypeMapForInstruction.get(new MultiKey(operationType, type));
         if(resolvedInstruction == null) {
@@ -277,7 +281,6 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitLiteralExpr(Expr.Literal literalExpr) {
-        List<Integer> bytes = new ArrayList<>();
         DataType type = literalExpr.getType();
         Object value = literalExpr.getValue();
 
@@ -286,21 +289,21 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
                 interRepresentation.write(PUSHI, (Integer) value);
                 break;
             case CHAR:
-                interRepresentation.write(PUSHC, (Character) value);
+                interRepresentation.write(PUSHI, (Character) value);
                 break;
             case STRING:
                 int key = interRepresentation.addString((String) value);
-                interRepresentation.write(PUSHS, key);
+                interRepresentation.write(PUSHI, key);
                 break;
             case BOOL:
-                interRepresentation.write(PUSHB, ((boolean) value) ? 1 : 0);
+                interRepresentation.write(PUSHI, ((boolean) value) ? 1 : 0);
                 break;
             case FLOAT:
-                long doubleToLong = Double.doubleToRawLongBits((Double) value);
-                //interRepresentation.write(PUSHF, doubleToLong);
+                int floatToInt = Float.floatToIntBits((float) value);
+                interRepresentation.write(PUSHF, floatToInt);
                 break;
             case NULL:
-                interRepresentation.write(PUSHB, 0); // TODO null should be revised when pointers are implemented
+                interRepresentation.write(PUSHI, 0); // TODO null should be revised when pointers are implemented
                 break;
             case VOID:
                 throw new UnsupportedOperationException("Void type literals should be impossible. Value = '" + literalExpr.getValue() + "'");
@@ -315,27 +318,67 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     public Void visitUnaryExpr(Expr.Unary unaryExpr) {
         // TODO: optimisation, if unaryExpr member is literal, somehow replace it value-with-modification
         OperatorToken operator = unaryExpr.getOperator();
-        switch (operator.getType()) {
 
-            case ADD:
-                break;
-            case SUB:
-                break;
-            case NOT:
-                break;
-            case INC_PRE:
-                break;
-            case INC_POST:
-                break;
-            case DEC_PRE:
-                break;
-            case DEC_POST:
-                break;
-            default:
-                throw new UnsupportedOperationException(String.format("Operation type '%s' is not supported in unary operations in line %d", operator.getType(), operator.getLine()));
+        if(!(unaryExpr.getRight() instanceof Expr.Variable)) {
+            return null;
         }
-        // TODO
-        return null;
+        Expr.Variable var = (Expr.Variable) unaryExpr.getRight();
+
+        OperationType operationType = operator.getType();
+
+
+        int pointer = ((StackDeclaredNode)var.getScope().resolve(var.getName(), ElementType.VARIABLE)).getStackSlot();
+        unaryExpr.getRight().accept(this);
+
+        // TODO Decide how this should work
+        if(operationType == OperationType.INC_PRE || operationType == OperationType.DEC_PRE) {
+            InstructionType unaryOp = operationType == OperationType.INC_PRE ? ADDI : SUBI;
+            interRepresentation.write(PUSHI, 1);
+            interRepresentation.write(PEEK, pointer);
+            interRepresentation.write(unaryOp);
+            interRepresentation.write(POKE, pointer);
+            return null;
+        }
+        else if(operationType == OperationType.INC_POST || operationType == OperationType.DEC_POST) {
+            InstructionType unaryOp = operationType == OperationType.INC_POST ? ADDI : SUBI;
+            interRepresentation.write(PUSHI, 1);
+            interRepresentation.write(PEEK, pointer);
+            interRepresentation.write(unaryOp);
+            interRepresentation.write(POKE, pointer);
+            return null;
+        }
+        // Add is ignored as it is useless
+        else if(operationType == OperationType.ADD) {
+            return null;
+        }
+        else if(operationType == OperationType.SUB) {
+            InstructionType pushType;
+            InstructionType multType;
+            switch (var.getType()) {
+                case INT:
+                    pushType = PUSHI;
+                    multType =  MULI;
+                    break;
+                case FLOAT:
+                    pushType = PUSHF;
+                    multType =  MULF;
+                    break;
+                default:
+                    throw new UnsupportedOperationException(String.format("Operation type '%s' is not supported in unary operations in line %d", operationType, operator.getLine()));
+            }
+            interRepresentation.write(pushType, -1);
+            interRepresentation.write(PEEK, pointer);
+            interRepresentation.write(multType);
+            interRepresentation.write(POKE, pointer);
+            return null;
+        }
+        else if(operationType == OperationType.NOT) {
+            interRepresentation.write(PEEK, pointer);
+            interRepresentation.write(NOT);
+            interRepresentation.write(POKE, pointer);
+            return null;
+        }
+        throw new UnsupportedOperationException(String.format("Operation type '%s' is not supported in unary operations in line %d", operationType, operator.getLine()));
     }
 
     @Override

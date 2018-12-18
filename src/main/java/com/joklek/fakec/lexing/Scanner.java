@@ -181,7 +181,7 @@ public class Scanner {
         String value = source.substring(start + 1, current - 1);
         String unescapedValue = stringParsingUtils.unescapeCharSymbols(value);
         if (unescapedValue.length() == 1) {
-            addToken(TokenType.CHAR, unescapedValue);
+            addToken(TokenType.CHAR, unescapedValue.charAt(0));
         }
         else {
             error("Char should be of one character length and is of: " + unescapedValue.length(), currentLine);
@@ -241,11 +241,10 @@ public class Scanner {
 
         String value = source.substring(start, current);
         if(isFloat) {
-            Double unescapedValue = Double.parseDouble(value);
+            Float unescapedValue = Float.parseFloat(value);
             addToken(TokenType.FLOAT, unescapedValue);
         }
         else {
-
             Integer unescapedValue = Integer.parseInt(value);
             addToken(TokenType.INTEGER, unescapedValue);
         }

@@ -26,6 +26,8 @@ import com.joklek.fakec.tokens.TokenType;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.joklek.fakec.codegen.InstructionType.PUSHF;
+
 @SuppressWarnings("squid:S106")
 public class Compiler {
 
@@ -122,8 +124,15 @@ public class Compiler {
 
             StringBuilder ops = new StringBuilder();
             for(int j = 1; j <= instruction.getOps(); j++) {
-                ops.append(bytes.get(offset+j));
+                Integer codeFromIR = bytes.get(offset + j);
+                if(instruction == InstructionType.POPF || instruction == InstructionType.ADDF || instruction == PUSHF ) {
+                    ops.append(Float.intBitsToFloat(codeFromIR));
+                }
+                else {
+                    ops.append(codeFromIR);
+                }
             }
+
             System.out.printf("%04d: %-10s %s%n", offset, instruction, ops.toString());
             offset += instruction.getOps();
         }
