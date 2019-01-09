@@ -130,6 +130,25 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
     }
 
     @Override
+    public Void visitForStmt(Stmt.For forStmt, List<ScopeError> errors) {
+        Scope scope = forStmt.getScope();
+
+        for (IStmt iStmt : forStmt.getInitializer()) {
+            setScopeAndSearchForErrors(scope, iStmt, errors);
+        }
+
+        setScopeAndSearchForErrors(scope, forStmt.getCondition(), errors);
+        setScopeAndSearchForErrors(scope, forStmt.getBody(), errors);
+
+        Expr inc = forStmt.getIncrement();
+        if(inc != null) {
+            setScopeAndSearchForErrors(scope, inc, errors);
+        }
+        forStmt.getBody().setParent(forStmt);
+        return null;
+    }
+
+    @Override
     public Void visitOutputStmt(Stmt.Output stmt, List<ScopeError> errors) {
         Scope scope = stmt.getScope();
         for (IExpr expression : stmt.getExpressions()) {

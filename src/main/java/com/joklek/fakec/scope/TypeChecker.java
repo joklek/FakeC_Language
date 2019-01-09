@@ -105,6 +105,23 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     }
 
     @Override
+    public Void visitForStmt(Stmt.For forStmt, List<TypeError> errors) {
+        forStmt.getBody().accept(this, errors);
+        forStmt.getCondition().accept(this, errors);
+        for (IStmt iStmt : forStmt.getInitializer()) {
+            iStmt.accept(this, errors);
+        }
+        if(forStmt.getIncrement() != null) {
+            forStmt.getIncrement().accept(this, errors);
+        }
+        if (forStmt.getCondition().getType() != DataType.BOOL) {
+            errors.add(new TypeError("Condition should be of boolean type", DataType.BOOL, forStmt.getCondition().getType(), -1)); // TODO
+        }
+
+        return null;
+    }
+
+    @Override
     public Void visitOutputStmt(Stmt.Output stmt, List<TypeError> errors) {
         for (IExpr expression : stmt.getExpressions()) {
             expression.accept(this, errors);
@@ -141,7 +158,6 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     public Void visitContinueStmt(Stmt.Continue stmt, List<TypeError> errors) {
         return null;
     }
-
 
     @Override
     public Void visitBinaryExpr(Expr.Binary expr, List<TypeError> errors) {

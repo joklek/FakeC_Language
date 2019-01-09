@@ -2,6 +2,7 @@ package com.joklek.fakec.scope;
 
 import com.joklek.fakec.parsing.ast.IExpr;
 import com.joklek.fakec.parsing.ast.IStmt;
+import com.joklek.fakec.parsing.ast.LoopNode;
 import com.joklek.fakec.parsing.ast.Stmt;
 import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.scope.error.TypeError;
@@ -121,6 +122,18 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
     }
 
     @Override
+    public Void visitForStmt(Stmt.For forStmt, List<TypeError> errors) {
+        List<IStmt> init = forStmt.getInitializer();
+        if (init != null) {
+            for (IStmt iStmt : init) {
+                iStmt.accept(this, errors);
+            }
+        }
+        forStmt.getBody().accept(this, errors);
+        return null;
+    }
+
+    @Override
     public Void visitOutputStmt(Stmt.Output stmt, List<TypeError> errors) {
         return null;
     }
@@ -143,7 +156,7 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
     @Override
     public Void visitBreakStmt(Stmt.Break stmt, List<TypeError> errors) {
         IStmt parent = stmt.getParent();
-        Stmt.While aWhile = resolveParentWhile(parent, errors, stmt.getToken());
+        LoopNode aWhile = resolveParentLoop(parent, errors, stmt.getToken());
         stmt.setTarget(aWhile);
 
         return null;
@@ -152,14 +165,14 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
     @Override
     public Void visitContinueStmt(Stmt.Continue stmt, List<TypeError> errors) {
         IStmt parent = stmt.getParent();
-        Stmt.While aWhile = resolveParentWhile(parent, errors, stmt.getToken());
+        LoopNode aWhile = resolveParentLoop(parent, errors, stmt.getToken());
         stmt.setTarget(aWhile);
 
         return null;
     }
 
-    private Stmt.While resolveParentWhile(IStmt parent, List<TypeError> errors, Token token) {
-        while (parent != null && !(parent instanceof Stmt.While)) {
+    private LoopNode resolveParentLoop(IStmt parent, List<TypeError> errors, Token token) {
+        while (parent != null && !(parent instanceof LoopNode)) {
             parent = parent.getParent();
         }
         if (parent == null) {
@@ -167,7 +180,7 @@ public class ScopeChecker implements Stmt.VisitorWithErrors<Void, TypeError> {
             return null;
         }
         else {
-            return (Stmt.While) parent;
+            return (LoopNode) parent;
         }
     }
 }

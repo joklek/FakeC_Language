@@ -200,6 +200,32 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     }
 
     @Override
+    public Void visitForStmt(Stmt.For forStmt) {
+
+        for (IStmt iStmt : forStmt.getInitializer()) {
+            iStmt.accept(this);
+        }
+        // Place the label so we ignore the increment on first loop
+        Label initialLabel = interRepresentation.newLabel();
+        interRepresentation.write(JMP, initialLabel);
+        Label startLabel = interRepresentation.newLabelAtCurrent();
+        forStmt.setStartLabel(startLabel);
+        if(forStmt.getIncrement() != null) {
+            forStmt.getIncrement().accept(this);
+        }
+        interRepresentation.placeLabel(initialLabel);
+
+        forStmt.getCondition().accept(this);
+        Label endLabel = interRepresentation.newLabel();
+        forStmt.setEndLabel(endLabel);
+        interRepresentation.write(JMPZ, endLabel);
+        forStmt.getBody().accept(this);
+        interRepresentation.write(JMP, startLabel);
+        interRepresentation.placeLabel(endLabel);
+        return null;
+    }
+
+    @Override
     public Void visitOutputStmt(Stmt.Output outputStmt) {
         for (IExpr expression : outputStmt.getExpressions()) {
             expression.accept(this);
@@ -259,7 +285,6 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
         return null;
     }
 
-    // TODO Does not work with for loops, fFFF
     @Override
     public Void visitContinueStmt(Stmt.Continue continueStmt) {
         Label label = continueStmt.getTarget().getStartLabel();

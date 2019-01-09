@@ -8,6 +8,7 @@ import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
@@ -250,7 +251,33 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return "CONTINUE" + System.lineSeparator();
     }
 
-    private String buildBranch(String name, IExpr... exprs) {
+    @Override
+    public String visitForStmt(Stmt.For forStmt) {
+        List<IStmt> init = forStmt.getInitializer();
+
+        StringBuilder initBuilder = new StringBuilder();
+        for(int i = 0; i < init.size(); i++) {
+            IStmt stmt = init.get(i);
+            initBuilder.append(buildBranch(String.format("INITIALIZER[%d]: ", i), stmt));
+        }
+        String initString = initBuilder.toString();
+
+        Expr increment = forStmt.getIncrement();
+        String incrementString = "";
+        if(increment != null) {
+            incrementString = buildBranch("INCREMENT: ", increment);
+        }
+
+        String condition = buildBranch("CONDITION: ", forStmt.getCondition());
+        String body = buildBranch("BODY: ", forStmt.getBody());
+        return String.format("FOR: %n" +
+                "%s" +
+                "%s" +
+                "%s" +
+                "%s", initString, condition, incrementString, body);
+    }
+
+    private String buildBranch(String name, @Nonnull IExpr... exprs) {
         StringBuilder builder = new StringBuilder(name);
 
         for (IExpr expr : exprs) {
@@ -260,7 +287,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return builder.toString();
     }
 
-    private String buildBranch(String name, IStmt... stmts) {
+    private String buildBranch(String name, @Nonnull IStmt... stmts) {
         StringBuilder builder = new StringBuilder(name);
 
         for (IStmt stmt : stmts) {

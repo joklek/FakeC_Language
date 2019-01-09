@@ -21,7 +21,8 @@ public interface IStmt extends Node {
         R visitArrayStmt(Stmt.Array arrayStmt);
         R visitBreakStmt(Stmt.Break breakStmt);
         R visitContinueStmt(Stmt.Continue continueStmt);
-    }
+        R visitForStmt(Stmt.For forStmt);
+}
 
     interface VisitorWithErrors<R, E extends Error> {
         R visitProgramStmt(Stmt.Program programStmt, List<E> errors);
@@ -37,6 +38,7 @@ public interface IStmt extends Node {
         R visitArrayStmt(Stmt.Array arrayStmt, List<E> errors);
         R visitBreakStmt(Stmt.Break breakStmt, List<E> errors);
         R visitContinueStmt(Stmt.Continue continueStmt, List<E> errors);
+        R visitForStmt(Stmt.For forStmt, List<E> errors);
     }
 
     Scope getScope();

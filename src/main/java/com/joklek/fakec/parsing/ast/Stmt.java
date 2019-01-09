@@ -7,6 +7,7 @@ import com.joklek.fakec.scope.Scope;
 import com.joklek.fakec.tokens.Token;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
@@ -252,12 +253,29 @@ public abstract class Stmt implements IStmt {
         }
     }
 
-    public static class While extends Stmt {
+    public static class While implements IStmt, LoopNode {
 
         private final IExpr condition;
         private final Block body;
         private Label startLabel;
         private Label endLabel;
+
+        private Scope scope = null;
+        public Scope getScope() {
+            return scope;
+        }
+        public void setScope(Scope scope) {
+            this.scope = scope;
+        }
+
+        private IStmt parent = null;
+        public IStmt getParent() {
+            return parent;
+        }
+        public void setParent(IStmt parent) {
+            this.parent = parent;
+        }
+
 
         public While(IExpr condition, Block body) {
             this.condition = condition;
@@ -298,6 +316,88 @@ public abstract class Stmt implements IStmt {
             return visitor.visitWhileStmt(this, errors);
         }
     }
+
+    public static class For implements IStmt, LoopNode {
+
+        private final List<IStmt> initializer;
+        private final Expr condition;
+        private final Expr increment;
+        private final Block body;
+        private Label startLabel;
+        private Label endLabel;
+
+        private Scope scope = null;
+        public Scope getScope() {
+            return scope;
+        }
+        public void setScope(Scope scope) {
+            this.scope = scope;
+        }
+
+        private IStmt parent = null;
+        public IStmt getParent() {
+            return parent;
+        }
+        public void setParent(IStmt parent) {
+            this.parent = parent;
+        }
+
+        public For(@Nonnull List<IStmt> initializer, @Nonnull Expr condition, @Nullable Expr increment, @Nonnull Block body) {
+            this.initializer = initializer;
+            this.condition = condition;
+            this.increment = increment;
+            this.body = body;
+        }
+
+        @Nonnull
+        public List<IStmt> getInitializer() {
+            return initializer;
+        }
+
+        @Nonnull
+        public Expr getCondition() {
+            return condition;
+        }
+
+        @Nullable
+        public Expr getIncrement() {
+            return increment;
+        }
+
+        @Nonnull
+        public Block getBody() {
+            return body;
+        }
+
+        @Override
+        public Label getStartLabel() {
+            return startLabel;
+        }
+
+        @Override
+        public void setStartLabel(Label startLabel) {
+            this.startLabel = startLabel;
+        }
+
+        @Override
+        public Label getEndLabel() {
+            return endLabel;
+        }
+
+        @Override
+        public void setEndLabel(Label endLabel) {
+            this.endLabel = endLabel;
+        }
+
+        public <R> R accept(Visitor<R> visitor) {
+            return visitor.visitForStmt(this);
+        }
+
+        public <R, E extends Error> R accept(VisitorWithErrors<R, E> visitor, List<E> errors) {
+            return visitor.visitForStmt(this, errors);
+        }
+    }
+
 
     public static class Output extends Stmt {
 
@@ -473,7 +573,7 @@ public abstract class Stmt implements IStmt {
     public static class Break extends Stmt {
 
         private final Token token;
-        private While target;
+        private LoopNode target;
 
         public Break(Token token) {
             this.token = token;
@@ -484,11 +584,11 @@ public abstract class Stmt implements IStmt {
             return token;
         }
 
-        public While getTarget() {
+        public LoopNode getTarget() {
             return target;
         }
 
-        public void setTarget(While target) {
+        public void setTarget(LoopNode target) {
             this.target = target;
         }
 
@@ -504,7 +604,7 @@ public abstract class Stmt implements IStmt {
     public static class Continue extends Stmt {
 
         private final Token token;
-        private While target;
+        private LoopNode target;
 
         public Continue(Token token) {
             this.token = token;
@@ -515,11 +615,11 @@ public abstract class Stmt implements IStmt {
             return token;
         }
 
-        public While getTarget() {
+        public LoopNode getTarget() {
             return target;
         }
 
-        public void setTarget(While target) {
+        public void setTarget(LoopNode target) {
             this.target = target;
         }
 

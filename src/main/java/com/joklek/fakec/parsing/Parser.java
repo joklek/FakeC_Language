@@ -242,9 +242,9 @@ public class Parser {
         consume(FOR);
         consume(LEFT_PAREN, "Expect '(' after 'for'.");
 
-        List<IStmt> initializer;
+        List<IStmt> initializer = Collections.emptyList();
         if (match(SEMICOLON)) {
-            initializer = null;
+            initializer = Collections.emptyList();
         } else if (Arrays.asList(VARIABLE_TYPES).contains(current().getType())) {
             initializer = parseVarDecStmt();
         } else {
@@ -264,28 +264,12 @@ public class Parser {
         consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 
         Stmt.Block body = parseBlock();
-        // Adds increment part to statements
-        if (increment != null) {
-            List<IStmt> stmtList = new ArrayList<>(body.getStatements());
-            stmtList.add(new Stmt.Expression(increment));
-            body = new Stmt.Block(stmtList);
-        }
 
-        // if condition
         if (condition == null) {
             condition = new Expr.Literal(true);
             condition.setType(DataType.BOOL);
         }
-        Stmt.While whileLoop = new Stmt.While(condition, body);
-
-        // Adds initializer before while loop
-        if (initializer != null) {
-            List<IStmt> initStatements = new ArrayList<>(initializer);
-            initStatements.add(whileLoop);
-            body = new Stmt.Block(initStatements);
-        }
-
-        return body;
+        return new Stmt.For(initializer, condition, increment, body);
     }
 
     protected IStmt parseWhile() {
