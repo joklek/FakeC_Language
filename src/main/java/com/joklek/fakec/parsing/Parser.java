@@ -561,6 +561,14 @@ public class Parser {
                 return new Expr.Variable(identifier);
             }
         }
+        if (match(RANDOM)) {
+            consume(LEFT_BRACE, "[ should follow the random statement");
+            Expr minInclusive = parseExpression();
+            Token comma = consume(COMMA, "Comma should separate random restriction");
+            Expr maxInclusive = parseExpression();
+            consume(RIGHT_BRACE, "] should be at the end of a random expression");
+            return new Expr.Random(minInclusive, maxInclusive, comma);
+        }
 
         if (match(VARIABLES_OF_TYPE)) {
             DataType type = typeConverter.convertToken(previous());

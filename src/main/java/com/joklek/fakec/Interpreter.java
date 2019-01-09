@@ -4,6 +4,7 @@ import com.joklek.fakec.codegen.StringTable;
 
 import java.nio.BufferOverflowException;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 @SuppressWarnings({"squid:S1135", "squid:S106"})
@@ -18,11 +19,13 @@ public class Interpreter {
     private int bp; // base
 
     private Scanner scanner;
+    private Random randomGen;
 
     public Interpreter(List<Integer> code, StringTable strings) {
         this.strings = strings;
         this.running = true;
         this.scanner = new Scanner(System.in);
+        this.randomGen = new Random();
 
         this.codeBase = 512;
         this.memory = new int[4096];
@@ -93,6 +96,7 @@ public class Interpreter {
             case 0x63: exit(); break;
             case 0x64: jmp(); break;
             case 0x65: jmpz(); break;
+            case 0x66: rand(); break;
 
             case 0x70: stdOutInteger(); break;
             case 0x71: stdOutFloat(); break;
@@ -103,6 +107,12 @@ public class Interpreter {
             default:
                 throw new UnsupportedOperationException(String.format("Unsupported instruction with code %03X %d", opcode, opcode));
         }
+    }
+
+    private void rand() {
+        int min = pop();
+        int max = pop();
+        push(randomGen.nextInt(max) + min);
     }
 
     private void and() {

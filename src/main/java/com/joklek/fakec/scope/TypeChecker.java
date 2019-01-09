@@ -299,6 +299,23 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
     }
 
     @Override
+    public Void visitRandom(Expr.Random random, List<TypeError> errors) {
+        Expr min = random.getMinInclusive();
+        Expr max = random.getMaxInclusive();
+
+        min.accept(this, errors);
+        max.accept(this, errors);
+        if(min.getType() != DataType.INT) {
+            errors.add(new TypeError("Incorrect type for random minimum", DataType.INT, min.getType(), random.getToken().getLine()));
+        }
+        if(max.getType() != DataType.INT) {
+            errors.add(new TypeError("Incorrect type for random maximum", DataType.INT, max.getType(), random.getToken().getLine()));
+        }
+        random.setType(DataType.INT);
+        return null;
+    }
+
+    @Override
     public Void visitArrayStmt(Stmt.Array stmt, List<TypeError> errors) {
         return null;
     }

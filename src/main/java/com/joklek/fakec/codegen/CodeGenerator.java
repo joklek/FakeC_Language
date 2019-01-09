@@ -441,4 +441,12 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
         // TODO
         return null;
     }
+
+    @Override
+    public Void visitRandom(Expr.Random random) {
+        random.getMaxInclusive().accept(this);
+        random.getMinInclusive().accept(this);
+        interRepresentation.write(RND);
+        return null;
+    }
 }

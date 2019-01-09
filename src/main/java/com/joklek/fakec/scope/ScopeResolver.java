@@ -287,6 +287,14 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         return null;
     }
 
+    @Override
+    public Void visitRandom(Expr.Random random, List<ScopeError> errors) {
+        Scope scope = random.getScope();
+        setScopeAndSearchForErrors(scope, random.getMinInclusive(), errors);
+        setScopeAndSearchForErrors(scope, random.getMaxInclusive(), errors);
+        return null;
+    }
+
     private void setScopeAndSearchForErrors(Scope scope, IExpr expression, List<ScopeError> errors) {
         expression.setScope(scope);
         expression.accept(this, errors);

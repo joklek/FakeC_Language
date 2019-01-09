@@ -271,4 +271,39 @@ public abstract class Expr implements IExpr {
             return visitor.visitArrayCreateExpr(this, errors);
         }
     }
+
+    public static class Random extends Expr {
+
+        private final Expr minInclusive;
+        private final Expr maxInclusive;
+        private final Token token;
+
+        public Random(Expr minInclusive, Expr maxInclusive, Token token) {
+            this.maxInclusive = maxInclusive;
+            this.minInclusive = minInclusive;
+            this.token = token;
+        }
+
+        public Expr getMinInclusive() {
+            return minInclusive;
+        }
+
+        public Expr getMaxInclusive() {
+            return maxInclusive;
+        }
+
+        public Token getToken() {
+            return token;
+        }
+
+        @Override
+        public <R> R accept(Visitor<R> visitor) {
+            return visitor.visitRandom(this);
+        }
+
+        @Override
+        public <R, E extends Error> R accept(VisitorWithErrors<R, E> visitor, List<E> errors) {
+            return visitor.visitRandom(this, errors);
+        }
+    }
 }

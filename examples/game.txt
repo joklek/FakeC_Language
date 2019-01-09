@@ -1,7 +1,9 @@
 int main() {
-    int count = 0;
+    int count = 1;
     int guess = 0;
-    int number = 500;
+    int min = 0;
+    int max = 1000;
+    int number = random [min, max];
 
     while(true) {
         output << "Enter number: ";
@@ -16,9 +18,9 @@ int main() {
         else if(guess == number) {
             break;
         }
-        guess++;
+        count++;
     }
 
-    output << "congrats, you've won in ", count, "tries. The number was ", number, "\n";
+    output << "congrats, you've won in ", count, " tries. The number was ", number, "\n";
     return 0;
 }

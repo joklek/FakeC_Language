@@ -30,6 +30,7 @@ public class ReservedKeywordUtils {
         keywords.put("void", TokenType.VOID_TYPE);
         keywords.put("input", TokenType.INPUT);
         keywords.put("output", TokenType.OUTPUT);
+        keywords.put("random", TokenType.RANDOM);
     }
 
     /**

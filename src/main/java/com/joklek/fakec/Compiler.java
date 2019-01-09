@@ -80,23 +80,7 @@ public class Compiler {
 
         if(!compilerErrors.isEmpty()) {
             System.err.println("Compiler stopped before code generation. Errors occurred");
-            compilerErrors.sort((lhs, rhs) -> Integer.compare(rhs.getLine(), lhs.getLine()));
-            Collections.reverse(compilerErrors);
-
-            for (Error error : compilerErrors) {
-                if(error instanceof LexerError) {
-                    error((LexerError) error, filename);
-                }
-                else if(error instanceof ParserError) {
-                    error((ParserError) error, filename);
-                }
-                else if(error instanceof ScopeError) {
-                    error((ScopeError) error, filename);
-                }
-                else if(error instanceof TypeError) {
-                    error((TypeError) error, filename);
-                }
-            }
+            printErrors(compilerErrors, filename);
             return;
         }
 
@@ -141,6 +125,27 @@ public class Compiler {
         // RUN THIS
         Interpreter vm = new Interpreter(bytes, intermediateRepresentation.getStringTable());
         vm.execute();
+    }
+
+    private static void printErrors(List<Error> compilerErrors, String filename) {
+        compilerErrors.sort((lhs, rhs) -> Integer.compare(rhs.getLine(), lhs.getLine()));
+        Collections.reverse(compilerErrors);
+
+        for (Error error : compilerErrors) {
+            if(error instanceof LexerError) {
+                error((LexerError) error, filename);
+            }
+            else if(error instanceof ParserError) {
+                error((ParserError) error, filename);
+            }
+            else if(error instanceof ScopeError) {
+                error((ScopeError) error, filename);
+            }
+            else if(error instanceof TypeError) {
+                error((TypeError) error, filename);
+            }
+        }
+        return;
     }
 
     private static void printLexemas(List<Token> tokens, String fileName) {

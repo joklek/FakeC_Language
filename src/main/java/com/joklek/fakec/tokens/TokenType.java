@@ -21,5 +21,6 @@ public enum TokenType {
     // IO
     INPUT, OUTPUT, INPUT_SIGN, OUTPUT_SIGN,
 
+    RANDOM,
     EOF
 }

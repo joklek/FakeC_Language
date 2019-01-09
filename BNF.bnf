@@ -65,7 +65,8 @@
                <identifier> |
                <type_value> |
                <function_call> |
-               <array_access>
+               <array_access> |
+               <random_number_request>
                
 <function_call> ::= <identifier> "(" <argument_list> ")" | <identifier> "(" ")"
 <argument_list> ::= <expression> | <expression> "," <argument_list>
@@ -92,6 +93,9 @@
 
 <number> ::= <float> | <integer>
 <char> ::= "'"<ascii_without_single_quote_and_backslash>"'" | "'\''" | "'\\'"
+
+// RANDOM
+<random_number_request> ::= "random" "[" <expression> "," <expression> "]"
 
 // STRING
 <string> ::= "\""<string_contents>"\"" | """"

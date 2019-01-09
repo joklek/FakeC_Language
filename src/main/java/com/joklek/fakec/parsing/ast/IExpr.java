@@ -17,6 +17,7 @@ public interface IExpr extends NodeWithMutableType {
         R visitCallExpr(Expr.Call callExpr);
         R visitArrayAccessExpr(Expr.ArrayAccess arrayAccessExpr);
         R visitArrayCreateExpr(Expr.ArrayCreate arrayCreateExpr);
+        R visitRandom(Expr.Random random);
     }
 
     interface VisitorWithErrors<R, E extends Error> {
@@ -29,6 +30,7 @@ public interface IExpr extends NodeWithMutableType {
         R visitCallExpr(Expr.Call callExpr, List<E> errors);
         R visitArrayAccessExpr(Expr.ArrayAccess arrayAccessExpr, List<E> errors);
         R visitArrayCreateExpr(Expr.ArrayCreate arrayCreateExpr, List<E> errors);
+        R visitRandom(Expr.Random random, List<E> errors);
     }
 
     Scope getScope();

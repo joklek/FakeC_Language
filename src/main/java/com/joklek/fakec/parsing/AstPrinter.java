@@ -86,6 +86,15 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitRandom(Expr.Random random) {
+        String min = buildBranch("min: ", random.getMinInclusive());
+        String max = buildBranch("max: ", random.getMaxInclusive());
+        return String.format("RANDOM:%n" +
+                               "%s" +
+                               "%s", min, max);
+    }
+
+    @Override
     public String visitProgramStmt(Stmt.Program program) {
         StringBuilder builder = new StringBuilder(String.format("PROGRAM: %n"));
         List<Stmt.Function> functions = program.getFunctions();
