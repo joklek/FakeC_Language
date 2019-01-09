@@ -2,10 +2,11 @@ package com.joklek.fakec;
 
 import com.joklek.fakec.codegen.StringTable;
 
+import java.nio.BufferOverflowException;
 import java.util.List;
 import java.util.Scanner;
 
-@SuppressWarnings("squid:S1135")
+@SuppressWarnings({"squid:S1135", "squid:S106"})
 public class Interpreter {
 
     private final StringTable strings;
@@ -16,7 +17,7 @@ public class Interpreter {
     private int sp; // stack
     private int bp; // base
 
-    Scanner scanner;
+    private Scanner scanner;
 
     public Interpreter(List<Integer> code, StringTable strings) {
         this.strings = strings;
@@ -49,9 +50,6 @@ public class Interpreter {
     private void executeStep() {
         int opcode = readCode();
 
-        //InstructionResolver instructionResolver = new InstructionResolver();
-        //System.out.println(instructionResolver.resolveInstruction(opcode));
-
         switch (opcode) {
             case 0x10: addInteger(); break;
             case 0x11: addFloat(); break;
@@ -73,6 +71,8 @@ public class Interpreter {
             case 0x27: greaterFloat(); break;
             case 0x28: greaterOrEqualInteger(); break;
             case 0x29: greaterOrEqualFloat(); break;
+            case 0X2A: notEqualInteger(); break;
+            case 0X2B: notEqualFloat(); break;
 
             case 0x30: and(); break;
             case 0x31: or(); break;
@@ -93,7 +93,6 @@ public class Interpreter {
             case 0x63: exit(); break;
             case 0x64: jmp(); break;
             case 0x65: jmpz(); break;
-            //case 0x66: error(); break;
 
             case 0x70: stdOutInteger(); break;
             case 0x71: stdOutFloat(); break;
@@ -104,10 +103,6 @@ public class Interpreter {
             default:
                 throw new UnsupportedOperationException(String.format("Unsupported instruction with code %03X %d", opcode, opcode));
         }
-    }
-
-    private void pushFloat() {
-
     }
 
     private void and() {
@@ -133,18 +128,24 @@ public class Interpreter {
         push(a);
     }
 
-    public void alloc(){
+    private void alloc(){
         int num = readCode();
-        sp += num;
+        if (sp + num >= memory.length) {
+            throw new BufferOverflowException();
+        }
+        else {
+            sp += num;
+        }
     }
 
-    public void jmp(){
+    private void jmp(){
         goTo(readCode());
     }
 
-    public void jmpz(){
+    private void jmpz(){
         int target = readCode();
-        if (pop() == 0) {
+        int poppedValue = pop();
+        if (poppedValue == 0) {
             goTo(target);
         }
     }
@@ -179,14 +180,13 @@ public class Interpreter {
     private void peek() {
         int index = readCode();
         int a = memory[bp +index];
-        //System.out.println("peek at " + index + " with = " + a);
         push(a);
     }
 
     private void poke() {
         int index = readCode();
-        memory[bp +index] = pop();
-        //System.out.println("poke at " + index + " = " + memory[bp+index]);
+        //memory[bp +index] = pop();
+        memory[bp + index] = memory[sp-1];
     }
 
     public void instrPush(){
@@ -220,11 +220,9 @@ public class Interpreter {
     }
 
     private void stdin() {
-        int n = 0;
-        scanner.nextInt();
+        int n = scanner.nextInt(); // TODO not only ints
         push(n);
     }
-
 
     private void addInteger() {
         int b = pop();
@@ -233,10 +231,9 @@ public class Interpreter {
     }
 
     private void addFloat() {
-        /*float b =;
-        float a=;
-        push(a+b);*/
-        // TODO
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a + b));
     }
 
     private void subInteger() {
@@ -246,7 +243,9 @@ public class Interpreter {
     }
 
     private void subFloat() {
-        // TODO
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a - b));
     }
 
 
@@ -257,7 +256,9 @@ public class Interpreter {
     }
 
     private void multFloat() {
-        // TODO
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a * b));
     }
 
     private void divInteger() {
@@ -267,7 +268,9 @@ public class Interpreter {
     }
 
     private void divFloat() {
-        // TODO
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a / b));
     }
 
     private void modulus() {
@@ -283,8 +286,22 @@ public class Interpreter {
         push(a == b ? 1 : 0);
     }
 
+    private void notEqualInteger() {
+        int b = pop();
+        int a = pop();
+        push(a != b ? 1 : 0);
+    }
+
     private void equalsFloat() {
-        // TODO
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a == b ? 1 : 0));
+    }
+
+    private void notEqualFloat() {
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a != b ? 1 : 0));
     }
 
     private void lessInteger() {
@@ -294,7 +311,9 @@ public class Interpreter {
     }
 
     private void lessFloat() {
-        // TODO
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a < b ? 1 : 0));
     }
 
     private void lessOrEqualInteger() {
@@ -304,7 +323,9 @@ public class Interpreter {
     }
 
     private void lessOrEqualFloat() {
-        // TODO
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a <= b ? 1 : 0));
     }
 
     private void greaterInteger() {
@@ -314,7 +335,9 @@ public class Interpreter {
     }
 
     private void greaterFloat() {
-        // TODO
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a > b ? 1 : 0));
     }
 
     private void greaterOrEqualInteger() {
@@ -324,7 +347,9 @@ public class Interpreter {
     }
 
     private void greaterOrEqualFloat() {
-        // TODO
+        float b = Float.intBitsToFloat(pop());
+        float a = Float.intBitsToFloat(pop());
+        push(Float.floatToIntBits(a >= b ? 1 : 0));
     }
 
     /*---------------------------------------------------------------------------------------------------------*/
@@ -336,7 +361,12 @@ public class Interpreter {
 
     private void push(int value){
         memory[sp] = value;
-        sp++;
+        if(sp + 1 >= memory.length) {
+            throw new StackOverflowError();
+        }
+        else {
+            sp++;
+        }
     }
 
     private void goTo(int target){

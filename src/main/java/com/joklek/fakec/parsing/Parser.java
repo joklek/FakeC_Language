@@ -248,7 +248,7 @@ public class Parser {
         } else if (Arrays.asList(VARIABLE_TYPES).contains(current().getType())) {
             initializer = parseVarDecStmt();
         } else {
-            initializer = Arrays.asList(parseExprStatement());
+            initializer = Collections.singletonList(parseExprStatement());
         }
 
         Expr condition = null;

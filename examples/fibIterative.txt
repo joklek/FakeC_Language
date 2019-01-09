@@ -4,10 +4,12 @@ int main() {
     output << "Enter the number of terms: ";
 
     input >> n;
-    output << "Fibonacci Series:";
+    output << n, " term for fibonacci Series: ";
 
-    for (i = 1; i <= n; ++i) {
-        output << t1, " ";
+    for (i = 0; i <= n; ++i) {
+        if(i == n) {
+            output << t1, "\n";
+        }
         nextTerm = t1 + t2;
         t1 = t2;
         t2 = nextTerm;

@@ -2,7 +2,7 @@ int main(){
   int n, i = 0, c;
 
   input >> n;
-  output << "Fibonacci series terms are:\n";
+  output << n, " term for fibonacci Series: ";
 
   for (c = 1; c <= n; c++)
   {

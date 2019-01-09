@@ -12,6 +12,7 @@ public enum InstructionType {
     LEI(0x24, 0), LEF(0x25, 0),
     GTI(0x26, 0), GTF(0x27, 0),
     GEI(0x28, 0), GEF(0x29, 0),
+    NEI(0x2A, 0), NEF(0x2B, 0),
 
     AND(0x30, 0),
     OR(0x31, 0),
@@ -26,8 +27,6 @@ public enum InstructionType {
 
     CALL(0x60, 1), RET(0x61, 0), RET_V(0x62, 0), EXIT(0x63, 0),
     JMP(0x64, 1), JMPZ(0x65, 1),
-    ERROR(0x66, 0),
-
 
     STDOI(0x70,0),
     STDOF(0x71,0),

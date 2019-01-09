@@ -8,10 +8,10 @@ int main() {
         input >> guess;
 
         if(guess > number) {
-            output << "Guess is greater than number";
+            output << "Guess is greater than number", "\n";
         }
         else if(guess < number) {
-            output << "Guess is less than number";
+            output << "Guess is less than number", "\n";
         }
         else if(guess == number) {
             break;

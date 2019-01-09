@@ -46,6 +46,8 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
         this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER_EQUAL, DataType.INT), GEI);
         this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.GREATER_EQUAL, DataType.FLOAT), GEF);
         this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.EQUAL_EQUAL, DataType.INT), EQI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.NOT_EQUAL, DataType.INT), NEI);
+        this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.NOT_EQUAL, DataType.FLOAT), NEF);
         this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.EQUAL_EQUAL, DataType.BOOL), EQI); // TODO
         this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.EQUAL_EQUAL, DataType.FLOAT), EQF);
         this.operationAndTypeMapForInstruction.put(new MultiKey(OperationType.MOD, DataType.INT), MOD);
@@ -61,6 +63,8 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     @Override
     public Void visitProgramStmt(Stmt.Program program) {
         mainLabel = interRepresentation.newLabel();
+        // Were pushing these values to stack, because when call happens, they will be overwritten by register values
+        // Better way for this would be pushing on the interpreter maybe?
         interRepresentation.write(PUSHI, mainLabel);
         interRepresentation.write(PUSHI, 666);
         interRepresentation.write(PUSHI, 666);
@@ -74,15 +78,19 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitFunctionStmt(Stmt.Function functionStmt) {
-        if(functionStmt.getType() == DataType.INT && functionStmt.getName().getLexeme().equals("main") && functionStmt.getParams().isEmpty()) {
+
+        if(functionStmt.getType() == DataType.INT &&
+                functionStmt.getName().getLexeme().equals("main") &&
+                functionStmt.getParams().isEmpty()) {
             interRepresentation.placeLabel(mainLabel);
         }
 
         Label fnLabel = functionStmt.getLabel();
         interRepresentation.placeLabel(fnLabel);
 
-        if(!functionStmt.getParams().isEmpty()) {
-            interRepresentation.write(ALLOC, functionStmt.getParams().size());
+        int innerVariableCount = functionStmt.getScope().getPointer().getCurrentStackSlot();
+        if(innerVariableCount != 0) {
+            interRepresentation.write(ALLOC, innerVariableCount);
         }
 
         /*for (Pair<Token, DataType> param : functionStmt.getParams()) {
@@ -164,10 +172,10 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
             block.accept(this);
 
             // Optimisation to remove last jump from an if it it's pointing to the following instruction
-            if(branches.lastIndexOf(branch) != branches.size() - 1 || ifStmt.getElseBranch() != null) {
+            //if(branches.lastIndexOf(branch) != branches.size() - 1 || ifStmt.getElseBranch() != null) {
                 interRepresentation.write(JMP, endLabel);
                 interRepresentation.placeLabel(label);
-            }
+            //}
         }
         if(ifStmt.getElseBranch() != null) {
             ifStmt.getElseBranch().accept(this);
@@ -235,10 +243,11 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitVarStmt(Stmt.Var varStmt) {
+
         if (varStmt.getInitializer() != null) {
             varStmt.getInitializer().accept(this);
-            interRepresentation.write(POKE, varStmt.getStackSlot()); // TODO this might be a problematic place
-            //interRepresentation.write(POP);
+            interRepresentation.write(POKE, varStmt.getStackSlot());
+            interRepresentation.write(POP);
         }
         return null;
     }
@@ -250,6 +259,7 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
         return null;
     }
 
+    // TODO Does not work with for loops, fFFF
     @Override
     public Void visitContinueStmt(Stmt.Continue continueStmt) {
         Label label = continueStmt.getTarget().getStartLabel();

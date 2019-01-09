@@ -47,7 +47,7 @@ public class Compiler {
             List<LexerError> errors = scannerResults.getErrors();
             errorsForFiles.put(fileName, errors);
             tokensForFiles.put(fileName, tokens);
-            printLexemas(tokens, fileName);
+            //printLexemas(tokens, fileName);
         });
         errorsForFiles.forEach((fileName, errors) ->
                 compilerErrors.addAll(errors));
@@ -125,7 +125,7 @@ public class Compiler {
             StringBuilder ops = new StringBuilder();
             for(int j = 1; j <= instruction.getOps(); j++) {
                 Integer codeFromIR = bytes.get(offset + j);
-                if(instruction == InstructionType.POPF || instruction == InstructionType.ADDF || instruction == PUSHF ) {
+                if(instruction == InstructionType.POPF || instruction == InstructionType.ADDF || instruction == PUSHF) {
                     ops.append(Float.intBitsToFloat(codeFromIR));
                 }
                 else {
