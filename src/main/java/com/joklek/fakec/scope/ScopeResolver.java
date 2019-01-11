@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.joklek.fakec.parsing.types.element.ElementType.FUNCTION;
-import static com.joklek.fakec.parsing.types.element.ElementType.VARIABLE;
+import static com.joklek.fakec.parsing.types.element.ElementType.*;
 
 // 4.1
 /**
@@ -249,6 +248,11 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         expr.getValue().setScope(scope);
         expr.getValue().accept(this, errors);
 
+        if(expr.getOffset() != null) {
+            expr.getOffset().accept(this, errors);
+            expr.getOffset().setScope(scope);
+        }
+
         return null;
     }
 
@@ -271,18 +275,10 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         Scope scope = stmt.getScope();
 
         ScopeError error = scope.add(stmt.getName(), stmt, VARIABLE);
+        scope.getPointer().addSlots(stmt.getSize() - 1);
         if(error != null) {
             errors.add(error);
         }
-
-
-        IExpr initializer = stmt.getInitializer();
-        if(initializer != null) {
-            setScopeAndSearchForErrors(scope, initializer, errors);
-        }
-
-        getResolveError(scope, stmt.getName(), VARIABLE)
-                .ifPresent(resolveError -> errors.add(resolveError));
         return null;
     }
 
@@ -291,16 +287,6 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         Scope scope = expr.getScope();
 
         setScopeAndSearchForErrors(scope, expr.getOffset(), errors);
-        getResolveError(scope, expr.getArray(), VARIABLE)
-                .ifPresent(error -> errors.add(error));
-        return null;
-    }
-
-    @Override
-    public Void visitArrayCreateExpr(Expr.ArrayCreate expr, List<ScopeError> errors) {
-        Scope scope = expr.getScope();
-
-        setScopeAndSearchForErrors(scope, expr.getSize(), errors);
         getResolveError(scope, expr.getArray(), VARIABLE)
                 .ifPresent(error -> errors.add(error));
         return null;

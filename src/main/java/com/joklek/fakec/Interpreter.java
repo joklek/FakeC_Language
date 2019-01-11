@@ -89,6 +89,8 @@ public class Interpreter {
             case 0x50: peek(); break;
             case 0x51: poke(); break;
             case 0x52: alloc(); break;
+            case 0x5A: peeks(); break;
+            case 0x5B: pokes(); break;
 
             case 0x60: call(readCode()); break;
             case 0x61: ret(0); break;
@@ -191,6 +193,18 @@ public class Interpreter {
         int index = readCode();
         int a = memory[bp +index];
         push(a);
+    }
+
+    private void peeks() {
+        int index = pop();
+        int a = memory[bp + index];
+        push(a);
+    }
+
+    private void pokes() {
+        int index = pop();
+        //memory[bp +index] = pop();
+        memory[bp + index] = memory[sp-1];
     }
 
     private void poke() {

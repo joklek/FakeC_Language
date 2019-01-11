@@ -6,9 +6,8 @@ import com.joklek.fakec.parsing.types.operation.OperatorToken;
 import com.joklek.fakec.scope.Scope;
 import com.joklek.fakec.tokens.Token;
 
+import javax.annotation.Nullable;
 import java.util.List;
-
-import static com.joklek.fakec.parsing.ast.Stmt.Function;
 
 public abstract class Expr implements IExpr {
 
@@ -159,11 +158,17 @@ public abstract class Expr implements IExpr {
 
         private final Token name;
         private final Expr value;
+        private final Expr offset;
         private Stmt.Var target;
 
         public Assign(Token name, Expr value) {
+            this(name, value, null);
+        }
+
+        public Assign(Token name, Expr value, @Nullable Expr offset) {
             this.name = name;
             this.value = value;
+            this.offset = offset;
         }
 
         public Token getName() {
@@ -172,6 +177,11 @@ public abstract class Expr implements IExpr {
 
         public Expr getValue() {
             return value;
+        }
+
+        @Nullable
+        public Expr getOffset() {
+            return offset;
         }
 
         public Stmt.Var getTarget() {
@@ -245,22 +255,28 @@ public abstract class Expr implements IExpr {
         }
     }
 
-    public static class ArrayCreate extends Expr {
+    /*public static class ArrayCreate extends Expr {
 
-        private final Token array;
-        private final Expr size;
+        private final Token name;
+        private final int size;
+        private final DataType arrayType;
 
-        public ArrayCreate(Token array, Expr size) {
-            this.array = array;
+        public ArrayCreate(Token name, DataType arrayType, int size) {
+            this.name = name;
             this.size = size;
+            this.arrayType = arrayType;
         }
 
-        public Token getArray() {
-            return array;
+        public Token getName() {
+            return name;
         }
 
-        public Expr getSize() {
+        public int getSize() {
             return size;
+        }
+
+        public DataType getArrayType() {
+            return arrayType;
         }
 
         public <R> R accept(Visitor<R> visitor) {
@@ -270,7 +286,7 @@ public abstract class Expr implements IExpr {
         public <R, E extends Error> R accept(VisitorWithErrors<R, E> visitor, List<E> errors) {
             return visitor.visitArrayCreateExpr(this, errors);
         }
-    }
+    }*/
 
     public static class Random extends Expr {
 

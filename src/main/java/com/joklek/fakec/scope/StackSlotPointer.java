@@ -18,4 +18,8 @@ public class StackSlotPointer {
     public void resetCurrentStackSlot() {
         currentStackSlot = 0;
     }
+
+    public void addSlots(int size) {
+        currentStackSlot += size;
+    }
 }

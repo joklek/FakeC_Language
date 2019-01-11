@@ -451,17 +451,19 @@ public abstract class Stmt implements IStmt {
         private Label label;
         private int stackSlot;
 
-        public Var(DataType type, Token name, IExpr initializer) {
+        public Var(@Nonnull DataType type, @Nonnull Token name, @Nullable IExpr initializer) {
             this.type = type;
             this.name = name;
             this.initializer = initializer;
             this.label = new Label();
         }
 
+        @Nonnull
         public DataType getType() {
             return type;
         }
 
+        @Nonnull
         public Token getName() {
             return name;
         }
@@ -509,62 +511,27 @@ public abstract class Stmt implements IStmt {
         }
     }
 
-    public static class Array implements IStmt, StackDeclaredNode {
+    public static class Array extends Var {
+        private int size;
 
-        private final DataType type;
-        private final Token name;
-        private final IExpr initializer;
-        private Scope scope = null;
-        private IStmt parent = null;
-        private int stackSlot;
-
-        public Array(DataType type, Token name, IExpr initializer) {
-            this.type = type;
-            this.name = name;
-            this.initializer = initializer;
+        public Array(DataType type, Token name, int size) {
+            super(type, name, null);
+            if(size < 0) {
+                throw new IllegalArgumentException("Arrays should be of size bigger than 0");
+            }
+            this.size = size;
         }
 
-        public DataType getType() {
-            return type;
-        }
-
-        public Token getName() {
-            return name;
-        }
-
-        @Nullable
-        public IExpr getInitializer() {
-            return initializer;
-        }
-
-        public Scope getScope() {
-            return scope;
-        }
-        public void setScope(Scope scope) {
-            this.scope = scope;
-        }
-
-        public IStmt getParent() {
-            return parent;
-        }
-        public void setParent(IStmt parent) {
-            this.parent = parent;
+        public int getSize() {
+            return size;
         }
 
         @Override
-        public int getStackSlot() {
-            return stackSlot;
-        }
-
-        @Override
-        public void setStackSlot(int stackSlot) {
-            this.stackSlot = stackSlot;
-        }
-
         public <R> R accept(Visitor<R> visitor) {
             return visitor.visitArrayStmt(this);
         }
 
+        @Override
         public <R, E extends Error> R accept(VisitorWithErrors<R, E> visitor, List<E> errors) {
             return visitor.visitArrayStmt(this, errors);
         }

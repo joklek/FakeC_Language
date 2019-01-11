@@ -57,9 +57,14 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitAssignExpr(Expr.Assign assignExpr) {
+        String offset = "";
+        if(assignExpr.getOffset() != null) {
+            offset = buildBranch("Offset: ", assignExpr.getOffset());
+        }
         return buildBranch(String.format("AssignExpr: %n" +
                                          "VAR: %s%n" +
-                                          "Value: ", assignExpr.getName().getLexeme()), assignExpr.getValue());
+                                          "%s" +
+                                          "Value: ", assignExpr.getName().getLexeme(), offset), assignExpr.getValue());
     }
 
     @Override
@@ -78,12 +83,6 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     public String visitArrayAccessExpr(Expr.ArrayAccess arrayAccessExpr) {
         return buildBranch(String.format("ArrayAccess: %s%n" +
                              "Offset: ", arrayAccessExpr.getArray().getLexeme()), arrayAccessExpr.getOffset());
-    }
-
-    @Override
-    public String visitArrayCreateExpr(Expr.ArrayCreate arrayCreateExpr) {
-        return buildBranch(String.format("ArrayCreation: %s%n" +
-                "Size: ", arrayCreateExpr.getArray().getLexeme()), arrayCreateExpr.getSize());
     }
 
     @Override

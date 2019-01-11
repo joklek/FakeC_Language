@@ -431,7 +431,12 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     public Void visitAssignExpr(Expr.Assign assignExpr) {
         assignExpr.getValue().accept(this);
         int pointer = ((StackDeclaredNode)assignExpr.getScope().resolve(assignExpr.getName(), ElementType.VARIABLE)).getStackSlot();
-        interRepresentation.write(POKE, pointer);
+        interRepresentation.write(PUSHI, pointer);
+        if(assignExpr.getOffset() != null) {
+            assignExpr.getOffset().accept(this);
+            interRepresentation.write(ADDI);
+        }
+        interRepresentation.write(POKES);
         return null;
     }
 
@@ -451,19 +456,21 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitArrayStmt(Stmt.Array arrayStmt) {
-        // TODO
         return null;
     }
 
     @Override
     public Void visitArrayAccessExpr(Expr.ArrayAccess arrayAccessExpr) {
-        // TODO
-        return null;
-    }
 
-    @Override
-    public Void visitArrayCreateExpr(Expr.ArrayCreate arrayCreateExpr) {
-        // TODO
+        Scope scope = arrayAccessExpr.getScope();
+        Token variableName = arrayAccessExpr.getArray();
+        StackDeclaredNode resolvedVariable = (StackDeclaredNode) scope.resolve(variableName, ElementType.VARIABLE);
+        int pointer = resolvedVariable.getStackSlot();
+
+        arrayAccessExpr.getOffset().accept(this);
+        interRepresentation.write(PUSHI, pointer);
+        interRepresentation.write(ADDI);
+        interRepresentation.write(PEEKS);
         return null;
     }
 

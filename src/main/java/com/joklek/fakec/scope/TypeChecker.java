@@ -1,9 +1,6 @@
 package com.joklek.fakec.scope;
 
-import com.joklek.fakec.parsing.ast.Expr;
-import com.joklek.fakec.parsing.ast.IExpr;
-import com.joklek.fakec.parsing.ast.IStmt;
-import com.joklek.fakec.parsing.ast.Stmt;
+import com.joklek.fakec.parsing.ast.*;
 import com.joklek.fakec.scope.error.ScopeError;
 import com.joklek.fakec.scope.error.TypeError;
 import com.joklek.fakec.parsing.types.operation.OperatorToken;
@@ -293,6 +290,14 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
         else {
             expr.setType(expr.getValue().getType());
         }
+
+        if(expr.getOffset() != null) {
+            expr.getOffset().accept(this, errors);
+            if(expr.getOffset().getType() != DataType.INT) {
+                errors.add(new TypeError("Offset should be int", DataType.INT, expr.getOffset().getType(), expr.getName().getLine()));
+            }
+        }
+
         return null;
     }
 
@@ -338,11 +343,11 @@ public class TypeChecker implements Expr.VisitorWithErrors<Void, TypeError>, Stm
 
     @Override
     public Void visitArrayAccessExpr(Expr.ArrayAccess expr, List<TypeError> errors) {
-        return null;
-    }
+        Scope scope = expr.getScope();
+        expr.getOffset().accept(this, errors);
 
-    @Override
-    public Void visitArrayCreateExpr(Expr.ArrayCreate expr, List<TypeError> errors) {
+        NodeWithType resolved = scope.resolve(expr.getArray(), VARIABLE);
+        expr.setType(resolved.getType());
         return null;
     }
 }

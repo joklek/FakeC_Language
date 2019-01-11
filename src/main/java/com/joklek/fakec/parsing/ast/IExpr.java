@@ -16,7 +16,6 @@ public interface IExpr extends NodeWithMutableType {
         R visitAssignExpr(Expr.Assign assignExpr);
         R visitCallExpr(Expr.Call callExpr);
         R visitArrayAccessExpr(Expr.ArrayAccess arrayAccessExpr);
-        R visitArrayCreateExpr(Expr.ArrayCreate arrayCreateExpr);
         R visitRandom(Expr.Random random);
     }
 
@@ -29,7 +28,6 @@ public interface IExpr extends NodeWithMutableType {
         R visitAssignExpr(Expr.Assign assignExpr, List<E> errors);
         R visitCallExpr(Expr.Call callExpr, List<E> errors);
         R visitArrayAccessExpr(Expr.ArrayAccess arrayAccessExpr, List<E> errors);
-        R visitArrayCreateExpr(Expr.ArrayCreate arrayCreateExpr, List<E> errors);
         R visitRandom(Expr.Random random, List<E> errors);
     }
 

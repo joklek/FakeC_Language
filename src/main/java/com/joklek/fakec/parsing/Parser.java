@@ -1,6 +1,5 @@
 package com.joklek.fakec.parsing;
 
-import com.joklek.fakec.codegen.Label;
 import com.joklek.fakec.parsing.ast.Expr;
 import com.joklek.fakec.parsing.ast.IExpr;
 import com.joklek.fakec.parsing.ast.IStmt;
@@ -189,22 +188,23 @@ public class Parser {
         return declarations;
     }
 
+    // TODO Fix BNF
     // <array_declaration>  ::= <type_atomic_specifier> "[" "]" <identifier> ("["<expression>"]" | "=" <expression>)
     private IStmt parseArrayDecStmt(DataType type) {
         consume(LEFT_BRACE);
         consume(RIGHT_BRACE, "Right brace should follow left brace in array declaration.");
         Token name = consume(IDENTIFIER, "Expect variable name.");
 
-        IExpr initializer = parseArrayDeclarator(name);
-        IStmt declaration = new Stmt.Array(type, name, initializer);
+        int size = parseArrayDeclarationSize();
+        IStmt declaration = new Stmt.Array(type, name, size);
 
         if(check(COMMA)) {
             List<IStmt> declarations = new ArrayList<>();
             declarations.add(declaration);
             while(match(COMMA)) {
                 name = consume(IDENTIFIER, "Expect variable name.");
-                initializer =  parseArrayDeclarator(name);
-                declarations.add(new Stmt.Array(type, name, initializer));
+                size =  parseArrayDeclarationSize();
+                declarations.add(new Stmt.Array(type, name, size));
             }
             declaration = new Stmt.Block(declarations);
         }
@@ -213,16 +213,11 @@ public class Parser {
         return declaration;
     }
 
-    private Expr parseArrayDeclarator(Token name) {
-        Expr initializer = null;
-        if (match(LEFT_BRACE)) {
-            Expr size = parseExpression();
-            consume(RIGHT_BRACE, "Right brace should follow array size declaration");
-            initializer = new Expr.ArrayCreate(name, size);
-        } else if (match(EQUAL)) {
-            initializer = parseExpression();
-        }
-        return initializer;
+    private int parseArrayDeclarationSize() {
+        consume(LEFT_BRACE);
+        Token size = consume(INTEGER, "Array size should be a good-old integer literal");
+        consume(RIGHT_BRACE, "Right brace should follow array size declaration");
+        return Integer.parseInt(size.getLexeme());
     }
 
     protected IStmt parseReturnStmt() {
@@ -365,7 +360,7 @@ public class Parser {
             }
             else if (expr instanceof Expr.ArrayAccess) {
                 Token name = ((Expr.ArrayAccess)expr).getArray();
-                return new Expr.Assign(name, value);
+                return new Expr.Assign(name, value, ((Expr.ArrayAccess) expr).getOffset());
             }
 
             throw error(equals, "Invalid assignment target.");
