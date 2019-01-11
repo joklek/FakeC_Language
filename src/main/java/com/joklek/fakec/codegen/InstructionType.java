@@ -26,6 +26,8 @@ public enum InstructionType {
     PEEK(0x50, 1), POKE(0x51, 1), ALLOC(0x52, 1),
     PEEKS(0x5A, 0), POKES(0x5B, 0),
 
+    LEA(0x5C, 0), LD(0x5D, 0),
+
     CALL(0x60, 1), RET(0x61, 0), RET_V(0x62, 0), EXIT(0x63, 0),
     JMP(0x64, 1), JMPZ(0x65, 1),
     RND(0x66, 0),

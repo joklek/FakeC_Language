@@ -179,6 +179,7 @@ public abstract class Stmt implements IStmt {
             return hasValue;
         }
 
+        // TODO see if target is needed here
         public Function getTarget() {
             return target;
         }

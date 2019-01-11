@@ -438,11 +438,11 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
             // Add offset
             assignExpr.getOffset().accept(this);
             interRepresentation.write(ADDI);
+            interRepresentation.write(LD);
         }
         else {
-            interRepresentation.write(PUSHI, pointer);
+            interRepresentation.write(POKE, pointer);
         }
-        interRepresentation.write(POKES);
         return null;
     }
 
@@ -463,7 +463,8 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     @Override
     public Void visitArrayStmt(Stmt.Array arrayStmt) {
         StackDeclaredNode resolved = (StackDeclaredNode) arrayStmt.getScope().resolve(arrayStmt.getName(), ElementType.VARIABLE);
-        interRepresentation.write(PUSHI, resolved.getStackSlot() + 1); // + 1 so the first slot of array right next to the address of array
+        interRepresentation.write(PUSHI, resolved.getStackSlot() + 1);
+        interRepresentation.write(LEA); // puts effective address on stack top, +1 so the first slot of array right next to the address of array
         interRepresentation.write(POKE, resolved.getStackSlot()); // assign the address
         return null;
     }
