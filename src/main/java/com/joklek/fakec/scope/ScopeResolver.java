@@ -249,8 +249,8 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         expr.getValue().accept(this, errors);
 
         if(expr.getOffset() != null) {
-            expr.getOffset().accept(this, errors);
             expr.getOffset().setScope(scope);
+            expr.getOffset().accept(this, errors);
         }
 
         return null;

@@ -3,6 +3,7 @@ package com.joklek.fakec;
 import com.joklek.fakec.codegen.StringTable;
 
 import java.nio.BufferOverflowException;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
@@ -11,6 +12,7 @@ import java.util.Scanner;
 public class Interpreter {
 
     private final StringTable strings;
+    private final String filename;
     private boolean running;
     private final int codeBase;
     private int[] memory;
@@ -18,19 +20,22 @@ public class Interpreter {
     private int sp; // stack
     private int bp; // base
 
+    private static final int STACKBASE = 2048;
+
     private Scanner scanner;
     private Random randomGen;
 
-    public Interpreter(List<Integer> code, StringTable strings) {
+    public Interpreter(String filename, List<Integer> code, StringTable strings) {
         this.strings = strings;
         this.running = true;
         this.scanner = new Scanner(System.in);
         this.randomGen = new Random();
+        this.filename = filename;
 
         this.codeBase = 512;
         this.memory = new int[4096];
         this.ip = codeBase;
-        this.sp = 2048;
+        this.sp = STACKBASE;
         this.bp = sp;
 
         for (int i = 0; i < code.size(); i++){
@@ -108,8 +113,12 @@ public class Interpreter {
             case 0x73: stdOutChar(); break;
             case 0x74: stdOutBool(); break;
             case 0x75: stdin(); break;
+            case 0x76: stdinf(); break;
+            case 0x77: stdinc(); break;
+            case 0x78: stdins(); break;
             default:
-                throw new UnsupportedOperationException(String.format("Unsupported instruction with code %03X %d", opcode, opcode));
+                running = false;
+                System.err.printf("%s:%d: error: %s%n", filename, 0, String.format("Unsupported instruction with code %03X %d%n", opcode, opcode));
         }
     }
 
@@ -145,7 +154,8 @@ public class Interpreter {
     private void alloc(){
         int num = readCode();
         if (sp + num >= memory.length) {
-            throw new BufferOverflowException();
+            running = false;
+            System.err.printf("%s:%d: error: %s%n", filename, 0, "Stack overflown, exiting program");
         }
         else {
             sp += num;
@@ -166,6 +176,7 @@ public class Interpreter {
 
     private void exit() {
         running = false;
+        System.out.printf("%nProgram exited with status %d%n", pop());
     }
 
     private void call(int args) {
@@ -257,8 +268,51 @@ public class Interpreter {
     }
 
     private void stdin() {
-        int n = scanner.nextInt(); // TODO not only ints
-        push(n);
+        try {
+            int n = scanner.nextInt(); // TODO not only ints
+            push(n);
+        }
+        catch (InputMismatchException ex) {
+            running = false;
+            System.err.printf("%s:%d: error: %s%n", filename, 0, "Incorrect integer entered");
+        }
+    }
+
+    private void stdinf() {
+        try {
+            float n = scanner.nextFloat();
+            push(Float.floatToIntBits(n));
+        }
+        catch (InputMismatchException ex) {
+            running = false;
+            System.err.printf("%s:%d: error: %s%n", filename, 0, "Incorrect float entered");
+        }
+    }
+
+    private void stdinc() {
+        try {
+            String string = scanner.nextLine();
+            if(string.length() != 1) {
+                throw new InputMismatchException();
+            }
+            push(string.charAt(0));
+        }
+        catch (InputMismatchException ex) {
+            running = false;
+            System.err.printf("%s:%d: error: %s%n", filename, 0, "Incorrect char entered");
+        }
+    }
+
+    private void stdins(){
+        try {
+            String string = scanner.nextLine();
+            int index = strings.add(string);
+            push(index);
+        }
+        catch (InputMismatchException ex) {
+            running = false;
+            System.err.printf("%s:%d: error: %s%n", filename, 0, "Incorrect string entered");
+        }
     }
 
     private void addInteger() {
@@ -392,6 +446,10 @@ public class Interpreter {
     /*---------------------------------------------------------------------------------------------------------*/
 
     private int pop(){
+        if(sp - 1 < STACKBASE) {
+            running = false;
+            return 0;
+        }
         sp--;
         return memory[sp];
     }
@@ -399,7 +457,9 @@ public class Interpreter {
     private void push(int value){
         memory[sp] = value;
         if(sp + 1 >= memory.length) {
-            throw new StackOverflowError();
+            running = false;
+            System.err.printf("%s:%d: error: %s%n", filename, 0, "Stack overflown, exiting program");
+            return;
         }
         else {
             sp++;

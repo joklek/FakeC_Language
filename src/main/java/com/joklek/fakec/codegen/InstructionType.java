@@ -37,7 +37,11 @@ public enum InstructionType {
     STDOS(0x72,0),
     STDOC(0x73,0),
     STDOB(0x74,0),
-    STDIN(0x75,0);
+
+    STDINI(0x75,0),
+    STDINF(0x76,0),
+    STDINC(0x77, 0),
+    STDINS(0x78, 0);
 
     private final int value;
     private final int ops;

@@ -123,7 +123,7 @@ public class Compiler {
 
         // 5
         // RUN THIS
-        Interpreter vm = new Interpreter(bytes, intermediateRepresentation.getStringTable());
+        Interpreter vm = new Interpreter(filename, bytes, intermediateRepresentation.getStringTable());
         vm.execute();
     }
 

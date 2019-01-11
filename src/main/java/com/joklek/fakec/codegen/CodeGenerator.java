@@ -172,10 +172,10 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
             block.accept(this);
 
             // Optimisation to remove last jump from an if it it's pointing to the following instruction
-            //if(branches.lastIndexOf(branch) != branches.size() - 1 || ifStmt.getElseBranch() != null) {
+            if(branches.lastIndexOf(branch) != branches.size() - 1 || ifStmt.getElseBranch() != null) {
                 interRepresentation.write(JMP, endLabel);
-                interRepresentation.placeLabel(label);
-            //}
+            }
+            interRepresentation.placeLabel(label);
         }
         if(ifStmt.getElseBranch() != null) {
             ifStmt.getElseBranch().accept(this);
@@ -261,7 +261,24 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     public Void visitInputStmt(Stmt.Input inputStmt) {
         for (Token variable : inputStmt.getVariables()) {
             StackDeclaredNode variableNode = (StackDeclaredNode) inputStmt.getScope().resolve(variable, ElementType.VARIABLE);
-            interRepresentation.write(STDIN);
+            switch (variableNode.getType()) {
+                case INT:
+                    interRepresentation.write(STDINI);
+                    break;
+                case CHAR:
+                    interRepresentation.write(STDINC);
+                    break;
+                case STRING:
+                    interRepresentation.write(STDINS);
+                    break;
+                case FLOAT:
+                    interRepresentation.write(STDINF);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Wrong input type");
+                    //break;
+            }
+
             interRepresentation.write(POKE, variableNode.getStackSlot());
         }
         return null;
