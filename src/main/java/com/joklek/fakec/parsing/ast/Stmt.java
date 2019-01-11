@@ -45,14 +45,6 @@ public abstract class Stmt implements IStmt {
             return functions;
         }
 
-        public Label getEntryLabel() {
-            return entryLabel;
-        }
-
-        public void setEntryLabel(Label entryLabel) {
-            this.entryLabel = entryLabel;
-        }
-
         public <R> R accept(Visitor<R> visitor) {
             return visitor.visitProgramStmt(this);
         }

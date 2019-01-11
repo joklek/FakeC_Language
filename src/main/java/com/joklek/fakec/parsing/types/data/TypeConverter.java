@@ -2,7 +2,6 @@ package com.joklek.fakec.parsing.types.data;
 
 import com.joklek.fakec.parsing.error.ParserError;
 import com.joklek.fakec.parsing.types.TokenConverter;
-import com.joklek.fakec.parsing.types.data.DataType;
 import com.joklek.fakec.tokens.Token;
 import com.joklek.fakec.tokens.TokenType;
 

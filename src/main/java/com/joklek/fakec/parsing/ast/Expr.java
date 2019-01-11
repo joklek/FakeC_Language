@@ -159,8 +159,7 @@ public abstract class Expr implements IExpr {
         private final Token name;
         private final Expr value;
         private final Expr offset;
-        private Stmt.Var target;
-
+        
         public Assign(Token name, Expr value) {
             this(name, value, null);
         }
@@ -182,14 +181,6 @@ public abstract class Expr implements IExpr {
         @Nullable
         public Expr getOffset() {
             return offset;
-        }
-
-        public Stmt.Var getTarget() {
-            return target;
-        }
-
-        public void setTarget(Stmt.Var target) {
-            this.target = target;
         }
 
         public <R> R accept(Visitor<R> visitor) {
