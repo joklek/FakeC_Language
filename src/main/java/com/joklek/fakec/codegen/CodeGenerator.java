@@ -431,10 +431,16 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
     public Void visitAssignExpr(Expr.Assign assignExpr) {
         assignExpr.getValue().accept(this);
         int pointer = ((StackDeclaredNode)assignExpr.getScope().resolve(assignExpr.getName(), ElementType.VARIABLE)).getStackSlot();
-        interRepresentation.write(PUSHI, pointer);
+
         if(assignExpr.getOffset() != null) {
+            // Get address out of pointer
+            interRepresentation.write(PEEK, pointer);
+            // Add offset
             assignExpr.getOffset().accept(this);
             interRepresentation.write(ADDI);
+        }
+        else {
+            interRepresentation.write(PUSHI, pointer);
         }
         interRepresentation.write(POKES);
         return null;
@@ -456,20 +462,22 @@ public class CodeGenerator implements Stmt.Visitor<Void>, Expr.Visitor<Void>  {
 
     @Override
     public Void visitArrayStmt(Stmt.Array arrayStmt) {
+        StackDeclaredNode resolved = (StackDeclaredNode) arrayStmt.getScope().resolve(arrayStmt.getName(), ElementType.VARIABLE);
+        interRepresentation.write(PUSHI, resolved.getStackSlot() + 1); // + 1 so the first slot of array right next to the address of array
+        interRepresentation.write(POKE, resolved.getStackSlot()); // assign the address
         return null;
     }
 
     @Override
     public Void visitArrayAccessExpr(Expr.ArrayAccess arrayAccessExpr) {
-
         Scope scope = arrayAccessExpr.getScope();
         Token variableName = arrayAccessExpr.getArray();
         StackDeclaredNode resolvedVariable = (StackDeclaredNode) scope.resolve(variableName, ElementType.VARIABLE);
         int pointer = resolvedVariable.getStackSlot();
 
-        arrayAccessExpr.getOffset().accept(this);
-        interRepresentation.write(PUSHI, pointer);
-        interRepresentation.write(ADDI);
+        arrayAccessExpr.getOffset().accept(this); // get offset
+        interRepresentation.write(PEEK, pointer); // get address
+        interRepresentation.write(ADDI);  // add offset to address
         interRepresentation.write(PEEKS);
         return null;
     }

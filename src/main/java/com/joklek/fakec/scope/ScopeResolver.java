@@ -275,7 +275,7 @@ public class ScopeResolver implements Expr.VisitorWithErrors<Void, ScopeError>, 
         Scope scope = stmt.getScope();
 
         ScopeError error = scope.add(stmt.getName(), stmt, VARIABLE);
-        scope.getPointer().addSlots(stmt.getSize() - 1);
+        scope.getPointer().addSlots(stmt.getSize());
         if(error != null) {
             errors.add(error);
         }
